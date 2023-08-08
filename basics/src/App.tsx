@@ -16,14 +16,17 @@ export default function App() {
 
 
     // Make a renderer
-    const canvas = document.getElementById('cube')
+    const canvas = document.querySelector('canvas.webgl')
+
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true } as any)
-    renderer.setSize(window.innerWidth / 2, window.innerHeight / 2)
+    renderer.setSize(window.innerWidth, window.innerHeight)
 
     document.body.appendChild(renderer.domElement)
 
     // Add orbit controls
-    const controls = new OrbitControls(camera, renderer.domElement)
+    const controls = new OrbitControls(camera, canvas as any)
+    controls.enableDamping = true
+    controls.enablePan = true
 
 
     // Add stats
@@ -87,10 +90,11 @@ export default function App() {
 
   return (
     <div >
-      <canvas id='cube' />
-      <h1 className="text-3xl font-bold underline">
+      <canvas className="webgl"></canvas>
+
+      {/* <h1 className="text-3xl font-bold underline">
         Hello world!
-      </h1>
+      </h1> */}
 
 
     </div>
