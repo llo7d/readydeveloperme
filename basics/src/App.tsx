@@ -1,12 +1,32 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect } from "react"
 
 // @ts-ignore
 import * as THREE from 'three'
 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import Stats from 'three/examples/jsm/libs/stats.module.js'
+
+import { TextureLoader } from "three"
+
+//@ts-ignore
+import textureColor from "./textures/door/color.jpg"
+//@ts-ignore
+import textureHeight from "./textures/door/height.jpg"
+//@ts-ignore
+import textureMetalness from "./textures/door/metalness.jpg"
+//@ts-ignore
+import textureNormal from "./textures/door/normal.jpg"
+//@ts-ignore
+import textureAlpha from "./textures/door/alpha.jpg"
+//@ts-ignore
+import textureAmbientOcclusion from "./textures/door/ambientOcclusion.jpg"
+
+
+
 
 export default function App() {
+
+
 
   useEffect(() => {
 
@@ -29,20 +49,46 @@ export default function App() {
     controls.enablePan = true
 
 
-    // Add stats
-    const stats = new Stats()
-    document.body.appendChild(stats.dom)
-
 
     // Make a light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
-    ambientLight.castShadow = true
-    scene.add(ambientLight)
+    const pointLight = new THREE.PointLight(0xffffff, 65)
+    pointLight.position.x = 2
+    pointLight.position.y = 3
+    pointLight.position.z = 4
+    scene.add(pointLight)
+
+    // Make a light
+    const light = new THREE.HemisphereLight(0xffffbb, 0x080820, 2);
+
+    scene.add(light);
+
 
 
     // Make a cube
-    const geometry = new THREE.BoxGeometry()
-    const material = new THREE.MeshNormalMaterial({ color: 0x00ff00 } as any)
+    const geometry = new THREE.BoxGeometry(1, 1, 1, 100, 100, 100)
+
+
+
+
+    const material = new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load(textureColor) })
+
+    material.normalMap = new THREE.TextureLoader().load(textureNormal)
+
+    material.normalScale.set(8, 8)
+
+    material.metalnessMap = new THREE.TextureLoader().load(textureMetalness)
+
+    material.metalness = 0.7
+
+    material.roughnessMap = new THREE.TextureLoader().load("./textures/door/roughness.jpg")
+
+    material.displacementMap = new THREE.TextureLoader().load(textureHeight)
+
+    material.displacementScale = 0.1
+
+
+
+
     const cube = new THREE.Mesh(geometry, material)
     scene.add(cube)
 
@@ -63,23 +109,9 @@ export default function App() {
 
       const elapsedTime = clock.getElapsedTime()
 
-      stats.update()
       controls.update()
 
       requestAnimationFrame(animate)
-      // cube.rotation.x += 0.001
-      // cube.rotation.y += 0.001
-
-
-      // Move the cube on they y axis going between 0 and 3
-      // cube.position.y = Math.sin(Date.now() * 0.001) + 1 
-
-      // Doing a circle
-      // cube.position.y = Math.sin(elapsedTime)
-      // cube.position.x = Math.cos(elapsedTime)
-
-      // Look at the cube
-      // camera.lookAt(cube.position)
 
 
 
@@ -95,6 +127,7 @@ export default function App() {
       {/* <h1 className="text-3xl font-bold underline">
         Hello world!
       </h1> */}
+
 
 
     </div>
