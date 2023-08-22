@@ -9,7 +9,12 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { TextureLoader } from "three"
 
 //@ts-ignore
+// import textureColor from "./textures/minecraft.png"
+
+//@ts-ignore
 import textureColor from "./textures/door/color.jpg"
+
+
 //@ts-ignore
 import textureHeight from "./textures/door/height.jpg"
 //@ts-ignore
@@ -68,23 +73,30 @@ export default function App() {
     const geometry = new THREE.BoxGeometry(1, 1, 1, 100, 100, 100)
 
 
+    const colorTexture = new THREE.TextureLoader().load(textureColor)
 
+    colorTexture.magFilter = THREE.NearestFilter
 
-    const material = new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load(textureColor) })
+    const material = new THREE.MeshToonMaterial({ map: colorTexture })
 
     material.normalMap = new THREE.TextureLoader().load(textureNormal)
 
     material.normalScale.set(8, 8)
 
-    material.metalnessMap = new THREE.TextureLoader().load(textureMetalness)
+    // material.metalnessMap = new THREE.TextureLoader().load(textureMetalness)
 
-    material.metalness = 0.7
+    // material.metalness = 0.7
 
-    material.roughnessMap = new THREE.TextureLoader().load("./textures/door/roughness.jpg")
+    // material.roughnessMap = new THREE.TextureLoader().load("./textures/door/roughness.jpg")
 
     material.displacementMap = new THREE.TextureLoader().load(textureHeight)
 
-    material.displacementScale = 0.1
+    material.displacementScale = 0
+
+    material.alphaMap = new THREE.TextureLoader().load(textureAlpha)
+
+
+    material.transparent = true
 
 
 
