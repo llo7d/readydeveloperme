@@ -1,147 +1,41 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { useEffect } from "react"
+import { Canvas, useFrame } from "@react-three/fiber";
 
-// @ts-ignore
-import * as THREE from 'three'
+import { useRef } from "react";
+import { Mesh } from "three";
+import "./App.css";
 
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+function Box() {
+  const boxRef = useRef<Mesh>(null!);
 
-import { TextureLoader } from "three"
-
-//@ts-ignore
-// import textureColor from "./textures/minecraft.png"
-
-//@ts-ignore
-import textureColor from "./textures/door/color.jpg"
-
-
-//@ts-ignore
-import textureHeight from "./textures/door/height.jpg"
-//@ts-ignore
-import textureMetalness from "./textures/door/metalness.jpg"
-//@ts-ignore
-import textureNormal from "./textures/door/normal.jpg"
-//@ts-ignore
-import textureAlpha from "./textures/door/alpha.jpg"
-//@ts-ignore
-import textureAmbientOcclusion from "./textures/door/ambientOcclusion.jpg"
-
-
-
-
-export default function App() {
-
-
-
-  useEffect(() => {
-
-    // Make a scene
-    const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-
-
-    // Make a renderer
-    const canvas = document.querySelector('canvas.webgl')
-
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true } as any)
-    renderer.setSize(window.innerWidth, window.innerHeight)
-
-    document.body.appendChild(renderer.domElement)
-
-    // Add orbit controls
-    const controls = new OrbitControls(camera, canvas as any)
-    controls.enableDamping = true
-    controls.enablePan = true
-
-
-
-    // Make a light
-    const pointLight = new THREE.PointLight(0xffffff, 65)
-    pointLight.position.x = 2
-    pointLight.position.y = 3
-    pointLight.position.z = 4
-    scene.add(pointLight)
-
-    // Make a light
-    const light = new THREE.HemisphereLight(0xffffbb, 0x080820, 2);
-
-    scene.add(light);
-
-
-
-    // Make a cube
-    const geometry = new THREE.BoxGeometry(1, 1, 1, 100, 100, 100)
-
-
-    const colorTexture = new THREE.TextureLoader().load(textureColor)
-
-    colorTexture.magFilter = THREE.NearestFilter
-
-    const material = new THREE.MeshToonMaterial({ map: colorTexture })
-
-    material.normalMap = new THREE.TextureLoader().load(textureNormal)
-
-    material.normalScale.set(8, 8)
-
-    // material.metalnessMap = new THREE.TextureLoader().load(textureMetalness)
-
-    // material.metalness = 0.7
-
-    // material.roughnessMap = new THREE.TextureLoader().load("./textures/door/roughness.jpg")
-
-    material.displacementMap = new THREE.TextureLoader().load(textureHeight)
-
-    material.displacementScale = 0
-
-    material.alphaMap = new THREE.TextureLoader().load(textureAlpha)
-
-
-    material.transparent = true
-
-
-
-
-    const cube = new THREE.Mesh(geometry, material)
-    scene.add(cube)
-
-    // Add three.js clock
-    const clock = new THREE.Clock()
-
-
-
-    // Move the camera
-    camera.position.z = 5
-
-    // Add axess
-    const axesHelper = new THREE.AxesHelper(5);
-    scene.add(axesHelper);
-
-    // Animate the cube
-    const animate = function () {
-
-      const elapsedTime = clock.getElapsedTime()
-
-      controls.update()
-
-      requestAnimationFrame(animate)
-
-
-
-      renderer.render(scene, camera)
-    }
-    animate()
-  }, [])
+  useFrame(() => {
+    boxRef.current.rotation.x += 0.005;
+    boxRef.current.rotation.y += 0.01;
+  });
 
   return (
-    <div >
-      <canvas className="webgl"></canvas>
-
-      {/* <h1 className="text-3xl font-bold underline">
-        Hello world!
-      </h1> */}
-
-
-
-    </div>
-  )
+    <mesh ref={boxRef}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial color="orange" />
+    </mesh>
+  );
 }
+
+function ThreeScene() {
+  return (
+    <Canvas>
+      <ambientLight />
+      <pointLight position={[5, 5, 5]} />
+      <Box />
+    </Canvas>
+  );
+}
+
+function App() {
+  return (
+    <div className="App h-screen">
+      <ThreeScene />
+    </div>
+  );
+}
+
+export default App;
