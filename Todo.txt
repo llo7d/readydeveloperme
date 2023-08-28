@@ -1,2 +1,4 @@
 Todo 28.08.2023
-- Import .glb and display it ( )
+- Import .glb and display it ( X )
+-> Do the show loading thing ( X )
+-> import glb as a glbjsx ( )

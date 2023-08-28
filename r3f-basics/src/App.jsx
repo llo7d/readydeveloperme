@@ -1,22 +1,16 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/no-unknown-property */
 
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame, useLoader } from '@react-three/fiber'
 import { useState, useRef } from 'react'
-
-import { Environment, OrbitControls } from '@react-three/drei'
-
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import { Environment, OrbitControls, Html, useProgress } from '@react-three/drei'
+import { Suspense } from "react";
 
 
 function Box({ color, ...props }) {
 
-
-
-
-
   const meshRef = useRef()
-
-
 
   return (
     <>
@@ -41,7 +35,30 @@ function Box({ color, ...props }) {
   )
 }
 
+function Loader() {
+  const { progress } = useProgress()
+  return <Html center>{progress} % loaded</Html>
+}
 
+
+function GLBModel() {
+  const gltf = useLoader(GLTFLoader, 'shoe2.gltf')
+
+
+  // usiung the useFrame hook to rotate the model
+  useFrame(() => {
+    gltf.scene.getObjectByName('shoe_5').rotation.y += 0.01
+  })
+
+  // grabbing the matieral from the model and changing the color
+
+  console.log(gltf.scene)
+  return (
+    <>
+      <primitive object={gltf.scene} />
+    </>
+  )
+}
 
 
 function App() {
@@ -62,14 +79,17 @@ function App() {
     <>
       <div className='App'>
         <Canvas >
-          <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr" />
-          <OrbitControls />
-          <Box color={color} />
+          <Suspense fallback={<Loader />}>
+            <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr" />
+            <OrbitControls />
+            <GLBModel />
+          </Suspense>
+
         </Canvas>
       </div>
-      <div>
+      {/* <div>
         <button id='center' onClick={() => HandleColourChange()}>Click me</button>
-      </div>
+      </div> */}
     </>
   )
 }
