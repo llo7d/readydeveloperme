@@ -1,2 +1,2 @@
-Todo 25.08: 
-Change the colour of the cube with a button press.
+Todo 28.08.2023
+- Import .glb and display it ( )
