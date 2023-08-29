@@ -12,9 +12,12 @@
   "dependencies": {
     "@react-three/drei": "^9.80.6",
     "@react-three/fiber": "^8.13.7",
+    "gltfjsx": "^6.2.13",
+    "leva": "^0.9.35",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "three": "^0.155.0"
+    "three": "^0.155.0",
+    "valtio": "^1.11.2"
   },
   "devDependencies": {
     "@types/react": "^18.2.15",

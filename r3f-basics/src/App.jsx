@@ -4,8 +4,9 @@
 import { Canvas, useFrame, useLoader } from '@react-three/fiber'
 import { useState, useRef } from 'react'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { Environment, OrbitControls, Html, useProgress } from '@react-three/drei'
+import { Environment, OrbitControls, Html, useProgress, useGLTF } from '@react-three/drei'
 import { Suspense } from "react";
+import { useControls } from 'leva'
 
 
 function Box({ color, ...props }) {
@@ -39,6 +40,28 @@ function Loader() {
   const { progress } = useProgress()
   return <Html center>{progress} % loaded</Html>
 }
+
+export function Shoe(props) {
+
+  const { soleColor, bootColor, moveShoeX } = useControls({ soleColor: 'red', bootColor: 'green', moveShoeX: { value: 0, min: 0, max: 10 } })
+
+  const { nodes, materials } = useGLTF('/shoe2lDraco.gltf')
+
+  return (
+    <group {...props} dispose={null} position={[0, moveShoeX, 0]}>
+      <mesh material-color={soleColor} geometry={nodes.shoe.geometry} material={materials.laces} />
+      <mesh material-color={soleColor} geometry={nodes.shoe_1.geometry} material={materials.mesh} />
+      <mesh material-color="green" geometry={nodes.shoe_2.geometry} material={materials.caps} />
+      <mesh material-color="green" geometry={nodes.shoe_3.geometry} material={materials.inner} />
+      <mesh material-color={bootColor} geometry={nodes.shoe_4.geometry} material={materials.sole} />
+      <mesh geometry={nodes.shoe_5.geometry} material={materials.stripes} />
+      <mesh geometry={nodes.shoe_6.geometry} material={materials.band} />
+      <mesh geometry={nodes.shoe_7.geometry} material={materials.patch} />
+    </group>
+  )
+}
+
+useGLTF.preload('/shoe2lDraco.gltf')
 
 
 function GLBModel() {
@@ -75,16 +98,18 @@ function App() {
 
   }
 
+
   return (
+
     <>
       <div className='App'>
         <Canvas >
           <Suspense fallback={<Loader />}>
             <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr" />
             <OrbitControls />
-            <GLBModel />
+            {/* <GLBModel /> */}
+            <Shoe />
           </Suspense>
-
         </Canvas>
       </div>
       {/* <div>
