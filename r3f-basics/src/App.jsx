@@ -65,6 +65,7 @@ export function Shoe(props) {
 export function Fox(props) {
 
 
+  console.log("props in Fox", props.animation)
 
   // Run,Survey, Walk
   const group = useRef();
@@ -72,10 +73,31 @@ export function Fox(props) {
 
   const { actions, mixer, ref } = useAnimations(animations, group);
 
+  // // Reset and fade in animation after an index has been changed
+  // useEffect(() => {
 
+  //   mixer.stopAllAction();
+
+  //   actions[props.animation].fadeIn(0.5);
+  //   actions[props.animation].play();
+  // }, [props.animation]);
+
+  // // Change animation when the index changes
+  // useEffect(() => {
+  //   // Reset and fade in animation after an index has been changed
+  //   actions[props.animation].reset().fadeIn(0.5).play()
+  //   // In the clean-up phase, fade it out
+  //   return () => actions[props.animation].fadeOut(0.5)
+  // }, [props.animation])
+
+  // Change animation when the index changes
   useEffect(() => {
-    actions["Survey"].play()
-  }, [])
+    // Reset and fade in animation after an index has been changed
+    actions[props.animation].reset().fadeIn(0.5).play()
+    // In the clean-up phase, fade it out
+    return () => actions[props.animation].fadeOut(0.5)
+  }, [props.animation])
+
 
 
 
@@ -109,7 +131,7 @@ function App() {
 
   const [animation, setAnimation] = useState("Run")
 
-  console.log(animation);
+  // console.log(animation);
 
 
   return (
@@ -130,7 +152,6 @@ function App() {
           onChange={(event) => setAnimation(event.target.value)}
           value={animation}
         >
-          <option value={null}>null</option>
           <option value="Run">Run</option>
           <option value="Survey">Survey</option>
           <option value="Walk">Walk</option>
