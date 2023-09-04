@@ -2,9 +2,9 @@
 /* eslint-disable react/no-unknown-property */
 
 import { Canvas, useFrame, useLoader } from '@react-three/fiber'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { Environment, OrbitControls, Html, useProgress, useGLTF } from '@react-three/drei'
+import { Environment, OrbitControls, Html, useProgress, useGLTF, useAnimations } from '@react-three/drei'
 import { Suspense } from "react";
 import { useControls } from 'leva'
 
@@ -61,42 +61,55 @@ export function Shoe(props) {
   )
 }
 
-useGLTF.preload('/shoe2lDraco.gltf')
+
+export function Fox(props) {
 
 
-function GLBModel() {
-  const gltf = useLoader(GLTFLoader, 'shoe2.gltf')
+
+  // Run,Survey, Walk
+  const group = useRef();
+  const { nodes, materials, animations } = useGLTF("/Fox-processed.gltf");
+
+  const { actions, mixer, ref } = useAnimations(animations, group);
 
 
-  // usiung the useFrame hook to rotate the model
-  useFrame(() => {
-    gltf.scene.getObjectByName('shoe_5').rotation.y += 0.01
-  })
+  useEffect(() => {
+    actions["Survey"].play()
+  }, [])
 
-  // grabbing the matieral from the model and changing the color
 
-  console.log(gltf.scene)
+
+  console.log("actions:", actions, "\n", "mixer:", mixer, "\n", "ref:", ref)
+
+
   return (
     <>
-      <primitive object={gltf.scene} />
+      <group ref={group} {...props} dispose={null}>
+        <group>
+          <group name="root">
+            <skinnedMesh
+              name="fox"
+              geometry={nodes.fox.geometry}
+              material={materials.fox_material}
+              skeleton={nodes.fox.skeleton}
+            // material-color="red"
+            // onClick={(e) => actions[props.animation].play()}
+            />
+            <primitive object={nodes._rootJoint} />
+          </group>
+        </group>
+      </group>
     </>
-  )
+  );
 }
+
 
 
 function App() {
 
-  const [color, setColor] = useState('red')
+  const [animation, setAnimation] = useState("Run")
 
-  function HandleColourChange() {
-    if (color === 'red') {
-      setColor('blue')
-    } else {
-      setColor('red')
-    }
-
-
-  }
+  console.log(animation);
 
 
   return (
@@ -107,14 +120,23 @@ function App() {
           <Suspense fallback={<Loader />}>
             <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr" />
             <OrbitControls />
-            {/* <GLBModel /> */}
-            <Shoe />
+            {/* <Shoe /> */}
+            <Fox scale={[0.01, 0.01, 0.01]} animation={animation} />
           </Suspense>
         </Canvas>
       </div>
-      {/* <div>
-        <button id='center' onClick={() => HandleColourChange()}>Click me</button>
-      </div> */}
+      <form id='center'>
+        <select
+          onChange={(event) => setAnimation(event.target.value)}
+          value={animation}
+        >
+          <option value={null}>null</option>
+          <option value="Run">Run</option>
+          <option value="Survey">Survey</option>
+          <option value="Walk">Walk</option>
+        </select>
+      </form>
+
     </>
   )
 }
