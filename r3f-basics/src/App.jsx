@@ -96,7 +96,7 @@ export function Fox(props) {
     actions[props.animation].reset().fadeIn(0.5).play()
     // In the clean-up phase, fade it out
     return () => actions[props.animation].fadeOut(0.5)
-  }, [props.animation])
+  }, [props.animation, actions])
 
 
 
