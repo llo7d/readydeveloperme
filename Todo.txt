@@ -1,8 +1,14 @@
-Todo 28.08.2023
-- Import .glb and display it ( X )
--> Do the show loading thing ( X )
--> import glb as a glbjsx ( X )
+Todo:
+Make camera control. ( Camera1 ,Camera 2...Closeup, far away from dropdown.) ( )
+Make character rotate on moving not camera around character ( https://gyazo.com/063c83aebc1eb188f86eba32de2f6f20 ) ( )
+Scroll exacly to face ( https://gyazo.com/85c427b891d7db604c5b0804eeb77fdf ) ( )
 
-04.09.2023
-- Import fox and play animations. ( X ) 
--> DRop down, then we can play animations on each press. But not at same time but sepreat. (  )
+
+What will the user be able to control?
+Poses (Image)
+Hair (Image)
+Beard (Image)
+Face (Slider)
+Hats (Image)
+Colours(Images)
+Logo(Dropdown upload)
