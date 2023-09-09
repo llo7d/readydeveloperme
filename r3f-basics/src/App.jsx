@@ -4,7 +4,7 @@
 import { Canvas, useFrame, useLoader } from '@react-three/fiber'
 import { useState, useRef, useEffect } from 'react'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { Environment, OrbitControls, Html, useProgress, useGLTF, useAnimations } from '@react-three/drei'
+import { Environment, OrbitControls, Html, useProgress, useGLTF, useAnimations, ContactShadows, OrthographicCamera, PerspectiveCamera, Stage, CameraControls } from '@react-three/drei'
 import { Suspense } from "react";
 import { useControls } from 'leva'
 
@@ -101,12 +101,9 @@ export function Fox(props) {
 
 
 
-  console.log("actions:", actions, "\n", "mixer:", mixer, "\n", "ref:", ref)
-
-
   return (
     <>
-      <group ref={group} {...props} dispose={null}>
+      <group ref={group} {...props} dispose={null} position={[0, -1, 0]} scale={[0.02, 0.02, 0.02]}>
         <group>
           <group name="root">
             <skinnedMesh
@@ -129,9 +126,12 @@ export function Fox(props) {
 
 function App() {
 
+  const DEG45 = Math.PI / 4;
+
   const [animation, setAnimation] = useState("Run")
 
   // console.log(animation);
+  const cameraControlRef = useRef(null);
 
 
   return (
@@ -141,9 +141,12 @@ function App() {
         <Canvas >
           <Suspense fallback={<Loader />}>
             <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr" />
-            <OrbitControls />
             {/* <Shoe /> */}
-            <Fox scale={[0.01, 0.01, 0.01]} animation={animation} />
+            <Fox animation={animation} />
+            <PerspectiveCamera makeDefault position={[0, 0, 10]} ref={cameraControlRef} />
+            {/* <CameraControls enableZoom={false} ref={cameraControlRef} maxZoom={1} minZoom={1} /> */}
+            <OrbitControls cameraminPolarAngle={Math.PI / 2} maxPolarAngle={Math.PI / 2} enableZoom={true} enablePan={false} />
+
           </Suspense>
         </Canvas>
       </div>
@@ -158,6 +161,16 @@ function App() {
         </select>
       </form>
 
+
+      <button
+        id='center'
+        onClick={() => {
+          // Camera looks at the Fox
+          cameraControlRef.current.position.set(0, 0, 3);
+        }}
+      >
+        rotate theta 45deg
+      </button>
     </>
   )
 }

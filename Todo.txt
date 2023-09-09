@@ -1,5 +1,6 @@
 Todo:
-Make camera control. ( Camera1 ,Camera 2...Closeup, far away from dropdown.) ( )
+Make camera control. ( Camera1 ,Camera 2...Closeup, far away from dropdown.)
+-> Kinda works but I dont want to allow zoom and panunder ( )
 Make character rotate on moving not camera around character ( https://gyazo.com/063c83aebc1eb188f86eba32de2f6f20 ) ( )
 Scroll exacly to face ( https://gyazo.com/85c427b891d7db604c5b0804eeb77fdf ) ( )
 
