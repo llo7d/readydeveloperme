@@ -2,9 +2,9 @@
 /* eslint-disable react/no-unknown-property */
 
 import { Canvas, useFrame, useLoader } from '@react-three/fiber'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, memo } from 'react'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { Environment, OrbitControls, Html, useProgress, useGLTF, useAnimations, ContactShadows, OrthographicCamera, PerspectiveCamera, Stage, CameraControls } from '@react-three/drei'
+import { Environment, OrbitControls, Html, useProgress, useGLTF, useAnimations, ContactShadows, OrthographicCamera, PerspectiveCamera, Stage, CameraControls, Grid, AccumulativeShadows, RandomizedLight, Shadow } from '@react-three/drei'
 import { Suspense } from "react";
 import { useControls } from 'leva'
 
@@ -100,10 +100,9 @@ export function Fox(props) {
 
 
 
-
   return (
     <>
-      <group ref={group} {...props} dispose={null} position={[0, -1, 0]} scale={[0.02, 0.02, 0.02]}>
+      <group ref={group} {...props} dispose={null} position={[0, 0, 0]} scale={[0.02, 0.02, 0.02]}>
         <group>
           <group name="root">
             <skinnedMesh
@@ -122,16 +121,32 @@ export function Fox(props) {
   );
 }
 
+function Ground() {
+  const gridConfig = {
+    cellSize: 0.5,
+    cellThickness: 0.5,
+    cellColor: '#DFAD06',
+    sectionSize: 3,
+    sectionThickness: 1,
+    sectionColor: '#C19400',
+    fadeDistance: 30,
+    fadeStrength: 1,
+    followCamera: false,
+    infiniteGrid: true
+  }
+  return <Grid position={[0, -0.01, 0]} args={[10.5, 10.5]} {...gridConfig} />
+}
 
 
 function App() {
 
-  const DEG45 = Math.PI / 4;
 
   const [animation, setAnimation] = useState("Run")
-
-  // console.log(animation);
   const cameraControlRef = useRef(null);
+
+  const { cameraPosition } = useControls({ cameraPosition: [0, 0, 5] })
+  const { opacity, blur, scale, far } = useControls('Shadows', { opacity: 1, scale: 10, blur: 3, far: 1.1 })
+
 
 
   return (
@@ -143,9 +158,12 @@ function App() {
             <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr" />
             {/* <Shoe /> */}
             <Fox animation={animation} />
-            <PerspectiveCamera makeDefault position={[0, 0, 10]} ref={cameraControlRef} />
+            <PerspectiveCamera makeDefault position={cameraPosition} ref={cameraControlRef} />
             {/* <CameraControls enableZoom={false} ref={cameraControlRef} maxZoom={1} minZoom={1} /> */}
             <OrbitControls cameraminPolarAngle={Math.PI / 2} maxPolarAngle={Math.PI / 2} enableZoom={true} enablePan={false} />
+            <Ground />
+            <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
+
 
           </Suspense>
         </Canvas>
@@ -166,11 +184,22 @@ function App() {
         id='center'
         onClick={() => {
           // Camera looks at the Fox
-          cameraControlRef.current.position.set(0, 0, 3);
+          cameraControlRef.current.position.set(0, 2, 3);
         }}
       >
         rotate theta 45deg
       </button>
+
+      <button
+        id='center2'
+        onClick={() => {
+          // Camera looks at the Fox
+          cameraControlRef.current.position.set(5.5, 1.5, 5.5);
+        }}
+      >
+        side view
+      </button>
+
     </>
   )
 }

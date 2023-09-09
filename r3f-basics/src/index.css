@@ -14,7 +14,7 @@ body {
 /* center button */
 #center {
   position: absolute;
-  top: 20%;
+  top: 10%;
   left: 50%;
   transform: translate(-50%, -50%);
 }
@@ -34,7 +34,7 @@ button {
  
     /* add button down 10 pixels */
     position: absolute;
-    top: 20%;
+    top: 10%;
     left: 50%;
     transform: translate(-50%, -50%);
      margin-top: 65px;
