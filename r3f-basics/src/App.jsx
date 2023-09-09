@@ -126,10 +126,10 @@ function Ground() {
   const { cellColor, sectionColor } = useControls('Grid', { cellColor: '#DFAD06', sectionColor: '#C19400' })
 
   const gridConfig = {
-    cellSize: 0.5,
+    cellSize: 0, // 0,5
     cellThickness: 0.5,
     cellColor: cellColor,
-    sectionSize: 3,
+    sectionSize: 1, // 3
     sectionThickness: 1,
     sectionColor: sectionColor,
     fadeDistance: 30,
@@ -165,6 +165,7 @@ function App() {
             {/* <CameraControls enableZoom={false} ref={cameraControlRef} maxZoom={1} minZoom={1} /> */}
             <OrbitControls cameraminPolarAngle={Math.PI / 2} maxPolarAngle={Math.PI / 2} enableZoom={true} enablePan={false} />
             <Ground />
+
             <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
 
 
