@@ -122,13 +122,16 @@ export function Fox(props) {
 }
 
 function Ground() {
+
+  const { cellColor, sectionColor } = useControls('Grid', { cellColor: '#DFAD06', sectionColor: '#C19400' })
+
   const gridConfig = {
     cellSize: 0.5,
     cellThickness: 0.5,
-    cellColor: '#DFAD06',
+    cellColor: cellColor,
     sectionSize: 3,
     sectionThickness: 1,
-    sectionColor: '#C19400',
+    sectionColor: sectionColor,
     fadeDistance: 30,
     fadeStrength: 1,
     followCamera: false,
