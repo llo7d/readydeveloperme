@@ -29,3 +29,15 @@ button {
   margin-top: 35px;
 }
 
+
+#center2{
+ 
+    /* add button down 10 pixels */
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+     margin-top: 65px;
+   
+  
+}
