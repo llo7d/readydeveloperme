@@ -185,7 +185,7 @@ function App() {
 
     <>
       <div className='App'>
-        <Canvas >
+        <Canvas shadows camera={{ fov: 25 }}>
           <Suspense fallback={<Loader />}>
             <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr" />
             {/* <Shoe /> */}
@@ -194,7 +194,7 @@ function App() {
             {/* <CameraControls enableZoom={false} ref={cameraControlRef} maxZoom={1} minZoom={1} /> */}
             <OrbitControls cameraminPolarAngle={Math.PI / 2} maxPolarAngle={Math.PI / 2} enableZoom={true} enablePan={false} />
             <Ground />
-            <Cube />
+            <Cube position={[0, 1, 0]} />
             <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
 
 

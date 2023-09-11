@@ -6,7 +6,11 @@ Make character rotate on moving not camera around character ( https://gyazo.com/
 Scroll exacly to face ( https://gyazo.com/85c427b891d7db604c5b0804eeb77fdf ) ( )
 
 
-GridHelpers semes pretty god aswell 
+Ground ideas:
+https://codesandbox.io/s/pbwi6i
+https://codesandbox.io/s/wdzv4
+https://codesandbox.io/s/hmgdjq
+
 
 What will the user be able to control?
 Poses (Image)
