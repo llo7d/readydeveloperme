@@ -14,34 +14,42 @@ body {
 /* center button */
 #center {
   position: absolute;
-  top: 10%;
-  left: 50%;
+  top: 50%;
+  left: 10%;
   transform: translate(-50%, -50%);
 }
 
-
+/* // Put the button in the left center */
 button {
- /* add button down 10 pixels */
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  transform: translate(-50%, -50%);
+}
+
+/*button {
+  add button down 10 pixels 
  position: absolute;
  top: 20%;
  left: 50%;
  transform: translate(-50%, -50%);
   margin-top: 35px;
-}
+}*/
 
 
 #center2{
  
     /* add button down 10 pixels */
     position: absolute;
-    top: 10%;
-    left: 50%;
+    top: 50%;
+    left: 10%;
     transform: translate(-50%, -50%);
-     margin-top: 65px;
+     margin-top: 35px;
    
   
 }
 
 body {
-  background: #303035;
+  background: #23262C ;
 }
+/* #303035; */
