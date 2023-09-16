@@ -4,7 +4,7 @@ Make camera control. ( Camera1 ,Camera 2...Closeup, far away from dropdown.)
 Create ortohraphic camera and see how character looks ( )
 -> https://threejs.org/examples/#css3d_orthographic
 
-Test controling shape keys  ( )
+Test controling shape keys  ( X )
 
 
 Maybe:
