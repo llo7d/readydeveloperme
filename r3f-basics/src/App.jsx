@@ -42,7 +42,7 @@ function Loader() {
   return <Html center>{progress} % loaded</Html>
 }
 
-export function Shoe(props) {
+function Shoe(props) {
 
   const { soleColor, bootColor, moveShoeX } = useControls({ soleColor: 'red', bootColor: 'green', moveShoeX: { value: 0, min: 0, max: 10 } })
 
@@ -63,64 +63,76 @@ export function Shoe(props) {
 }
 
 
-export function Fox(props) {
+// function Fox(props) {
 
 
-  console.log("props in Fox", props.animation)
+//   console.log("props in Fox", props.animation)
 
-  // Run,Survey, Walk
-  const group = useRef();
-  const { nodes, materials, animations } = useGLTF("/Fox-processed.gltf");
+//   // Run,Survey, Walk
+//   const group = useRef();
+//   const { nodes, materials, animations } = useGLTF("/Fox-processed.gltf");
 
-  const { actions, mixer, ref } = useAnimations(animations, group);
+//   const { actions, mixer, ref } = useAnimations(animations, group);
 
-  // // Reset and fade in animation after an index has been changed
-  // useEffect(() => {
+//   // // Reset and fade in animation after an index has been changed
+//   // useEffect(() => {
 
-  //   mixer.stopAllAction();
+//   //   mixer.stopAllAction();
 
-  //   actions[props.animation].fadeIn(0.5);
-  //   actions[props.animation].play();
-  // }, [props.animation]);
+//   //   actions[props.animation].fadeIn(0.5);
+//   //   actions[props.animation].play();
+//   // }, [props.animation]);
 
-  // // Change animation when the index changes
-  // useEffect(() => {
-  //   // Reset and fade in animation after an index has been changed
-  //   actions[props.animation].reset().fadeIn(0.5).play()
-  //   // In the clean-up phase, fade it out
-  //   return () => actions[props.animation].fadeOut(0.5)
-  // }, [props.animation])
+//   // // Change animation when the index changes
+//   // useEffect(() => {
+//   //   // Reset and fade in animation after an index has been changed
+//   //   actions[props.animation].reset().fadeIn(0.5).play()
+//   //   // In the clean-up phase, fade it out
+//   //   return () => actions[props.animation].fadeOut(0.5)
+//   // }, [props.animation])
 
-  // Change animation when the index changes
-  useEffect(() => {
-    // Reset and fade in animation after an index has been changed
-    actions[props.animation].reset().fadeIn(0.5).play()
-    // In the clean-up phase, fade it out
-    return () => actions[props.animation].fadeOut(0.5)
-  }, [props.animation, actions])
+//   // // Change animation when the index changes
+//   // useEffect(() => {
+//   //   // Reset and fade in animation after an index has been changed
+//   //   actions[props.animation].reset().fadeIn(0.5).play()
+//   //   // In the clean-up phase, fade it out
+//   //   return () => actions[props.animation].fadeOut(0.5)
+//   // }, [props.animation, actions])
+
+//   useEffect(() => {
+//     // Reset and fade in animation after an index has been changed
+//     console.log(actions);
+
+//     actions["Walk"].play()
+
+//     // Stop animation at frame 1 in 1 second
+//     setTimeout(() => {
+//       actions["Walk"].paused = true;
+//     }, 1000)
 
 
+//   }, [])
 
-  return (
-    <>
-      <group ref={group} {...props} dispose={null} position={[0, 0, 0]} scale={[0.02, 0.02, 0.02]}>
-        <group>
-          <group name="root">
-            <skinnedMesh
-              name="fox"
-              geometry={nodes.fox.geometry}
-              material={materials.fox_material}
-              skeleton={nodes.fox.skeleton}
-            // material-color="red"
-            // onClick={(e) => actions[props.animation].play()}
-            />
-            <primitive object={nodes._rootJoint} />
-          </group>
-        </group>
-      </group>
-    </>
-  );
-}
+//   return (
+//     <>
+//       <group ref={group} {...props} dispose={null} position={[0, 0, 0]} scale={[0.02, 0.02, 0.02]}>
+//         <group>
+//           <group name="root">
+//             <skinnedMesh
+//               name="fox"
+//               geometry={nodes.fox.geometry}
+//               material={materials.fox_material}
+//               skeleton={nodes.fox.skeleton}
+//             // material-color="red"
+//             // onClick={(e) => actions[props.animation].play()}
+//             />
+//             <primitive object={nodes._rootJoint} />
+//           </group>
+//         </group>
+//       </group>
+//     </>
+//   );
+// }
 
 
 function Developer(props) {
@@ -132,8 +144,10 @@ function Developer(props) {
   const logo = materials.logo.map = useLoader(
     THREE.TextureLoader,
     "/Logo.png"
+
   );
 
+  // logo.flipY = false;
 
   return (
     <group ref={group} {...props} dispose={null}>
@@ -170,7 +184,6 @@ function Developer(props) {
               name="Mesh_5"
               geometry={nodes.Mesh_5.geometry}
               material={materials.Pants_main}
-              material-color="red"
               skeleton={nodes.Mesh_5.skeleton}
             />
             <skinnedMesh
@@ -275,15 +288,24 @@ function Developer(props) {
 }
 
 
-/*
-Auto-generated by: https://github.com/pmndrs/gltfjsx
-*/
 
 
 function Developer2(props) {
   const group = useRef();
   const { nodes, materials, animations } = useGLTF("/dev3.glb");
-  const { actions } = useAnimations(animations, group);
+  const { actions, mixer, ref } = useAnimations(animations, group);
+
+
+  useEffect(() => {
+    // Reset and fade in animation after an index has been changed
+    console.log(actions);
+
+    // actions["DP-Character_Pointing Down"].play()
+
+  }, [])
+
+  // console.log(actions["DP-Character_Pointing Down"].play());
+
   return (
     <group ref={group} {...props} dispose={null}>
       <group name="Scene">
@@ -442,7 +464,6 @@ function Developer2(props) {
             name="t_shirt"
             geometry={nodes.t_shirt.geometry}
             material={materials.Shirt_main}
-            material-color="red"
             skeleton={nodes.t_shirt.skeleton}
           />
           <skinnedMesh
@@ -455,7 +476,6 @@ function Developer2(props) {
             name="t_shirt_2"
             geometry={nodes.t_shirt_2.geometry}
             material={materials.Shirt_main_cuffs}
-            material-color="pink"
             skeleton={nodes.t_shirt_2.skeleton}
           />
         </group>
@@ -464,7 +484,6 @@ function Developer2(props) {
             name="pants002"
             geometry={nodes.pants002.geometry}
             material={materials.Pants_main}
-            material-color="red"
             skeleton={nodes.pants002.skeleton}
           />
           <skinnedMesh
@@ -566,19 +585,18 @@ function App() {
 
     <>
       <div className='App'>
-        <Canvas shadows camera={{ fov: 20 }} >
+        <Canvas shadows camera={{ position: [0, -3, 6], fov: 20 }} >
           <Suspense fallback={<Loader />}>
             <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr" />
             {/* <Shoe /> */}
             {/* <CameraControls enableZoom={false} ref={cameraControlRef} maxZoom={1} minZoom={1} setLookAt={{ positionX: 0, positionY: 10, positionZ: 10 }} /> */}
             <OrbitControls cameraminPolarAngle={Math.PI / 2} maxPolarAngle={Math.PI / 2} enableZoom={true} enablePan={true} target={new THREE.Vector3(0, 1.2, 0)} position={new THREE.Vector3(1, 2, 5)} position0={new THREE.Vector3(1, 2, 5)} />
             <Ground />
-            <Developer />
-            {/* <Developer /> */}
             <Developer2 />
             {/* <Cube position={[0, 1, 0]} /> */}
             <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
             {/* <Environment files={city.default} /> */}
+            {/* <Fox /> */}
 
           </Suspense>
         </Canvas>
