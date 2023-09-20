@@ -336,12 +336,6 @@ function Developer2(props) {
               morphTargetInfluences={nodes.body_2.morphTargetInfluences}
             />
           </group>
-          <skinnedMesh
-            name="tongue_GEO"
-            geometry={nodes.tongue_GEO.geometry}
-            material={materials.Tongue}
-            skeleton={nodes.tongue_GEO.skeleton}
-          />
           <primitive object={nodes.desktop_bone} />
           <primitive object={nodes["DEF-pelvisL"]} />
           <primitive object={nodes["DEF-pelvisR"]} />
@@ -362,6 +356,7 @@ function Developer2(props) {
           skeleton={nodes.Brows.skeleton}
           morphTargetDictionary={nodes.Brows.morphTargetDictionary}
           morphTargetInfluences={nodes.Brows.morphTargetInfluences}
+          material-color="red"
         />
         <group name="GEO_CC_Shoes">
           <skinnedMesh
@@ -417,37 +412,67 @@ function Developer2(props) {
             skeleton={nodes.body001_2.skeleton}
           />
         </group>
-
+        <skinnedMesh
+          name="GEO_Hair_01"
+          geometry={nodes.GEO_Hair_01.geometry}
+          material={materials.MAT_Hair}
+          skeleton={nodes.GEO_Hair_01.skeleton}
+          visible={false}
+        />
         <skinnedMesh
           name="GEO_Beard_01"
           geometry={nodes.GEO_Beard_01.geometry}
           material={materials.MAT_Beard}
           skeleton={nodes.GEO_Beard_01.skeleton}
+          visible={true}
         />
         <skinnedMesh
           name="GEO_Beard_02"
           geometry={nodes.GEO_Beard_02.geometry}
           material={materials.MAT_Beard}
           skeleton={nodes.GEO_Beard_02.skeleton}
+          visible={false}
         />
-
+        <skinnedMesh
+          name="GEO_Hair_02"
+          geometry={nodes.GEO_Hair_02.geometry}
+          material={materials.MAT_Hair}
+          skeleton={nodes.GEO_Hair_02.skeleton}
+          visible={true}
+        />
+        <skinnedMesh
+          name="GEO_Hair_03"
+          geometry={nodes.GEO_Hair_03.geometry}
+          material={materials.MAT_Hair}
+          skeleton={nodes.GEO_Hair_03.skeleton}
+          visible={false}
+        />
         <skinnedMesh
           name="GEO_Beard_03"
           geometry={nodes.GEO_Beard_03.geometry}
           material={materials.MAT_Beard}
           skeleton={nodes.GEO_Beard_03.skeleton}
+          visible={false}
         />
         <skinnedMesh
           name="GEO_Beard_04"
           geometry={nodes.GEO_Beard_04.geometry}
           material={materials.MAT_Beard}
           skeleton={nodes.GEO_Beard_04.skeleton}
+          visible={false}
         />
         <skinnedMesh
           name="GEO_Hair_04"
           geometry={nodes.GEO_Hair_04.geometry}
           material={materials.MAT_Hair}
           skeleton={nodes.GEO_Hair_04.skeleton}
+          visible={false}
+        />
+        <skinnedMesh
+          name="tongue_GEO"
+          geometry={nodes.tongue_GEO.geometry}
+          material={materials.Tongue}
+          skeleton={nodes.tongue_GEO.skeleton}
         />
         <mesh
           name="iphone12"
@@ -479,7 +504,7 @@ function Developer2(props) {
             skeleton={nodes.t_shirt_2.skeleton}
           />
         </group>
-        <group name="GEO_CC_Pants">
+        <group name="GEO_CC_Pants_Baked">
           <skinnedMesh
             name="pants002"
             geometry={nodes.pants002.geometry}
@@ -579,7 +604,13 @@ function App() {
   const { opacity, blur, scale, far } = useControls('Shadows', { opacity: 1, scale: 10, blur: 3, far: 1.1 })
 
 
+  const [file, setFile] = useState();
+  function handleChange(e) {
+    console.log(e.target.files);
+    // setFile(URL.createObjectURL(e.target.files[0]));
 
+
+  }
 
   return (
 
@@ -624,7 +655,7 @@ function App() {
         Front View
       </button >
 
-      <button
+      {/* <button
         id='center2'
         onClick={() => {
           // Camera looks at the Fox
@@ -632,7 +663,14 @@ function App() {
         }}
       >
         Side View
-      </button>
+      </button> */}
+      <div id="center2">
+        <input type="file" onChange={handleChange} />
+        <img src={file} />
+
+      </div>
+
+
 
     </>
   )

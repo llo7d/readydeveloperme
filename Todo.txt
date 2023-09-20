@@ -7,8 +7,8 @@ Create ortohraphic camera and see how character looks ( X )
 
 Major:
 - Change 1 pose ( )
-- Change 1 Beard ( )
-- Upload image and change logo ( )
+- Change 1 Beard ( X )
+- Create Upload image and change logo ( )
 - Experiment with adding more interesting lights ( )
 -> Button that changes lights ( )
 - Try export 1 image. ( )
