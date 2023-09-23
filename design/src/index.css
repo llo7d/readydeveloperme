@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.scroll-light::-webkit-scrollbar,
+.scroll-dark::-webkit-scrollbar {
+  @apply w-1;
+}
+
+.scroll-light::-webkit-scrollbar-track {
+  @apply bg-neutral-10;
+}
+
+.scroll-light::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-neutral-30;
+}
+
+.scroll-dark::-webkit-scrollbar-track {
+  @apply bg-[#2A2B2F];
+}
+
+.scroll-dark::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-neutral-80;
+}
