@@ -134,166 +134,16 @@ function Shoe(props) {
 //   );
 // }
 
+function changeLogo() {
 
-function Developer(props) {
-  const group = useRef();
-  const { nodes, materials, animations } = useGLTF("/Developer.glb");
-  const { actions } = useAnimations(animations, group);
-
-
-  const logo = materials.logo.map = useLoader(
-    THREE.TextureLoader,
-    "/Logo.png"
-
-  );
-
-  // logo.flipY = false;
-
-  return (
-    <group ref={group} {...props} dispose={null}>
-      <group name="Scene">
-        <group name="DP-Character_RIG">
-          <group name="GEO_Body">
-            <skinnedMesh
-              name="body"
-              geometry={nodes.body.geometry}
-              material={materials.MAT_Skin}
-              skeleton={nodes.body.skeleton}
-            />
-            <skinnedMesh
-              name="body_1"
-              geometry={nodes.body_1.geometry}
-              material={materials.MAT_Teeth}
-              skeleton={nodes.body_1.skeleton}
-            />
-            <skinnedMesh
-              name="body_2"
-              geometry={nodes.body_2.geometry}
-              material={materials.MAT_Brows}
-              skeleton={nodes.body_2.skeleton}
-            />
-            <skinnedMesh
-              name="body_3"
-              geometry={nodes.body_3.geometry}
-              material={materials.MAT_Eyes}
-              skeleton={nodes.body_3.skeleton}
-            />
-          </group>
-          <group name="GEO_CC_Pants_Baked">
-            <skinnedMesh
-              name="Mesh_5"
-              geometry={nodes.Mesh_5.geometry}
-              material={materials.Pants_main}
-              skeleton={nodes.Mesh_5.skeleton}
-            />
-            <skinnedMesh
-              name="Mesh_6"
-              geometry={nodes.Mesh_6.geometry}
-              material={materials.Pants_belt}
-              skeleton={nodes.Mesh_6.skeleton}
-            />
-            <skinnedMesh
-              name="Mesh_7"
-              geometry={nodes.Mesh_7.geometry}
-              material={materials.Pants_belt_buckle}
-              skeleton={nodes.Mesh_7.skeleton}
-            />
-            <skinnedMesh
-              name="Mesh_8"
-              geometry={nodes.Mesh_8.geometry}
-              material={materials.Pants_bottom}
-              skeleton={nodes.Mesh_8.skeleton}
-            />
-          </group>
-          <group name="GEO_CC_Shoes">
-            <skinnedMesh
-              name="Mesh_12"
-              geometry={nodes.Mesh_12.geometry}
-              material={materials.shoes_main_sole}
-              skeleton={nodes.Mesh_12.skeleton}
-            />
-            <skinnedMesh
-              name="Mesh_13"
-              geometry={nodes.Mesh_13.geometry}
-              material={materials.shoes_main_2}
-              skeleton={nodes.Mesh_13.skeleton}
-            />
-            <skinnedMesh
-              name="Mesh_14"
-              geometry={nodes.Mesh_14.geometry}
-              material={materials.shoes_main_1}
-              skeleton={nodes.Mesh_14.skeleton}
-            />
-          </group>
-          <group name="GEO_CC_Tshirt">
-            <skinnedMesh
-              name="Mesh_9"
-              geometry={nodes.Mesh_9.geometry}
-              material={materials.Shirt_main}
-              skeleton={nodes.Mesh_9.skeleton}
-            />
-            <skinnedMesh
-              name="Mesh_10"
-              geometry={nodes.Mesh_10.geometry}
-              material={materials.logo}
-              skeleton={nodes.Mesh_10.skeleton}
-              //
-              material-map={logo}
-
-
-
-            />
-            <skinnedMesh
-              name="Mesh_11"
-              geometry={nodes.Mesh_11.geometry}
-              material={materials.Shirt_main_cuffs}
-              skeleton={nodes.Mesh_11.skeleton}
-            />
-          </group>
-          <group name="GEO_Watch">
-            <skinnedMesh
-              name="Mesh"
-              geometry={nodes.Mesh.geometry}
-              material={materials.MAT_Watch_Belt}
-              skeleton={nodes.Mesh.skeleton}
-            />
-            <skinnedMesh
-              name="Mesh_1"
-              geometry={nodes.Mesh_1.geometry}
-              material={materials.MAT_Watch_Plastic}
-              skeleton={nodes.Mesh_1.skeleton}
-            />
-            <skinnedMesh
-              name="Mesh_2"
-              geometry={nodes.Mesh_2.geometry}
-              material={materials.MAT_Watch_Screen}
-              skeleton={nodes.Mesh_2.skeleton}
-            />
-          </group>
-          <primitive object={nodes["DEF-pelvisL"]} />
-          <primitive object={nodes["DEF-pelvisR"]} />
-          <primitive object={nodes["DEF-thighL"]} />
-          <primitive object={nodes["DEF-thighR"]} />
-          <primitive object={nodes["DEF-shoulderL"]} />
-          <primitive object={nodes["DEF-upper_armL"]} />
-          <primitive object={nodes["DEF-shoulderR"]} />
-          <primitive object={nodes["DEF-upper_armR"]} />
-          <primitive object={nodes["DEF-breastL"]} />
-          <primitive object={nodes["DEF-breastR"]} />
-          <primitive object={nodes["DEF-spine"]} />
-        </group>
-      </group>
-    </group>
-  );
 }
-
-
 
 
 function Developer2(props) {
   const group = useRef();
   const { nodes, materials, animations } = useGLTF("/dev3.glb");
   const { actions, mixer, ref } = useAnimations(animations, group);
+
 
 
   useEffect(() => {
@@ -304,7 +154,22 @@ function Developer2(props) {
 
   }, [])
 
-  // console.log(actions["DP-Character_Pointing Down"].play());
+  console.log("props in Developer2", props)
+
+
+  // Load logo texture
+  const logo = materials.logo.map = useLoader(
+    THREE.TextureLoader,
+    props.logo
+  );
+
+  logo.flipY = false;
+
+
+
+
+
+
 
   return (
     <group ref={group} {...props} dispose={null}>
@@ -496,6 +361,7 @@ function Developer2(props) {
             geometry={nodes.t_shirt_1.geometry}
             material={materials.logo}
             skeleton={nodes.t_shirt_1.skeleton}
+            visible={true}
           />
           <skinnedMesh
             name="t_shirt_2"
@@ -604,10 +470,22 @@ function App() {
   const { opacity, blur, scale, far } = useControls('Shadows', { opacity: 1, scale: 10, blur: 3, far: 1.1 })
 
 
-  const [file, setFile] = useState();
+  const [logo, setLogo] = useState("/Logo.png");
+
   function handleChange(e) {
-    console.log(e.target.files);
-    // setFile(URL.createObjectURL(e.target.files[0]));
+
+    console.log(e.target.files[0]);
+
+
+    // Check if logo is a .jpg, if yes, alert the user "Only .png files are allowed"
+    if (e.target.files[0].type !== "image/png") {
+      alert("Only .png files are allowed");
+      return;
+    }
+
+    setLogo(URL.createObjectURL(e.target.files[0]));
+
+    console.log("logo", logo);
 
 
   }
@@ -623,7 +501,7 @@ function App() {
             {/* <CameraControls enableZoom={false} ref={cameraControlRef} maxZoom={1} minZoom={1} setLookAt={{ positionX: 0, positionY: 10, positionZ: 10 }} /> */}
             <OrbitControls cameraminPolarAngle={Math.PI / 2} maxPolarAngle={Math.PI / 2} enableZoom={true} enablePan={true} target={new THREE.Vector3(0, 1.2, 0)} position={new THREE.Vector3(1, 2, 5)} position0={new THREE.Vector3(1, 2, 5)} />
             <Ground />
-            <Developer2 />
+            <Developer2 logo={logo} />
             {/* <Cube position={[0, 1, 0]} /> */}
             <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
             {/* <Environment files={city.default} /> */}
@@ -665,8 +543,7 @@ function App() {
         Side View
       </button> */}
       <div id="center2">
-        <input type="file" onChange={handleChange} />
-        <img src={file} />
+        <input type="file" onChange={handleChange} accept='.png' />
 
       </div>
 
