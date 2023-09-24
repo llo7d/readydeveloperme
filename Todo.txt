@@ -8,9 +8,12 @@ Create ortohraphic camera and see how character looks ( X )
 Major:
 - Change 1 pose ( )
 
+- Hair change color with wheel ( )
 - Change 1 Beard ( X )
 -> Make button change 1,2,3 etc... beards ( X )
 -> On each change camera "jumps", fix it. ( )
+-> Maybe also adding camera "animate" to that position what is being changed? ( )
+
 
 - Create Upload image and change logo ( X )
 

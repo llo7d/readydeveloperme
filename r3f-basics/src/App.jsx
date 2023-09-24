@@ -7,6 +7,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { Environment, OrbitControls, Html, useProgress, useGLTF, useAnimations, ContactShadows, OrthographicCamera, PerspectiveCamera, Stage, CameraControls, Grid, AccumulativeShadows, RandomizedLight, Shadow, useTexture } from '@react-three/drei'
 import { Suspense } from "react";
 import { useControls } from 'leva'
+import { HexColorPicker } from "react-colorful";
+
 import * as THREE from 'three'
 
 
@@ -168,6 +170,7 @@ function Developer2(props) {
 
 
   const hair = props.hair;
+  const hairColor = props.hairColor;
 
   const Character_Rig = () => {
     return (
@@ -227,7 +230,7 @@ function Developer2(props) {
           skeleton={nodes.Brows.skeleton}
           morphTargetDictionary={nodes.Brows.morphTargetDictionary}
           morphTargetInfluences={nodes.Brows.morphTargetInfluences}
-          material-color="red"
+          material-color="#262626"
         />
       </>
     )
@@ -242,6 +245,8 @@ function Developer2(props) {
       geometry={nodes.GEO_Hair_01.geometry}
       material={materials.MAT_Hair}
       skeleton={nodes.GEO_Hair_01.skeleton}
+      // material-metalness={0.3}
+      material-color={hairColor}
       visible={true}
     />
 
@@ -249,6 +254,7 @@ function Developer2(props) {
       name="GEO_Hair_02"
       geometry={nodes.GEO_Hair_02.geometry}
       material={materials.MAT_Hair}
+      material-color={hairColor}
       skeleton={nodes.GEO_Hair_02.skeleton}
       visible={true}
     />
@@ -256,11 +262,20 @@ function Developer2(props) {
     const GEO_Hair_03 = <skinnedMesh
       name="GEO_Hair_03"
       geometry={nodes.GEO_Hair_03.geometry}
+      material-color={hairColor}
       material={materials.MAT_Hair}
       skeleton={nodes.GEO_Hair_03.skeleton}
       visible={true}
     />
 
+    const GEO_Hair_04 = <skinnedMesh
+      name="GEO_Hair_04"
+      geometry={nodes.GEO_Hair_04.geometry}
+      material-color={hairColor}
+      material={materials.MAT_Hair}
+      skeleton={nodes.GEO_Hair_04.skeleton}
+      visible={true}
+    />
 
     return (
 
@@ -269,9 +284,7 @@ function Developer2(props) {
         {hair === "GEO_Hair_01" && GEO_Hair_01}
         {hair === "GEO_Hair_02" && GEO_Hair_02}
         {hair === "GEO_Hair_03" && GEO_Hair_03}
-        {/* {GEO_Hair_01}
-        {GEO_Hair_02}
-        {GEO_Hair_03} */}
+        {hair === "GEO_Hair_04" && GEO_Hair_04}
       </>
     )
   }
@@ -367,13 +380,7 @@ function Developer2(props) {
           skeleton={nodes.GEO_Beard_04.skeleton}
           visible={false}
         />
-        <skinnedMesh
-          name="GEO_Hair_04"
-          geometry={nodes.GEO_Hair_04.geometry}
-          material={materials.MAT_Hair}
-          skeleton={nodes.GEO_Hair_04.skeleton}
-          visible={false}
-        />
+
         <skinnedMesh
           name="tongue_GEO"
           geometry={nodes.tongue_GEO.geometry}
@@ -510,6 +517,7 @@ function App() {
 
   const [animation, setAnimation] = useState("Run")
   const [hair, setHair] = useState("GEO_Hair_01")
+  const [hairColor, setHairColor] = useState("#262626")
   const cameraControlRef = useRef(null);
 
   const { cameraPosition } = useControls({ cameraPosition: [0, 0, 5] })
@@ -545,18 +553,20 @@ function App() {
             <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr" />
             {/* <Shoe /> */}
             {/* <CameraControls enableZoom={false} ref={cameraControlRef} maxZoom={1} minZoom={1} setLookAt={{ positionX: 0, positionY: 10, positionZ: 10 }} /> */}
-            <OrbitControls cameraminPolarAngle={Math.PI / 2} maxPolarAngle={Math.PI / 2} enableZoom={true} enablePan={true} target={new THREE.Vector3(0, 1.2, 0)} position={new THREE.Vector3(1, 2, 5)} position0={new THREE.Vector3(1, 2, 5)} />
+            <OrbitControls cameraminPolarAngle={Math.PI / 2} maxPolarAngle={Math.PI / 2} enableZoom={true} enablePan={false} target={new THREE.Vector3(0, 1.2, 0)} position={new THREE.Vector3(1, 2, 5)} position0={new THREE.Vector3(1, 2, 5)} />
             <Ground />
-            <Developer2 logo={logo} hair={hair} />
+            <Developer2 logo={logo} hair={hair} hairColor={hairColor} />
             {/* <Cube position={[0, 1, 0]} /> */}
             <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
             {/* <Environment files={city.default} /> */}
             {/* <Fox /> */}
-
           </Suspense>
         </Canvas>
       </div >
 
+      <div id='center3'>
+        <HexColorPicker color={hairColor} onChange={setHairColor} />;
+      </div>
 
 
       <form id='center'>
@@ -567,6 +577,7 @@ function App() {
           <option value="GEO_Hair_01">Hair 1</option>
           <option value="GEO_Hair_02">Hair 2</option>
           <option value="GEO_Hair_03">Hair 3</option>
+          <option value="GEO_Hair_04">Hair 4</option>
         </select>
       </form>
 
