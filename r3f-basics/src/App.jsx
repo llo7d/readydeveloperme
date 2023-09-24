@@ -4,7 +4,7 @@
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber'
 import { useState, useRef, useEffect, memo } from 'react'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { Environment, OrbitControls, Html, useProgress, useGLTF, useAnimations, ContactShadows, OrthographicCamera, PerspectiveCamera, Stage, CameraControls, Grid, AccumulativeShadows, RandomizedLight, Shadow } from '@react-three/drei'
+import { Environment, OrbitControls, Html, useProgress, useGLTF, useAnimations, ContactShadows, OrthographicCamera, PerspectiveCamera, Stage, CameraControls, Grid, AccumulativeShadows, RandomizedLight, Shadow, useTexture } from '@react-three/drei'
 import { Suspense } from "react";
 import { useControls } from 'leva'
 import * as THREE from 'three'
@@ -156,24 +156,22 @@ function Developer2(props) {
 
   console.log("props in Developer2", props)
 
+  const logo = materials.logo.map = useTexture(props.logo)
 
   // Load logo texture
-  const logo = materials.logo.map = useLoader(
-    THREE.TextureLoader,
-    props.logo
-  );
+  // const logo = materials.logo.map = useLoader(
+  //   THREE.TextureLoader,
+  //   props.logo
+  // );
 
   logo.flipY = false;
 
 
+  const hair = props.hair;
 
-
-
-
-
-  return (
-    <group ref={group} {...props} dispose={null}>
-      <group name="Scene">
+  const Character_Rig = () => {
+    return (
+      <>
         <group name="DP-Character_RIG">
           <group name="GEO_Body">
             <skinnedMesh
@@ -214,6 +212,14 @@ function Developer2(props) {
           <primitive object={nodes["DEF-breastR"]} />
           <primitive object={nodes["DEF-spine"]} />
         </group>
+      </>
+    )
+  }
+
+
+  const Eyebrows = () => {
+    return (
+      <>
         <skinnedMesh
           name="Brows"
           geometry={nodes.Brows.geometry}
@@ -223,6 +229,58 @@ function Developer2(props) {
           morphTargetInfluences={nodes.Brows.morphTargetInfluences}
           material-color="red"
         />
+      </>
+    )
+  }
+
+  const Hair = () => {
+
+    console.log("props in Hair", props);
+    // Based on props name return only the hair that matches the name
+    const GEO_Hair_01 = <skinnedMesh
+      name="GEO_Hair_01"
+      geometry={nodes.GEO_Hair_01.geometry}
+      material={materials.MAT_Hair}
+      skeleton={nodes.GEO_Hair_01.skeleton}
+      visible={true}
+    />
+
+    const GEO_Hair_02 = <skinnedMesh
+      name="GEO_Hair_02"
+      geometry={nodes.GEO_Hair_02.geometry}
+      material={materials.MAT_Hair}
+      skeleton={nodes.GEO_Hair_02.skeleton}
+      visible={true}
+    />
+
+    const GEO_Hair_03 = <skinnedMesh
+      name="GEO_Hair_03"
+      geometry={nodes.GEO_Hair_03.geometry}
+      material={materials.MAT_Hair}
+      skeleton={nodes.GEO_Hair_03.skeleton}
+      visible={true}
+    />
+
+
+    return (
+
+      <>
+        {hair === "none" && <></>}
+        {hair === "GEO_Hair_01" && GEO_Hair_01}
+        {hair === "GEO_Hair_02" && GEO_Hair_02}
+        {hair === "GEO_Hair_03" && GEO_Hair_03}
+        {/* {GEO_Hair_01}
+        {GEO_Hair_02}
+        {GEO_Hair_03} */}
+      </>
+    )
+  }
+
+  return (
+    <group ref={group} {...props} dispose={null}>
+      <group name="Scene">
+        <Character_Rig />
+        <Eyebrows />
         <group name="GEO_CC_Shoes">
           <skinnedMesh
             name="main_clothes002"
@@ -277,13 +335,8 @@ function Developer2(props) {
             skeleton={nodes.body001_2.skeleton}
           />
         </group>
-        <skinnedMesh
-          name="GEO_Hair_01"
-          geometry={nodes.GEO_Hair_01.geometry}
-          material={materials.MAT_Hair}
-          skeleton={nodes.GEO_Hair_01.skeleton}
-          visible={false}
-        />
+        <Hair hair={"GEO_Hair_01"} />
+
         <skinnedMesh
           name="GEO_Beard_01"
           geometry={nodes.GEO_Beard_01.geometry}
@@ -298,20 +351,8 @@ function Developer2(props) {
           skeleton={nodes.GEO_Beard_02.skeleton}
           visible={false}
         />
-        <skinnedMesh
-          name="GEO_Hair_02"
-          geometry={nodes.GEO_Hair_02.geometry}
-          material={materials.MAT_Hair}
-          skeleton={nodes.GEO_Hair_02.skeleton}
-          visible={true}
-        />
-        <skinnedMesh
-          name="GEO_Hair_03"
-          geometry={nodes.GEO_Hair_03.geometry}
-          material={materials.MAT_Hair}
-          skeleton={nodes.GEO_Hair_03.skeleton}
-          visible={false}
-        />
+
+
         <skinnedMesh
           name="GEO_Beard_03"
           geometry={nodes.GEO_Beard_03.geometry}
@@ -360,8 +401,12 @@ function Developer2(props) {
             name="t_shirt_1"
             geometry={nodes.t_shirt_1.geometry}
             material={materials.logo}
+            material-roughness={1}
+            material-metalness={1}
             skeleton={nodes.t_shirt_1.skeleton}
             visible={true}
+            position={[0, 0, 0]}
+            position-x={0}
           />
           <skinnedMesh
             name="t_shirt_2"
@@ -464,6 +509,7 @@ function App() {
 
 
   const [animation, setAnimation] = useState("Run")
+  const [hair, setHair] = useState("GEO_Hair_01")
   const cameraControlRef = useRef(null);
 
   const { cameraPosition } = useControls({ cameraPosition: [0, 0, 5] })
@@ -501,7 +547,7 @@ function App() {
             {/* <CameraControls enableZoom={false} ref={cameraControlRef} maxZoom={1} minZoom={1} setLookAt={{ positionX: 0, positionY: 10, positionZ: 10 }} /> */}
             <OrbitControls cameraminPolarAngle={Math.PI / 2} maxPolarAngle={Math.PI / 2} enableZoom={true} enablePan={true} target={new THREE.Vector3(0, 1.2, 0)} position={new THREE.Vector3(1, 2, 5)} position0={new THREE.Vector3(1, 2, 5)} />
             <Ground />
-            <Developer2 logo={logo} />
+            <Developer2 logo={logo} hair={hair} />
             {/* <Cube position={[0, 1, 0]} /> */}
             <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
             {/* <Environment files={city.default} /> */}
@@ -510,18 +556,21 @@ function App() {
           </Suspense>
         </Canvas>
       </div >
-      {/* <form id='center'>
+
+
+
+      <form id='center'>
         <select
-          onChange={(event) => setAnimation(event.target.value)}
-          value={animation}
-        >
-          <option value="Run">Run</option>
-          <option value="Survey">Survey</option>
-          <option value="Walk">Walk</option>
+          onChange={(event) => setHair(event.target.value)}
+          value={hair}>
+          <option value="none">None</option>
+          <option value="GEO_Hair_01">Hair 1</option>
+          <option value="GEO_Hair_02">Hair 2</option>
+          <option value="GEO_Hair_03">Hair 3</option>
         </select>
-      </form> */}
+      </form>
 
-
+      {/* 
       < button
         id='center'
         onClick={() => {
@@ -531,7 +580,18 @@ function App() {
         }
       >
         Front View
-      </button >
+      </button > */}
+
+      {/* < button
+        id='center'
+        onClick={() => {
+          // Camera looks at the Fox
+          cameraControlRef.current.position.set(0, 2, 3);
+        }
+        }
+      >
+        Front View
+      </button > */}
 
       {/* <button
         id='center2'

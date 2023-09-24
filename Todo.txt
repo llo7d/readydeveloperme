@@ -9,9 +9,12 @@ Major:
 - Change 1 pose ( )
 
 - Change 1 Beard ( X )
--> Make button change 1,2,3 etc... beards ( )
+-> Make button change 1,2,3 etc... beards ( X )
+-> On each change camera "jumps", fix it. ( )
 
-- Create Upload image and change logo ( )
+- Create Upload image and change logo ( X )
+
+- Change grid color on button press ( back and forth ) (  )
 
 - Experiment with adding more interesting lights ( )
 -> Button that changes lights ( )
