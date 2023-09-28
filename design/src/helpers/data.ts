@@ -18,84 +18,24 @@ type Tool = {
   label: string;
   icon: React.FC<SVGProps<SVGSVGElement>>;
   items: SubTool[];
-
 };
 
 export const getToolbarData = (): Tool[] => {
-
-
-  // create tool1 type, which is id string, icon React.FC<SVGProps<SVGSVGElement>>
-  // const tool1: SubTool[] = [
-  //   {  
-  //     id: "tool_1_item_1",
-
-  const tool1 = [
-    {
-      id: "tool_1_item_1",
-      icon: IconPose,
-    },
-    {
-      id: "tool_1_item_2",
-      icon: IconCamera,
-    },
-    {
-      id: "tool_1_item_3",
-      icon: IconColor,
-    },
-    {
-      id: "tool_1_item_4",
-      icon: IconAirpod,
-    },
-    {
-      id: "tool_1_item_5",
-      icon: IconPose,
-    },
-    {
-      id: "tool_1_item_6",
-      icon: IconPose,
-    },
-    {
-      id: "tool_1_item_7",
-      icon: IconPose,
-    },
-    {
-      id: "tool_1_item_8",
-      icon: IconPose,
-    },
-    {
-      id: "tool_1_item_9",
-      icon: IconPose,
-    },
-    {
-      id: "tool_1_item_10",
-      icon: IconPose,
-    },
-    {
-      id: "tool_1_item_11",
-      icon: IconPose,
-    },
-    {
-      id: "tool_1_item_12",
-      icon: IconPose,
-    },
-  ]
-
   return [
     {
-      id: "Poses",
-      label: "Poses",
+      id: "tool_1",
+      label: "Tool 1",
       icon: IconPose,
-      items: tool1,
-      // items: tool1.map((_, index) => ({
-      //   id: id,
-      //   icon: icon,
-      // })),
+      items: [...Array(12)].map((_, index) => ({
+        id: `tool_1_item_${index + 1}`,
+        icon: IconPose,
+      })),
     },
     {
       id: "tool_2",
       label: "Tool 2",
       icon: IconColor,
-      items: [...Array(5)].map((_, index) => ({
+      items: [...Array(12)].map((_, index) => ({
         id: `tool_2_item_${index + 1}`,
         icon: IconColor,
       })),

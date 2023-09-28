@@ -403,6 +403,7 @@ function Developer2(props) {
             geometry={nodes.t_shirt.geometry}
             material={materials.Shirt_main}
             skeleton={nodes.t_shirt.skeleton}
+            material-color="red"
           />
           <skinnedMesh
             name="t_shirt_1"
@@ -483,9 +484,10 @@ function Cube(props) {
   );
 }
 
-function Ground() {
+function Ground(props) {
 
   const { cellColor, sectionColor } = useControls('Grid', { cellColor: '#DFAD06', sectionColor: '#C19400' })
+
 
   const gridConfig = {
     cellSize: 0, // 0,5
@@ -520,7 +522,7 @@ function App() {
   const [hairColor, setHairColor] = useState("#262626")
   const cameraControlRef = useRef(null);
 
-  const { cameraPosition } = useControls({ cameraPosition: [0, 0, 5] })
+  const { cameraPosition } = useControls({ cameraPosition: [0, 0, 6] })
   const { opacity, blur, scale, far } = useControls('Shadows', { opacity: 1, scale: 10, blur: 3, far: 1.1 })
 
 
@@ -544,6 +546,9 @@ function App() {
 
   }
 
+  // change color to red, functin
+
+
   return (
 
     <>
@@ -554,7 +559,7 @@ function App() {
             {/* <Shoe /> */}
             {/* <CameraControls enableZoom={false} ref={cameraControlRef} maxZoom={1} minZoom={1} setLookAt={{ positionX: 0, positionY: 10, positionZ: 10 }} /> */}
             <OrbitControls cameraminPolarAngle={Math.PI / 2} maxPolarAngle={Math.PI / 2} enableZoom={true} enablePan={false} target={new THREE.Vector3(0, 1.2, 0)} position={new THREE.Vector3(1, 2, 5)} position0={new THREE.Vector3(1, 2, 5)} />
-            <Ground />
+            <Ground colorPrimary={"red"} colorSecondary={"red"} />
             <Developer2 logo={logo} hair={hair} hairColor={hairColor} />
             {/* <Cube position={[0, 1, 0]} /> */}
             <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
@@ -617,8 +622,20 @@ function App() {
         <input type="file" onChange={handleChange} accept='.png' />
 
       </div>
-
-
+      <button id='center4'>
+        Download
+      </button>
+      <button
+        id='center4'
+        // style={{ background: snap.color }}
+        onClick={() => {
+          const link = document.createElement('a')
+          link.setAttribute('download', 'canvas.png')
+          link.setAttribute('href', document.querySelector('canvas').toDataURL('image/png').replace('image/png', 'image/octet-stream'))
+          link.click()
+        }}>
+        DOWNLOAD
+      </button>
 
     </>
   )
