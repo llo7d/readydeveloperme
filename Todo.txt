@@ -17,7 +17,7 @@ Major:
 
 - Create Upload image and change logo ( X )
 
-- Change grid color on button press ( back and forth ) (  )
+- Change grid color on button press ( back and forth ) ( X )
 
 - Experiment with adding more interesting lights ( )
 -> Button that changes lights ( )

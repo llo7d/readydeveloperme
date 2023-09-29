@@ -511,7 +511,29 @@ function CameraHelper() {
   </group>
 }
 
+function DownloadImage() {
+  const canvas = document.querySelector('canvas');
 
+  console.log("canvas", canvas);
+  const image = canvas.toDataURL("image/png", 1.0).replace("image/png", "image/octet-stream");
+  const link = document.createElement('a');
+  link.download = "my-image.png";
+  link.href = image;
+  link.click();
+
+  // var canvas = document.getElementsByClassName("canvas");
+  // const image = canvas.toDataURL("image/png", 1.0).replace("image/png", "image/octet-stream");
+
+  // var url = canvas.toDataURL();
+
+  // var link = document.createElement('a');
+
+  // link.setAttribute('href', url);
+  // link.setAttribute('target', '_blank');
+  // link.setAttribute('download', "my-image.png");
+
+  // link.click();
+}
 
 function App() {
   // const city = import('@pmndrs/assets/hdri/city.exr')
@@ -552,8 +574,8 @@ function App() {
   return (
 
     <>
-      <div className='App'>
-        <Canvas shadows camera={{ position: [0, -3, 6], fov: 20 }} >
+      <div className='canvas'>
+        <Canvas gl={{ preserveDrawingBuffer: true }} shadows camera={{ position: [0, -3, 6], fov: 20 }} >
           <Suspense fallback={<Loader />}>
             <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr" />
             {/* <Shoe /> */}
@@ -628,12 +650,7 @@ function App() {
       <button
         id='center4'
         // style={{ background: snap.color }}
-        onClick={() => {
-          const link = document.createElement('a')
-          link.setAttribute('download', 'canvas.png')
-          link.setAttribute('href', document.querySelector('canvas').toDataURL('image/png').replace('image/png', 'image/octet-stream'))
-          link.click()
-        }}>
+        onClick={() => DownloadImage()}>
         DOWNLOAD
       </button>
 
