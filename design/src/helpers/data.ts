@@ -10,6 +10,8 @@ import IconContrast from "../assets/images/IconContrast";
 
 type SubTool = {
   id: string;
+  pose_name?: string;
+  color?: string;
   icon: React.FC<SVGProps<SVGSVGElement>>;
 };
 
@@ -22,14 +24,34 @@ type Tool = {
 
 export const getToolbarData = (): Tool[] => {
   return [
+
+    // {
+    //   id: "tool_1",
+    //   label: "Poses",
+    //   icon: IconPose,
+    //   items: [...Array(12)].map((_, index) => ({
+    //     id: `tool_1_item_${index + 1}`,
+    //     icon: IconPose,
+    //   })),
+    // },
     {
       id: "tool_1",
       label: "Poses",
       icon: IconPose,
-      items: [...Array(12)].map((_, index) => ({
-        id: `tool_1_item_${index + 1}`,
-        icon: IconPose,
-      })),
+      items: [
+        {
+          // id: `tool_2_item_1`,
+          id: `tool_1_item_1`,
+          pose_name: "Standing_Confident",
+          icon: IconPose,
+        },
+        {
+          // id: `tool_2_item_1`,
+          id: `tool_1_item_2`,
+          pose_name: "Standing_Question",
+          icon: IconPose,
+        },
+      ]
     },
     // {
     //   id: "tool_2",
@@ -49,11 +71,13 @@ export const getToolbarData = (): Tool[] => {
           // id: `tool_2_item_1`,
           id: `tool_2_item_1`,
           icon: IconColor,
+          color: "red",
         },
         {
           // id: `tool_2_item_1`,
           id: `tool_2_item_2`,
           icon: IconColor,
+          color: "green",
         },
       ]
     },

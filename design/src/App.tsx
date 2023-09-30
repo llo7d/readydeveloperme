@@ -20,19 +20,9 @@ type Mode = "front" | "side" | "close_up";
 
 import { proxy, useSnapshot } from "valtio"
 
+// Valtio stuff?
 const state = proxy({
   current: null,
-  assets: [
-    {
-      name: "tool_2_item_1",
-      color: "#4B50EC"
-    },
-    {
-      name: "tool_2_item_2",
-      color: "#4B50EC"
-    },
-
-  ]
 
 })
 
@@ -71,6 +61,10 @@ export default function App() {
   const [tool, setTool] = useState(tools[0]);
   const [subTool, setSubTool] = useState(tools[0].items[0]);
 
+
+  console.log(subTool);
+
+
   // Stuff for valtio
   const snap = useSnapshot(state)
 
@@ -81,7 +75,7 @@ export default function App() {
     tools[1].items.map((item) => {
       return {
         subToolId: item.id,
-        color: "#4B50EC",
+        color: item.color,
       };
     })
   );
@@ -121,7 +115,7 @@ export default function App() {
           <OrbitControls />
           <Ground />
           {/* Box */}
-          <Box colors={subToolColors} />
+          <Box colors={subToolColors} tool={tool} subTool={subTool} />
         </Canvas>
       </div>
 
@@ -168,23 +162,6 @@ export default function App() {
           tool={tool}
           colors={subToolColors}
           onClickItem={setSubTool}
-          // Uncomment below if you want hide/reveal version of the toolbar.
-          // onHoverTool={setIsToolbarOpen}
-          // onChangeColor={(subToolColor) => {
-          //   const newSubToolColors = subToolColors.map((color) => {
-          //     if (color.subToolId === subTool.id) {
-          //       return {
-          //         ...color,
-          //         color: subToolColor.color,
-          //       };
-          //     }
-
-          //     return color;
-          //   });
-
-          //   setSubToolColors(newSubToolColors);
-          // }}
-
           onChangeColor={(subToolColor) => {
             const newSubToolColors = subToolColors.map((color) => {
               if (color.subToolId === subTool.id) {
@@ -196,11 +173,6 @@ export default function App() {
 
               return color;
             });
-
-            // This wokrs for the cube, but what if we hade more items?
-            // state.items.cube = subToolColor.color
-
-
             setSubToolColors(newSubToolColors);
           }}
         />
@@ -242,29 +214,67 @@ export default function App() {
 }
 
 // Example Square
+// Create types for props
+type BoxProps = {
+  subTool: {
+    id: string;
+    icon: React.FC<SVGProps<SVGSVGElement>>;
+  };
+  tool: {
+    id: string;
+    label: string;
+    icon: React.FC<SVGProps<SVGSVGElement>>;
+    items: SubTool[];
+  }
 
-function Box(props) {
+}
 
-  // set head_color to props.colors.subToolId = tool_2_item_1
-  // set body_color to props.colors.subToolId = tool_2_item_2
+function Box(props: BoxProps) {
+
+  props.tool
+
+  const Box1 = () => {
+
+    const position = [2, 0.5, 0];
+
+    return <>
+      <mesh position={position} scale={1}>
+        <boxGeometry args={[1, 1, 1]} />
+        {/* <meshStandardMaterial color={snap.items.cube} /> */}
+        <meshStandardMaterial color={props.colors[1].color} />
+      </mesh>
+    </>
+  }
+  const Box2 = () => {
+    return <>
+      <mesh position={[0, 0.5, 0]} scale={1}>
+        <boxGeometry args={[1, 1, 1]} />
+        {/* <meshStandardMaterial color={snap.items.cube} /> */}
+        <meshStandardMaterial color={props.colors[0].color} />
+      </mesh>
+    </>
+  }
+
+
+  const Hair = () => {
+
+    if (props.tool.id === "tool_1") {
+      if (props.subTool.id === "tool_1_item_1") {
+        return <Box1 />
+      }
+      if (props.subTool.id === "tool_1_item_2") {
+        return <Box2 />
+      }
+    }
 
 
 
+  }
 
 
 
 
   return <>
-    <mesh position={[0, 0.5, 0]} scale={1}>
-      <boxGeometry args={[1, 1, 1]} />
-      {/* <meshStandardMaterial color={snap.items.cube} /> */}
-      <meshStandardMaterial color={props.colors[0].color} />
-    </mesh>
-
-    <mesh position={[2, 0.5, 0]} scale={1}>
-      <boxGeometry args={[1, 1, 1]} />
-      {/* <meshStandardMaterial color={snap.items.cube} /> */}
-      <meshStandardMaterial color={props.colors[1].color} />
-    </mesh>
+    <Hair />
   </>
 }

@@ -85,6 +85,11 @@ const SubToolbar: React.FC<Props> = ({
             }}
           >
             {tool.items.map((item, index) => {
+
+              //
+              // We know what is happening. console.log(item);
+              //
+
               const isActive = subToolId === item.id;
               const Icon = item.icon;
 
