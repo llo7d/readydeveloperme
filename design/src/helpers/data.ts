@@ -24,21 +24,38 @@ export const getToolbarData = (): Tool[] => {
   return [
     {
       id: "tool_1",
-      label: "Tool 1",
+      label: "Poses",
       icon: IconPose,
       items: [...Array(12)].map((_, index) => ({
         id: `tool_1_item_${index + 1}`,
         icon: IconPose,
       })),
     },
+    // {
+    //   id: "tool_2",
+    //   label: "Colors",
+    //   icon: IconColor,
+    //   items: [...Array(12)].map((_, index) => ({
+    //     id: `tool_2_item_${index + 1}`,
+    //     icon: IconColor,
+    //   })),
+    // },
     {
       id: "tool_2",
-      label: "Tool 2",
+      label: "Colors",
       icon: IconColor,
-      items: [...Array(12)].map((_, index) => ({
-        id: `tool_2_item_${index + 1}`,
-        icon: IconColor,
-      })),
+      items: [
+        {
+          // id: `tool_2_item_1`,
+          id: `tool_2_item_1`,
+          icon: IconColor,
+        },
+        {
+          // id: `tool_2_item_1`,
+          id: `tool_2_item_2`,
+          icon: IconColor,
+        },
+      ]
     },
     {
       id: "tool_3",

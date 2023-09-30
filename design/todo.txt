@@ -1,0 +1,2 @@
+- Test changing Poses, change positon of box ( )
+- Test changing color ( X )

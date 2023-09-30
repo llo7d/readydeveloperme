@@ -17,6 +17,26 @@ import ManualPopup from "./components/ManualPopup";
 
 type Mode = "front" | "side" | "close_up";
 
+
+import { proxy, useSnapshot } from "valtio"
+
+const state = proxy({
+  current: null,
+  assets: [
+    {
+      name: "tool_2_item_1",
+      color: "#4B50EC"
+    },
+    {
+      name: "tool_2_item_2",
+      color: "#4B50EC"
+    },
+
+  ]
+
+})
+
+
 function Ground() {
 
   // const { cellColor, sectionColor } = useControls('Grid', { cellColor: '#DFAD06', sectionColor: '#C19400' })
@@ -36,7 +56,9 @@ function Ground() {
   return <Grid position={[0, -0.01, 0]} args={[10.5, 10.5]} {...gridConfig} />
 }
 
-function App() {
+
+
+export default function App() {
   // Change to "false" if you want hide/reveal version of the toolbar.
   const [isToolbarOpen, setIsToolbarOpen] = useState(true);
   const [viewMode, setViewMode] = useState<Mode>("front");
@@ -49,6 +71,11 @@ function App() {
   const [tool, setTool] = useState(tools[0]);
   const [subTool, setSubTool] = useState(tools[0].items[0]);
 
+  // Stuff for valtio
+  const snap = useSnapshot(state)
+
+
+
   // Tool 2 subtool colors.
   const [subToolColors, setSubToolColors] = useState(
     tools[1].items.map((item) => {
@@ -58,6 +85,9 @@ function App() {
       };
     })
   );
+
+  console.log(subToolColors);
+
 
   const trayWidth = 3.5 * tools.length + 1 * (tools.length - 1);
 
@@ -91,10 +121,7 @@ function App() {
           <OrbitControls />
           <Ground />
           {/* Box */}
-          <mesh position={[0, 0.5, 0]} scale={1}>
-            <boxGeometry args={[1, 1, 1]} />
-            <meshStandardMaterial color={"hotpink"} />
-          </mesh>
+          <Box colors={subToolColors} />
         </Canvas>
       </div>
 
@@ -143,6 +170,21 @@ function App() {
           onClickItem={setSubTool}
           // Uncomment below if you want hide/reveal version of the toolbar.
           // onHoverTool={setIsToolbarOpen}
+          // onChangeColor={(subToolColor) => {
+          //   const newSubToolColors = subToolColors.map((color) => {
+          //     if (color.subToolId === subTool.id) {
+          //       return {
+          //         ...color,
+          //         color: subToolColor.color,
+          //       };
+          //     }
+
+          //     return color;
+          //   });
+
+          //   setSubToolColors(newSubToolColors);
+          // }}
+
           onChangeColor={(subToolColor) => {
             const newSubToolColors = subToolColors.map((color) => {
               if (color.subToolId === subTool.id) {
@@ -154,6 +196,10 @@ function App() {
 
               return color;
             });
+
+            // This wokrs for the cube, but what if we hade more items?
+            // state.items.cube = subToolColor.color
+
 
             setSubToolColors(newSubToolColors);
           }}
@@ -195,4 +241,30 @@ function App() {
   );
 }
 
-export default App;
+// Example Square
+
+function Box(props) {
+
+  // set head_color to props.colors.subToolId = tool_2_item_1
+  // set body_color to props.colors.subToolId = tool_2_item_2
+
+
+
+
+
+
+
+  return <>
+    <mesh position={[0, 0.5, 0]} scale={1}>
+      <boxGeometry args={[1, 1, 1]} />
+      {/* <meshStandardMaterial color={snap.items.cube} /> */}
+      <meshStandardMaterial color={props.colors[0].color} />
+    </mesh>
+
+    <mesh position={[2, 0.5, 0]} scale={1}>
+      <boxGeometry args={[1, 1, 1]} />
+      {/* <meshStandardMaterial color={snap.items.cube} /> */}
+      <meshStandardMaterial color={props.colors[1].color} />
+    </mesh>
+  </>
+}
