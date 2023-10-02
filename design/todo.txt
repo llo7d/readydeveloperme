@@ -1,10 +1,7 @@
 
-- When changing poses, how do we see what changed? Same for hair ? ( )
-
 - Test changing color ( X )
 -> Have "Custom" color from default ( X )
 
 
-
-- Test changing Poses, change positon of box ( )
--> Control args as if control, hairstyle etc.. ( )
+- Test changing hair ( )
+-> Either with Valtio or with useState.

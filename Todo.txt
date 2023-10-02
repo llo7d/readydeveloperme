@@ -23,7 +23,8 @@ Major:
 - Experiment with adding more interesting lights ( )
 -> Button that changes lights ( )
 
-- Try export 1 image. ( )
+- Try export 1 image. ( X )
+-> Hide grid when exporting (  )
 
 - Make master json that controls all the above ( )
 -> Pose, Beard, Upload?, Color,Face Shape key, Lights 

@@ -7,12 +7,13 @@ import IconAirpod from "../assets/images/IconAirpod";
 import IconFace from "../assets/images/IconFace";
 import IconImage from "../assets/images/IconImage";
 import IconContrast from "../assets/images/IconContrast";
+import IconHair from "../assets/images/IconHair";
 
 type SubTool = {
   id: string;
-  pose_name?: string;
-  color?: string;
   icon: React.FC<SVGProps<SVGSVGElement>>;
+  name?: string;
+  color?: string;
 };
 
 type Tool = {
@@ -24,7 +25,6 @@ type Tool = {
 
 export const getToolbarData = (): Tool[] => {
   return [
-
     // {
     //   id: "tool_1",
     //   label: "Poses",
@@ -42,13 +42,13 @@ export const getToolbarData = (): Tool[] => {
         {
           // id: `tool_2_item_1`,
           id: `tool_1_item_1`,
-          pose_name: "Standing_Confident",
+          name: "Standing_Confident",
           icon: IconPose,
         },
         {
           // id: `tool_2_item_1`,
           id: `tool_1_item_2`,
-          pose_name: "Standing_Question",
+          name: "Standing_Question",
           icon: IconPose,
         },
       ]
@@ -79,17 +79,81 @@ export const getToolbarData = (): Tool[] => {
           icon: IconColor,
           color: "green",
         },
+        {
+          // id: `tool_2_item_1`,
+          id: `tool_2_item_3`,
+          icon: IconColor,
+          color: "green",
+        },
+        {
+          // id: `tool_2_item_1`,
+          id: `tool_2_item_4`,
+          icon: IconColor,
+          color: "green",
+        },
+        {
+          // id: `tool_2_item_1`,
+          id: `tool_2_item_5`,
+          icon: IconColor,
+          color: "green",
+        },
+        {
+          // id: `tool_2_item_1`,
+          id: `tool_2_item_6`,
+          icon: IconColor,
+          color: "green",
+        },
       ]
     },
+
+
+    // {
+    //   id: "tool_3",
+    //   label: "Tool 3",
+    //   icon: IconHair,
+    //   items: [...Array(8)].map((_, index) => ({
+    //     id: `tool_3_item_${index + 1}`,
+    //     icon: IconHair,
+    //   })),
+    // },
+
     {
       id: "tool_3",
       label: "Tool 3",
-      icon: IconAirpod,
-      items: [...Array(8)].map((_, index) => ({
-        id: `tool_3_item_${index + 1}`,
-        icon: IconAirpod,
-      })),
+      icon: IconHair,
+      items: [
+        {
+          // id: `tool_2_item_1`,
+          id: `tool_3_item_1`,
+          icon: IconHair,
+          color: "green",
+          name: "GEO_Hair_01"
+        },
+        {
+          // id: `tool_2_item_1`,
+          id: `tool_3_item_2`,
+          icon: IconHair,
+          color: "green",
+          name: "GEO_Hair_02"
+        },
+        {
+          // id: `tool_2_item_1`,
+          id: `tool_3_item_3`,
+          icon: IconHair,
+          color: "green",
+          name: "GEO_Hair_03"
+        },
+        {
+          // id: `tool_2_item_1`,
+          id: `tool_3_item_4`,
+          icon: IconHair,
+          color: "green",
+          name: "GEO_Hair_04"
+        },
+      ],
     },
+
+
     {
       id: "tool_4",
       label: "Tool 4",

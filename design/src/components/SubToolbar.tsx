@@ -8,6 +8,7 @@ import { useStore } from "../store/store";
 type SubTool = {
   id: string;
   icon: React.FC<SVGProps<SVGSVGElement>>;
+  name?: string;
 };
 
 type Tool = {
@@ -23,6 +24,7 @@ type SubToolColor = {
 };
 
 type Props = {
+  setHair: (hair: string) => void;
   subToolId: string;
   tool: Tool;
   colors: SubToolColor[];
@@ -38,11 +40,13 @@ const SubToolbar: React.FC<Props> = ({
   onClickItem,
   onHoverTool,
   onChangeColor,
+  setHair
 }) => {
   // Change to "true" if you want "always reveal" version of the toolbar.
   const [isSubToolbarOpen, setIsSubToolbarOpen] = useState(false);
   const [isColorPaletteShow, setIsColorPaletteShow] = useState(false);
   const theme = useStore((state) => state.theme);
+  const refScroll = useRef<HTMLDivElement>(null);
   const refItems = useRef<(HTMLButtonElement | null)[]>([]);
 
   const ToolIcon = tool.icon;
@@ -54,6 +58,61 @@ const SubToolbar: React.FC<Props> = ({
     const rect = refItems.current[index]?.getBoundingClientRect();
 
     return rect;
+  })();
+
+  const { colorPaletteStyles, colorPaletteArrowStyles } = (() => {
+    const itemTop = activeItemRect?.top || 0;
+    const itemBottom = activeItemRect?.bottom || 0;
+    const itemHeight = 64;
+
+    const scrollRect = refScroll.current?.getBoundingClientRect();
+
+    if (!scrollRect) {
+      return {
+        colorPaletteStyles: {
+          top: itemTop,
+        },
+        colorPaletteArrowStyles: {
+          top: itemTop + itemHeight / 2,
+        },
+      };
+    }
+
+    const min = scrollRect.top;
+    const max = scrollRect.bottom;
+
+    if (itemTop - 72 <= min) {
+      return {
+        colorPaletteStyles: {
+          top: min,
+        },
+        colorPaletteArrowStyles: {
+          top: itemTop + itemHeight / 2,
+        },
+      };
+    }
+
+    if (itemBottom + 72 >= max) {
+      return {
+        colorPaletteStyles: {
+          top: max,
+          transform: "translateY(-100%)",
+        },
+        colorPaletteArrowStyles: {
+          top: itemTop + itemHeight / 2,
+        },
+      };
+    }
+
+    return {
+      colorPaletteStyles: {
+        top: itemTop + itemHeight / 2,
+        transform: "translateY(-50%)",
+      },
+      colorPaletteArrowStyles: {
+        top: itemTop + itemHeight / 2,
+      },
+    };
   })();
 
   return (
@@ -70,6 +129,7 @@ const SubToolbar: React.FC<Props> = ({
       <AnimatePresence>
         {isSubToolbarOpen && (
           <motion.div
+            ref={refScroll}
             className={classNames(
               "flex flex-col items-center gap-y-2 max-h-[35.5rem] overflow-y-auto",
               {
@@ -85,11 +145,6 @@ const SubToolbar: React.FC<Props> = ({
             }}
           >
             {tool.items.map((item, index) => {
-
-              //
-              // We know what is happening. console.log(item);
-              //
-
               const isActive = subToolId === item.id;
               const Icon = item.icon;
 
@@ -124,6 +179,28 @@ const SubToolbar: React.FC<Props> = ({
                     type="button"
                     onClick={() => {
                       onClickItem(item);
+                      // Console loge item.id only first 5 characters
+
+                      const toolID = item.id.substring(0, 6)
+
+                      // get the state from valtio
+
+
+
+
+                      if (toolID === "tool_3") {
+                        console.log("clicked tool 3");
+                        // If tool 3 is clicked, set the state to true to the item_name
+                        console.log(item);
+                        item.name
+                        //@ts-ignore
+                        setHair(item.name)
+
+
+                      }
+
+
+
 
                       if (hasColorPalette) {
                         setIsColorPaletteShow(true);
@@ -143,42 +220,32 @@ const SubToolbar: React.FC<Props> = ({
 
                   {/* Color palette for Tool 2 */}
                   {hasColorPalette && isActive && isColorPaletteShow && (
-                    <div
-                      className="fixed w-60 flex right-[6.5rem] -translate-y-1/2 mt-8"
-                      style={{
-                        top: activeItemRect?.top,
-                      }}
-                      onMouseEnter={() => setIsColorPaletteShow(true)}
-                      onMouseLeave={() => setIsColorPaletteShow(false)}
-                    >
+                    <>
                       <div
-                        className={classNames("p-2 rounded-2xl relative", {
-                          "bg-neutral-10": theme === "light",
-                          "bg-[#2A2B2F]": theme === "dark",
-                        })}
+                        className={classNames(
+                          "w-4 h-4 fixed top-1/2 right-[7.5rem] -translate-y-1/2 rotate-45",
+                          {
+                            "bg-neutral-10": theme === "light",
+                            "bg-[#2A2B2F]": theme === "dark",
+                          }
+                        )}
+                        style={colorPaletteArrowStyles}
+                      />
+                      <div
+                        className="fixed w-60 flex right-[6.5rem]"
+                        style={colorPaletteStyles}
+                        onMouseEnter={() => setIsColorPaletteShow(true)}
+                        onMouseLeave={() => setIsColorPaletteShow(false)}
                       >
-                        <div className="relative z-20">
-                          <HexColorPicker
-                            color={color || "red"}
-                            onChange={(color) => {
-                              onChangeColor?.({
-                                subToolId: item.id,
-                                color,
-                              });
-                            }}
-                          />
-                          <div className="flex items-center justify-between w-full px-2 pt-2">
-                            <p
-                              className={classNames("text-sm", {
-                                "text-neutral-80": theme === "light",
-                                "text-neutral-10": theme === "dark",
-                              })}
-                            >
-                              Hex
-                            </p>
-                            <HexColorInput
-                              className="w-36 px-3 border border-primary rounded-2xl"
-                              color={color}
+                        <div
+                          className={classNames("p-2 rounded-2xl relative", {
+                            "bg-neutral-10": theme === "light",
+                            "bg-[#2A2B2F]": theme === "dark",
+                          })}
+                        >
+                          <div className="relative z-20">
+                            <HexColorPicker
+                              color={color || "red"}
                               onChange={(color) => {
                                 onChangeColor?.({
                                   subToolId: item.id,
@@ -186,19 +253,30 @@ const SubToolbar: React.FC<Props> = ({
                                 });
                               }}
                             />
+                            <div className="flex items-center justify-between w-full px-2 pt-2">
+                              <p
+                                className={classNames("text-sm", {
+                                  "text-neutral-80": theme === "light",
+                                  "text-neutral-10": theme === "dark",
+                                })}
+                              >
+                                Hex
+                              </p>
+                              <HexColorInput
+                                className="w-36 px-3 border border-primary rounded-2xl"
+                                color={color}
+                                onChange={(color) => {
+                                  onChangeColor?.({
+                                    subToolId: item.id,
+                                    color,
+                                  });
+                                }}
+                              />
+                            </div>
                           </div>
                         </div>
-                        <div
-                          className={classNames(
-                            "w-4 h-4 absolute top-1/2 -right-2 -translate-y-1/2 z-10 rotate-45",
-                            {
-                              "bg-neutral-10": theme === "light",
-                              "bg-[#2A2B2F]": theme === "dark",
-                            }
-                          )}
-                        />
                       </div>
-                    </div>
+                    </>
                   )}
                 </div>
               );
