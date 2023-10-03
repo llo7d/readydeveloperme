@@ -8,6 +8,8 @@ import IconFace from "../assets/images/IconFace";
 import IconImage from "../assets/images/IconImage";
 import IconContrast from "../assets/images/IconContrast";
 import IconHair from "../assets/images/IconHair";
+import IconNo from "../assets/images/IconNo";
+import IconBeard from "../assets/images/IconBeard";
 
 type SubTool = {
   id: string;
@@ -123,6 +125,15 @@ export const getToolbarData = (): Tool[] => {
       icon: IconHair,
       items: [
         {
+
+          // id: `tool_2_item_1`,
+          id: `tool_3_item_0`,
+          icon: IconNo,
+          color: "green",
+          name: "None"
+        },
+        {
+
           // id: `tool_2_item_1`,
           id: `tool_3_item_1`,
           icon: IconHair,
@@ -154,15 +165,61 @@ export const getToolbarData = (): Tool[] => {
     },
 
 
+    // {
+    //   id: "tool_4",
+    //   label: "Tool 4",
+    //   icon: IconCamera,
+    //   items: [...Array(3)].map((_, index) => ({
+    //     id: `tool_4_item_${index + 1}`,
+    //     icon: IconCamera,
+    //   })),
+    // },
+
     {
       id: "tool_4",
       label: "Tool 4",
-      icon: IconCamera,
-      items: [...Array(3)].map((_, index) => ({
-        id: `tool_4_item_${index + 1}`,
-        icon: IconCamera,
-      })),
+      icon: IconBeard,
+      items: [
+        {
+
+          // id: `tool_2_item_1`,
+          id: `tool_4_item_0`,
+          icon: IconNo,
+          color: "green",
+          name: "None"
+        },
+        {
+
+          // id: `tool_2_item_1`,
+          id: `tool_4_item_1`,
+          icon: IconBeard,
+          color: "green",
+          name: "GEO_Beard_01"
+        },
+        {
+          // id: `tool_2_item_1`,
+          id: `tool_4_item_2`,
+          icon: IconBeard,
+          color: "green",
+          name: "GEO_Beard_02"
+        },
+        {
+          // id: `tool_2_item_1`,
+          id: `tool_4_item_3`,
+          icon: IconBeard,
+          color: "green",
+          name: "GEO_Beard_03"
+        },
+        {
+          // id: `tool_2_item_1`,
+          id: `tool_4_item_4`,
+          icon: IconBeard,
+          color: "green",
+          name: "GEO_Beard_04"
+        },
+      ],
     },
+
     {
       id: "tool_5",
       label: "Tool 5",

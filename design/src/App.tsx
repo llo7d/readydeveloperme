@@ -1,8 +1,9 @@
-import { useRef, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMediaQuery } from "react-responsive";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Grid, useGLTF, useAnimations } from "@react-three/drei";
+import { OrbitControls, Grid, useGLTF, useAnimations, Environment, Html, useProgress } from "@react-three/drei";
+import * as THREE from 'three'
 
 import ThemeToggle from "./components/ThemeToggle";
 import ViewMode from "./components/ViewMode";
@@ -68,6 +69,10 @@ function Ground() {
 //   }
 
 // }
+function Loader() {
+  const { progress } = useProgress()
+  return <Html center>{progress} % loaded</Html>
+}
 
 function Box(props) {
 
@@ -180,7 +185,43 @@ function Character(props) {
     )
   }
 
+  const Beard = () => {
+    const GEO_Beard_01 = <skinnedMesh
+      name="GEO_Beard_01"
+      geometry={nodes.GEO_Beard_01.geometry}
+      material={materials.MAT_Beard}
+      skeleton={nodes.GEO_Beard_01.skeleton}
+    />
 
+    const GEO_Beard_02 =
+      <skinnedMesh
+        name="GEO_Beard_02"
+        geometry={nodes.GEO_Beard_02.geometry}
+        material={materials.MAT_Beard}
+        skeleton={nodes.GEO_Beard_02.skeleton}
+      />
+
+    const GEO_Beard_03 = <skinnedMesh
+      name="GEO_Beard_03"
+      geometry={nodes.GEO_Beard_03.geometry}
+      material={materials.MAT_Beard}
+      skeleton={nodes.GEO_Beard_03.skeleton}
+    />
+
+    const GEO_Beard_04 = <skinnedMesh
+      name="GEO_Beard_04"
+      geometry={nodes.GEO_Beard_04.geometry}
+      material={materials.MAT_Beard}
+      skeleton={nodes.GEO_Beard_04.skeleton}
+    />
+
+
+    return (
+      <>
+        {GEO_Beard_01}
+      </>
+    )
+  }
 
   return (
     <group ref={group} {...props} dispose={null}>
@@ -227,6 +268,7 @@ function Character(props) {
         </group>
 
         <Hair />
+        <Beard />
         <skinnedMesh
           name="Brows"
           geometry={nodes.Brows.geometry}
@@ -290,32 +332,6 @@ function Character(props) {
           />
         </group>
 
-        <skinnedMesh
-          name="GEO_Beard_01"
-          geometry={nodes.GEO_Beard_01.geometry}
-          material={materials.MAT_Beard}
-          skeleton={nodes.GEO_Beard_01.skeleton}
-        />
-        <skinnedMesh
-          name="GEO_Beard_02"
-          geometry={nodes.GEO_Beard_02.geometry}
-          material={materials.MAT_Beard}
-          skeleton={nodes.GEO_Beard_02.skeleton}
-        />
-
-
-        <skinnedMesh
-          name="GEO_Beard_03"
-          geometry={nodes.GEO_Beard_03.geometry}
-          material={materials.MAT_Beard}
-          skeleton={nodes.GEO_Beard_03.skeleton}
-        />
-        <skinnedMesh
-          name="GEO_Beard_04"
-          geometry={nodes.GEO_Beard_04.geometry}
-          material={materials.MAT_Beard}
-          skeleton={nodes.GEO_Beard_04.skeleton}
-        />
 
         <skinnedMesh
           name="tongue_GEO"
@@ -446,13 +462,13 @@ export default function App() {
 
       <div className="w-full h-screen">
         <Canvas shadows camera={{ position: [0, -3, 6], fov: 20 }} >
-          <ambientLight intensity={1} />
-          <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
-          <pointLight position={[-10, -10, -10]} />
-          <OrbitControls />
-          <Ground />
-          <Character colors={subToolColors} hair={hair} />
-          {/* <Box colors={subToolColors} tool={tool} subTool={subTool} /> */}
+          <Suspense fallback={<Loader />}>
+            <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr" />
+            <OrbitControls minPolarAngle={Math.PI / 2} maxPolarAngle={Math.PI / 2} enableZoom={true} enablePan={false} target={new THREE.Vector3(0, 1.2, 0)} position={new THREE.Vector3(1, 2, 5)} position0={new THREE.Vector3(1, 2, 5)} />
+            <Ground />
+            <Character colors={subToolColors} hair={hair} />
+            {/* <Box colors={subToolColors} tool={tool} subTool={subTool} /> */}
+          </Suspense>
         </Canvas>
       </div>
 

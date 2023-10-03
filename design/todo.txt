@@ -3,5 +3,7 @@
 -> Have "Custom" color from default ( X )
 
 
-- Test changing hair ( )
--> Either with Valtio or with useState.
+- Test changing hair ( X )
+-> Either with Valtio or with useState. ( X )
+-> Create "none" selected for hair ( )
+-> Test bigger useState that also controls the beard ( ) 
