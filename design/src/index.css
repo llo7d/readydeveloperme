@@ -22,3 +22,17 @@
 .scroll-dark::-webkit-scrollbar-thumb {
   @apply rounded-full bg-neutral-80;
 }
+
+.progress-bar {
+  transition-property: width;
+  transition-duration: 0.3s;
+  transition-timing-function: ease-in-out;
+}
+
+.progress-marker-transition {
+  transition-property: left;
+  transition-duration: 0.3s;
+  transition-timing-function: ease-in-out;
+}
+
+

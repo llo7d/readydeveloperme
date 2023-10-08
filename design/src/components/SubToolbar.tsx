@@ -4,6 +4,7 @@ import { HexColorInput, HexColorPicker } from "react-colorful";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useStore } from "../store/store";
+import { log } from "three/examples/jsm/nodes/Nodes.js";
 
 type SubTool = {
   id: string;
@@ -24,7 +25,10 @@ type SubToolColor = {
 };
 
 type Props = {
-  setHair: (hair: string) => void;
+  setSelected: (selected: {
+    hair: string;
+    beard: string;
+  }) => void;
   subToolId: string;
   tool: Tool;
   colors: SubToolColor[];
@@ -40,7 +44,8 @@ const SubToolbar: React.FC<Props> = ({
   onClickItem,
   onHoverTool,
   onChangeColor,
-  setHair
+  setSelected,
+  setViewMode
 }) => {
   // Change to "true" if you want "always reveal" version of the toolbar.
   const [isSubToolbarOpen, setIsSubToolbarOpen] = useState(false);
@@ -81,6 +86,8 @@ const SubToolbar: React.FC<Props> = ({
     const min = scrollRect.top;
     const max = scrollRect.bottom;
 
+
+
     if (itemTop - 72 <= min) {
       return {
         colorPaletteStyles: {
@@ -115,6 +122,11 @@ const SubToolbar: React.FC<Props> = ({
     };
   })();
 
+
+  // We can change the position of the camera here
+  // setViewMode with the subToolId
+  //
+
   return (
     <div
       className={classNames("w-20 py-2 rounded-[1.125rem]", {
@@ -144,7 +156,11 @@ const SubToolbar: React.FC<Props> = ({
               setIsColorPaletteShow(false);
             }}
           >
+
+
+
             {tool.items.map((item, index) => {
+
               const isActive = subToolId === item.id;
               const Icon = item.icon;
 
@@ -186,17 +202,29 @@ const SubToolbar: React.FC<Props> = ({
                       // get the state from valtio
 
 
-
-
                       if (toolID === "tool_3") {
-                        console.log("clicked tool 3");
-                        // If tool 3 is clicked, set the state to true to the item_name
-                        console.log(item);
-                        item.name
-                        //@ts-ignore
-                        setHair(item.name)
+
+                        // @ts-ignore 
+                        setSelected((prev) => ({
+                          ...prev,
+                          hair: item.name
+                        }))
+
+                        // setCamera({
+                        //   position: [-10, -10, -10],
+                        //   target: [0, 2, 0],
+                        // })
 
 
+
+                      }
+
+                      if (toolID === "tool_4") {
+                        // @ts-ignore 
+                        setSelected((prev) => ({
+                          ...prev,
+                          beard: item.name
+                        }))
                       }
 
 

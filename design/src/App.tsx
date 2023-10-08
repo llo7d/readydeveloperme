@@ -2,7 +2,7 @@ import { Suspense, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMediaQuery } from "react-responsive";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Grid, useGLTF, useAnimations, Environment, Html, useProgress } from "@react-three/drei";
+import { OrbitControls, Grid, useGLTF, useAnimations, Environment, Html, useProgress, CameraControls } from "@react-three/drei";
 import * as THREE from 'three'
 
 import ThemeToggle from "./components/ThemeToggle";
@@ -15,20 +15,10 @@ import { getToolbarData } from "./helpers/data";
 import SubToolbar from "./components/SubToolbar";
 import IconMenu from "./assets/images/IconMenu";
 import ManualPopup from "./components/ManualPopup";
+import Camera from "./components/Camera";
 
-type Mode = "front" | "side" | "close_up";
+type Mode = "front" | "side" | "close_up" | "free";
 
-import { proxy, useSnapshot } from "valtio"
-
-// Valtio stuff?
-const state = proxy({
-  current: null,
-  selected: {
-    hair: "GEO_Hair_02",
-    beard: "GEO_Beard_01",
-  }
-
-})
 
 function Ground() {
 
@@ -52,75 +42,32 @@ function Ground() {
 
 
 
-
-
-// Example Square
-// Create types for props
-// type BoxProps = {
-//   subTool: {
-//     id: string;
-//     icon: React.FC<SVGProps<SVGSVGElement>>;
-//   };
-//   tool: {
-//     id: string;
-//     label: string;
-//     icon: React.FC<SVGProps<SVGSVGElement>>;
-//     items: SubTool[];
-//   }
-
-// }
 function Loader() {
   const { progress } = useProgress()
-  return <Html center>{progress} % loaded</Html>
-}
-
-function Box(props) {
-
-  props.tool
-
-  const Box1 = () => {
-
-    const position = [2, 0.5, 0];
-
-    return <>
-      <mesh position={position} scale={1}>
-        <boxGeometry args={[1, 1, 1]} />
-        {/* <meshStandardMaterial color={snap.items.cube} /> */}
-        <meshStandardMaterial color={props.colors[1].color} />
-      </mesh>
-    </>
-  }
-  const Box2 = () => {
-    return <>
-      <mesh position={[0, 0.5, 0]} scale={1}>
-        <boxGeometry args={[1, 1, 1]} />
-        {/* <meshStandardMaterial color={snap.items.cube} /> */}
-        <meshStandardMaterial color={props.colors[0].color} />
-      </mesh>
-    </>
-  }
 
 
-  const Hair = () => {
+  // return <Html center>
+  //   {/* H1 in white */}
+  //   <h1 className="text-white">
 
-    if (props.tool.id === "tool_1") {
-      if (props.subTool.id === "tool_1_item_1") {
-        return <Box1 />
-      }
-      if (props.subTool.id === "tool_1_item_2") {
-        return <Box2 />
-      }
-    }
-    else {
-      return <Box1 />
-    }
-  }
+  //     {/* Show only first 2 digits from progress */}
+  //     {progress.toFixed(0)}%
+
+  //   </h1>
+
+  // </Html>
+
+  return (
+    <Html center >
+      {/* // create a h1 in geometry */}
+      <h1 className="text-white">
+        {/* Show only first 2 digits from progress */}
+        {progress.toFixed(0)}%
+      </h1>
+    </Html>
+  )
 
 
-
-  return <>
-    <Hair />
-  </>
 }
 
 function Character(props) {
@@ -131,14 +78,11 @@ function Character(props) {
 
   const { actions } = useAnimations(animations, group);
 
-  const snap = useSnapshot(state)
-
-  // console.log(snap.selected.hair);
 
 
   const Hair = () => {
 
-    props.hair
+    // props.selected.hair
 
     const GEO_Hair_01 =
       <skinnedMesh
@@ -177,10 +121,10 @@ function Character(props) {
     return (
       <>
         {/* Return hair based on snap.selected.hair with a one of code*/}
-        {props.hair === "GEO_Hair_01" && GEO_Hair_01}
-        {props.hair === "GEO_Hair_02" && GEO_Hair_02}
-        {props.hair === "GEO_Hair_03" && GEO_Hair_03}
-        {props.hair === "GEO_Hair_04" && GEO_Hair_04}
+        {props.selected.hair === "GEO_Hair_01" && GEO_Hair_01}
+        {props.selected.hair === "GEO_Hair_02" && GEO_Hair_02}
+        {props.selected.hair === "GEO_Hair_03" && GEO_Hair_03}
+        {props.selected.hair === "GEO_Hair_04" && GEO_Hair_04}
       </>
     )
   }
@@ -191,6 +135,7 @@ function Character(props) {
       geometry={nodes.GEO_Beard_01.geometry}
       material={materials.MAT_Beard}
       skeleton={nodes.GEO_Beard_01.skeleton}
+      material-color={props.colors[1].color}
     />
 
     const GEO_Beard_02 =
@@ -199,6 +144,7 @@ function Character(props) {
         geometry={nodes.GEO_Beard_02.geometry}
         material={materials.MAT_Beard}
         skeleton={nodes.GEO_Beard_02.skeleton}
+        material-color={props.colors[1].color}
       />
 
     const GEO_Beard_03 = <skinnedMesh
@@ -206,6 +152,7 @@ function Character(props) {
       geometry={nodes.GEO_Beard_03.geometry}
       material={materials.MAT_Beard}
       skeleton={nodes.GEO_Beard_03.skeleton}
+      material-color={props.colors[1].color}
     />
 
     const GEO_Beard_04 = <skinnedMesh
@@ -213,12 +160,18 @@ function Character(props) {
       geometry={nodes.GEO_Beard_04.geometry}
       material={materials.MAT_Beard}
       skeleton={nodes.GEO_Beard_04.skeleton}
+      material-color={props.colors[1].color}
     />
 
 
     return (
       <>
-        {GEO_Beard_01}
+
+        {/* Return hair based on snap.selected.hair with a one of code*/}
+        {props.selected.beard === "GEO_Beard_01" && GEO_Beard_01}
+        {props.selected.beard === "GEO_Beard_02" && GEO_Beard_02}
+        {props.selected.beard === "GEO_Beard_03" && GEO_Beard_03}
+        {props.selected.beard === "GEO_Beard_04" && GEO_Beard_04}
       </>
     )
   }
@@ -416,14 +369,15 @@ export default function App() {
   const [tool, setTool] = useState(tools[0]);
   const [subTool, setSubTool] = useState(tools[0].items[0]);
 
-  const [hair, setHair] = useState("GEO_Hair_01");
+  const [selected, setSelected] = useState({
+    hair: "GEO_Hair_01",
+    beard: "GEO_Beard_01",
+  })
 
-  console.log("hair", hair);
-
-
-  // console.log("tool", tool);
-  // console.log("subTool", subTool);
-
+  const [camera, setCamera] = useState({
+    position: [0, 3, 6],
+    target: new THREE.Vector3(0, 1.2, 0),
+  })
 
 
   // Tool 2 subtool colors.
@@ -461,13 +415,14 @@ export default function App() {
       /> */}
 
       <div className="w-full h-screen">
-        <Canvas shadows camera={{ position: [0, -3, 6], fov: 20 }} >
+        <Canvas shadows camera={{ position: camera.position, fov: 20 }} >
+
           <Suspense fallback={<Loader />}>
             <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr" />
-            <OrbitControls minPolarAngle={Math.PI / 2} maxPolarAngle={Math.PI / 2} enableZoom={true} enablePan={false} target={new THREE.Vector3(0, 1.2, 0)} position={new THREE.Vector3(1, 2, 5)} position0={new THREE.Vector3(1, 2, 5)} />
             <Ground />
-            <Character colors={subToolColors} hair={hair} />
-            {/* <Box colors={subToolColors} tool={tool} subTool={subTool} /> */}
+            <Character colors={subToolColors} selected={selected} />
+            <Camera viewMode={viewMode} setViewMode={setViewMode} />
+
           </Suspense>
         </Canvas>
       </div>
@@ -511,11 +466,12 @@ export default function App() {
 
       <div className="absolute bottom-8 right-8">
         <SubToolbar
-          setHair={setHair}
+          setSelected={setSelected}
           subToolId={subTool.id}
           tool={tool}
           colors={subToolColors}
           onClickItem={setSubTool}
+          setCamera={setCamera}
           // Uncomment below if you want hide/reveal version of the toolbar.
           // onHoverTool={setIsToolbarOpen}
           onChangeColor={(subToolColor) => {
@@ -531,6 +487,7 @@ export default function App() {
             });
 
             setSubToolColors(newSubToolColors);
+
           }}
         />
       </div>
@@ -566,7 +523,7 @@ export default function App() {
         isOpen={isManualOpen}
         onClickClose={() => setIsManualOpen(false)}
       />
-    </div>
+    </div >
   );
 }
 

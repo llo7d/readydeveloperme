@@ -4,7 +4,7 @@ import classNames from "classnames";
 
 import IconCamera from "../assets/images/IconCamera";
 
-type Mode = "front" | "side" | "close_up";
+type Mode = "front" | "side" | "close_up" | "free";
 
 type Props = {
   mode: Mode;

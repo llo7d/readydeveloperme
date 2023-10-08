@@ -1,0 +1,59 @@
+import { OrbitControls } from '@react-three/drei'
+import { useFrame } from '@react-three/fiber'
+import React, { useRef } from 'react'
+import * as THREE from "three";
+
+
+const CameraPosition = {
+
+    "front": {
+        position: new THREE.Vector3(0, 1, 10),
+        target: new THREE.Vector3(0, 1, 0),
+    },
+
+    "close_up": {
+        position: new THREE.Vector3(0, 1.8, 3),
+        target: new THREE.Vector3(0, 1.8, 0),
+    },
+
+}
+
+
+const CameraControls = ({ viewMode, setViewMode }) => {
+
+    const orbitControls = useRef();
+
+    useFrame((state, delta) => {
+
+        if (viewMode == "free") {
+            return;
+        }
+
+        if (viewMode == "front") {
+            state.camera.position.lerp(CameraPosition.front.position, 3 * delta)
+            orbitControls.current.target.lerp(CameraPosition.front.target, 3 * delta)
+        }
+
+        if (viewMode == "close_up") {
+            state.camera.position.lerp(CameraPosition.close_up.position, 3 * delta)
+            orbitControls.current.target.lerp(CameraPosition.close_up.target, 3 * delta)
+
+        }
+
+    }
+    )
+
+    return (
+        <>
+            <OrbitControls
+                ref={orbitControls}
+                onStart={() => {
+                    setViewMode("free");
+                }}
+
+            />
+        </>
+    )
+}
+
+export default CameraControls
