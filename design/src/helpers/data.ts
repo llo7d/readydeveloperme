@@ -42,15 +42,108 @@ export const getToolbarData = (): Tool[] => {
       icon: IconPose,
       items: [
         {
-          // id: `tool_2_item_1`,
           id: `tool_1_item_1`,
-          name: "Standing_Confident",
+          name: "CharacterStop",
           icon: IconPose,
         },
         {
-          // id: `tool_2_item_1`,
           id: `tool_1_item_2`,
-          name: "Standing_Question",
+          name: "Confident",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_3`,
+          name: "Confused",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_4`,
+          name: "CrossedArm",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_5`,
+          name: "HappyOpenArm",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_6`,
+          name: "JumpHappy",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_7`,
+          name: "OnPhone",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_8`,
+          name: "PC01",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_9`,
+          name: "PC02",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_10`,
+          name: "CrossedArm",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_11`,
+          name: "PointingDown",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_12`,
+          name: "PointingLeft",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_13`,
+          name: "PointingRight",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_14`,
+          name: "PointingUp",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_15`,
+          name: "SittingHappy",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_16`,
+          name: "SittingSad",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_17`,
+          name: "Standing1",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_18`,
+          name: "StandingSad",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_19`,
+          name: "StandingThinking",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_20`,
+          name: "Waving",
+          icon: IconPose,
+        },
+        {
+          id: `tool_1_item_21`,
+          name: "Welcome",
           icon: IconPose,
         },
       ]

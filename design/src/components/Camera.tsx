@@ -16,6 +16,8 @@ const CameraPosition = {
         target: new THREE.Vector3(0, 1.8, 0),
     },
 
+    "free": "free"
+
 }
 
 
@@ -50,6 +52,7 @@ const CameraControls = ({ viewMode, setViewMode }) => {
                 onStart={() => {
                     setViewMode("free");
                 }}
+                ameraminPolarAngle={Math.PI / 2} maxPolarAngle={Math.PI / 2} enableZoom={true} enablePan={false}
 
             />
         </>

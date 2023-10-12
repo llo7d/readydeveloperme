@@ -201,6 +201,14 @@ const SubToolbar: React.FC<Props> = ({
 
                       // get the state from valtio
 
+                      if (toolID === "tool_1") {
+                        // @ts-ignore 
+                        setSelected((prev) => ({
+                          ...prev,
+                          pose: item.name
+                        }))
+                      }
+
 
                       if (toolID === "tool_3") {
 
@@ -214,7 +222,6 @@ const SubToolbar: React.FC<Props> = ({
                         //   position: [-10, -10, -10],
                         //   target: [0, 2, 0],
                         // })
-
 
 
                       }
