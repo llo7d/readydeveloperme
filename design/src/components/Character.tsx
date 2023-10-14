@@ -144,10 +144,12 @@ export default function Character({ selected, colors, }, props) {
         if (selected.pose === "PC01" || selected.pose === "PC02") {
             return (
                 <>
+                    <primitive object={nodes.desktop_bone} visible={true} />
                 </>
             )
         } else {
-            return <></>
+            return <><primitive object={nodes.desktop_bone} visible={false} />
+            </>
         }
 
     }
@@ -327,7 +329,7 @@ export default function Character({ selected, colors, }, props) {
                         />
                     </group>
 
-                    {/* <primitive object={nodes.desktop_bone} /> */}
+
                     <primitive object={nodes["DEF-pelvisL"]} />
                     <primitive object={nodes["DEF-pelvisR"]} />
                     <primitive object={nodes["DEF-thighL"]} />
@@ -341,15 +343,9 @@ export default function Character({ selected, colors, }, props) {
                     <primitive object={nodes["DEF-spine"]} />
                 </group>
 
-                {/* Trying to get the table */}
-                <group visible={true} position={[0, 1.87, 0]} rotateX={{ angle: 20 }}>
-                    <mesh
-                        name="table_baked"
-                        geometry={nodes.table_baked.geometry}
-                        material={materials.mat_table}
-                        skeleton={nodes.table_baked.skeleton}
-                    />
-                </group>
+                {/*  Create a group thats position is [0,1.87,0] and rotated 90 degrees  */}
+
+
                 <skinnedMesh
                     name="tongue_GEO"
                     geometry={nodes.tongue_GEO.geometry}

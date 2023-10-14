@@ -1,6 +1,8 @@
 - Change Pose ( X )
 -> Change pose with button press ( )
 
+-> Fixed showing table on pose ( X )
+
 - Fix camera ( going to 0 then to front. )
 
 - Add loader
