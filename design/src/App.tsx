@@ -17,6 +17,7 @@ import IconMenu from "./assets/images/IconMenu";
 import ManualPopup from "./components/ManualPopup";
 import Camera from "./components/Camera";
 import Character from "./components/Character";
+import { useControls } from "leva";
 
 type Mode = "front" | "side" | "close_up" | "free";
 
@@ -25,19 +26,45 @@ function Ground() {
 
   // const { cellColor, sectionColor } = useControls('Grid', { cellColor: '#DFAD06', sectionColor: '#C19400' })
 
-  const gridConfig = {
-    cellSize: 0, // 0,5
-    cellThickness: 0.5,
-    cellColor: '#DFAD06',
-    sectionSize: 1, // 3
-    sectionThickness: 1,
-    sectionColor: '#C19400',
-    fadeDistance: 30,
-    fadeStrength: 1,
-    followCamera: false,
-    infiniteGrid: true
+  // Dark mode, c: #484848 ,s: #4e4e4e // Light c:#1922ad s:#4737ad
+
+  const theme = useStore((state) => state.theme);
+
+  console.log(theme);
+
+  if (theme === "light") {
+    const gridConfig = {
+      cellSize: 0, // 0,5
+      cellThickness: 0.5,
+      cellColor: "#1922ad",
+      sectionSize: 1, // 3
+      sectionThickness: 1,
+      sectionColor: "#4737ad",
+      fadeDistance: 30,
+      fadeStrength: 1,
+      followCamera: false,
+      infiniteGrid: true
+    }
+    return <Grid position={[0, -0.01, 0]} args={[10.5, 10.5]} {...gridConfig} />
   }
-  return <Grid position={[0, -0.01, 0]} args={[10.5, 10.5]} {...gridConfig} />
+
+  else {
+    const gridConfig = {
+      cellSize: 0, // 0,5
+      cellThickness: 0.5,
+      cellColor: "#484848",
+      sectionSize: 1, // 3
+      sectionThickness: 1,
+      sectionColor: "#4e4e4e",
+      fadeDistance: 30,
+      fadeStrength: 1,
+      followCamera: false,
+      infiniteGrid: true
+    }
+    return <Grid position={[0, -0.01, 0]} args={[10.5, 10.5]} {...gridConfig} />
+  }
+
+
 }
 
 
