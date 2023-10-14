@@ -1,6 +1,6 @@
 - Change Pose ( X )
 -> Change pose with button press ( )
 
-- Fix camera
+- Fix camera ( going to 0 then to front. )
 
 - Add loader
