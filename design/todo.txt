@@ -1,7 +1,11 @@
 - Change Pose ( X )
--> Change pose with button press ( )
+-> Change pose with button press ( X )
 
 -> Fixed showing table on pose ( X )
+-> Show phone ( X )
+--> Animate phone ( )
+
+- Buttons have state so once pressed that button keeps being pressed (  )
 
 - Fix camera ( going to 0 then to front. )
 

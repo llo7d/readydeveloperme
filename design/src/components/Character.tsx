@@ -17,27 +17,33 @@ export default function Character({ selected, colors, }, props) {
     // Change Poses 
     useEffect(() => {
         // Reset and fade in animation after an index has been changed
-        actions[selected.pose].reset().fadeIn(0.5).play()
+        actions[selected.pose].reset().fadeIn(0.4).play()
         // In the clean-up phase, fade it out
-        return () => actions[selected.pose].fadeOut(0.5)
+        return () => actions[selected.pose].fadeOut(0.4)
     }, [actions[selected.pose]])
 
 
     const Phone = () => {
-        return (
-            <>
-                <mesh
-                    name="iphone12"
-                    castShadow
-                    receiveShadow
-                    geometry={nodes.iphone12.geometry}
-                    material={materials.Iphone_Shader}
-                    position={[-0.143, 1.901, 0.168]}
-                    rotation={[0.303, -0.423, 1.473]}
-                    scale={1.744}
-                />
-            </>
-        )
+        console.log(selected.pose);
+
+        if (selected.pose === "OnPhone") {
+            return (
+                <>
+                    <mesh
+                        name="iphone12"
+                        castShadow
+                        receiveShadow
+                        geometry={nodes.iphone12.geometry}
+                        material={materials.Iphone_Shader}
+                        position={[-0.143, 1.901, 0.168]}
+                        rotation={[0.303, -0.423, 1.473]}
+                        scale={1.744}
+                    />
+                </>
+            )
+        } else {
+            return <></>
+        }
     }
 
     const Hair = () => {
@@ -137,8 +143,6 @@ export default function Character({ selected, colors, }, props) {
     }
 
     const Desktop = () => {
-
-        console.log(selected.pose);
 
         // if seleceted.pose is SittingHappy or SittingSad return else null
         if (selected.pose === "PC01" || selected.pose === "PC02") {
@@ -361,6 +365,7 @@ export default function Character({ selected, colors, }, props) {
                 <Tshirt />
                 <Watch />
                 <Pants />
+                <Phone />
                 <Desktop />
 
 
