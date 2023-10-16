@@ -1,6 +1,10 @@
 import { useAnimations, useGLTF } from "@react-three/drei";
 import { useEffect, useRef } from "react";
+import * as THREE from 'three'
 
+
+// Default texture for PC screen
+const texture = new THREE.TextureLoader().load("images/change_me.png")
 
 
 export default function Character({ selected, colors, }, props) {
@@ -11,7 +15,6 @@ export default function Character({ selected, colors, }, props) {
 
     const { actions, mixer, ref } = useAnimations(animations, group);
 
-    console.log(actions);
 
     const pose = (() => {
         switch (selected.pose) {
@@ -43,27 +46,32 @@ export default function Character({ selected, colors, }, props) {
     // Change animation when the index changes
     useEffect(() => {
         // Reset and fade in animation after an index has been changed
-        actions[pose].reset().fadeIn(0.5).play()
+        actions[pose].reset().fadeIn(0.3).play()
         // In the clean-up phase, fade it out
-        return () => actions[pose].fadeOut(0.5)
+        return () => actions[pose].fadeOut(0.3)
     }, [actions[pose]])
 
 
     const Phone = () => {
-        return (
-            <>
-                <mesh
-                    name="iphone12"
-                    castShadow
-                    receiveShadow
-                    geometry={nodes.iphone12.geometry}
-                    material={materials.Iphone_Shader}
-                    position={[-0.143, 1.901, 0.168]}
-                    rotation={[0.303, -0.423, 1.473]}
-                    scale={1.744}
-                />
-            </>
-        )
+
+        if (selected.pose === "pose_on_phone") {
+            return (
+                <>
+                    <mesh
+                        name="iphone12"
+                        castShadow
+                        receiveShadow
+                        geometry={nodes.iphone12.geometry}
+                        material={materials.Iphone_Shader}
+                        position={[-0.143, 1.901, 0.168]}
+                        rotation={[0.303, -0.423, 1.473]}
+                        scale={1.744}
+                    />
+                </>
+            )
+        } else {
+            return <></>
+        }
     }
 
     const Hair = () => {
@@ -164,15 +172,35 @@ export default function Character({ selected, colors, }, props) {
 
     const Desktop = () => {
 
-        // if seleceted.pose is SittingHappy or SittingSad return else null
+        // console.log("nodes", nodes);
+
+        // Preload the texture to avoid flickering
+
+        // Get the a mesh from nodes, called desktop_bone
+        const desktop_bone = nodes.desktop_bone
+
+        // desktop_bone.children[0].visible = false
+
+        // Change desktop_bone.children[0] texture to change_me.png from public
+        desktop_bone.children[0].material.map = texture
+
+        // Flip y axis of texture
+        desktop_bone.children[0].material.map.flipY = false
+
+        // Set the material to be more glossy
+        desktop_bone.children[0].material.metalness = 0.5
+
+
+        // // if seleceted.pose is SittingHappy or SittingSad return else null
         if (selected.pose === "pose_pc01" || selected.pose === "pose_pc02") {
+
             return (
                 <>
-                    <primitive object={nodes.desktop_bone} visible={true} />
+                    <primitive object={desktop_bone} visible={true} />
                 </>
             )
         } else {
-            return <><primitive object={nodes.desktop_bone} visible={false} />
+            return <><primitive object={desktop_bone} visible={false} />
             </>
         }
 
@@ -213,28 +241,41 @@ export default function Character({ selected, colors, }, props) {
                 skeleton={nodes.Brows.skeleton}
                 morphTargetDictionary={nodes.Brows.morphTargetDictionary}
                 morphTargetInfluences={nodes.Brows.morphTargetInfluences}
+                material-color={"black"}
             />
         )
     }
 
     const Glasses = () => {
-        return (
 
-            <group name="GEO_Glassess_01">
-                <skinnedMesh
-                    name="Plane003"
-                    geometry={nodes.Plane003.geometry}
-                    material={materials.glass_plastic}
-                    skeleton={nodes.Plane003.skeleton}
-                />
-                <skinnedMesh
-                    name="Plane003_1"
-                    geometry={nodes.Plane003_1.geometry}
-                    material={materials.glass_transparent}
-                    skeleton={nodes.Plane003_1.skeleton}
-                />
-            </group>
-        )
+        if (selected.glasses === "glasses_1") {
+
+            return (
+
+                <group name="GEO_Glassess_01">
+                    <skinnedMesh
+                        name="Plane003"
+                        geometry={nodes.Plane003.geometry}
+                        material={materials.glass_plastic}
+                        skeleton={nodes.Plane003.skeleton}
+                        localToWorld={nodes.Plane003.matrixWorld}
+                    />
+
+                    <skinnedMesh
+                        name="Plane003_1"
+                        geometry={nodes.Plane003_1.geometry}
+                        material={materials.glass_transparent}
+                        skeleton={nodes.Plane003_1.skeleton}
+
+                    />
+                </group>
+            )
+        }
+
+        else {
+            return <></>
+        }
+
     }
 
     const Tshirt = () => {
@@ -361,7 +402,6 @@ export default function Character({ selected, colors, }, props) {
                     <primitive object={nodes["DEF-breastR"]} />
                     <primitive object={nodes["DEF-spine"]} />
                 </group>
-
                 <skinnedMesh
                     name="tongue_GEO"
                     geometry={nodes.tongue_GEO.geometry}
@@ -378,6 +418,7 @@ export default function Character({ selected, colors, }, props) {
                 <Watch />
                 <Pants />
                 <Desktop />
+                <Phone />
 
 
             </group>
@@ -385,4 +426,4 @@ export default function Character({ selected, colors, }, props) {
     );
 }
 
-useGLTF.preload("/dev4_compress.glb");
+useGLTF.preload("/dev5.glb");

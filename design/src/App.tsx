@@ -60,7 +60,6 @@ export default function App() {
     }
 
     for (const tool of tools) {
-      console.log("tool", tool);
 
       if (tool.id === "hair") {
         newSelected[tool.id] = "hair_1"
@@ -72,8 +71,6 @@ export default function App() {
 
     setSelected(newSelected)
   }, [])
-
-  console.log(selected);
 
 
   if (!isDesktop) {

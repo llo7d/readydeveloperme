@@ -16,6 +16,11 @@ const CameraPosition = {
         target: new THREE.Vector3(0, 1.8, 0),
     },
 
+    "side": {
+        position: new THREE.Vector3(10, 1, 0),
+        target: new THREE.Vector3(0, 1, 0),
+    },
+
     "free": "free"
 
 }
@@ -41,6 +46,13 @@ const CameraControls = ({ viewMode, setViewMode }) => {
             orbitControls.current.target.lerp(CameraPosition.close_up.target, 3 * delta)
 
         }
+
+        if (viewMode == "side") {
+            state.camera.position.lerp(CameraPosition.side.position, 3 * delta)
+            orbitControls.current.target.lerp(CameraPosition.side.target, 3 * delta)
+
+        }
+
 
     }
     )

@@ -10,6 +10,7 @@ import IconContrast from "../assets/images/IconContrast";
 import IconHair from "../assets/images/IconHair";
 import IconNo from "../assets/images/IconNo";
 import IconBeard from "../assets/images/IconBeard";
+import IconGlasses from "../assets/images/IconGlasses";
 
 type SubTool = {
   id: string;
@@ -148,12 +149,12 @@ export const getToolbarData = (): Tool[] => {
       items: [
         {
           id: `tool_2_item_1`,
-          icon: IconColor,
+          icon: IconHair,
           color: "red",
         },
         {
           id: `tool_2_item_2`,
-          icon: IconColor,
+          icon: IconBeard,
           color: "green",
         },
         {
@@ -186,14 +187,12 @@ export const getToolbarData = (): Tool[] => {
       icon: IconHair,
       items: [
         {
-
           id: `hair_none`,
           icon: IconNo,
           color: "green",
           name: "None"
         },
         {
-
           id: `hair_1`,
           icon: IconHair,
           color: "green",
@@ -270,13 +269,23 @@ export const getToolbarData = (): Tool[] => {
       })),
     },
     {
-      id: "tool_6",
-      label: "Tool 6",
-      icon: IconCamera,
-      items: [...Array(3)].map((_, index) => ({
-        id: `tool_6_item_${index + 1}`,
-        icon: IconCamera,
-      })),
+      id: "glasses",
+      label: "Glasses",
+      icon: IconGlasses,
+      items:
+        [{
+          id: `glasses_none`,
+          icon: IconNo,
+          color: "black",
+          name: "glasses_none"
+        },
+        {
+          id: `glasses_1`,
+          icon: IconGlasses,
+          color: "black",
+          name: "glasses_1"
+        },
+        ]
     },
     {
       id: "tool_7",

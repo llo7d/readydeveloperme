@@ -3,4 +3,13 @@
 
 - Fix camera ( going to 0 then to front. )
 
-- Add loader
+- Add loader ( X )
+
+- Add morph targets for facial shape. ( )+
+
+- Add change image on computer screen? ( X )
+-> If press it, we change the pose to it. ( )
+
+- Fix glasses not fitting correctly ( )
+
+- Use nodes book to change color ( )

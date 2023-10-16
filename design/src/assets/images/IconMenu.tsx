@@ -15,9 +15,9 @@ const IconMenu: React.FC<Props> = ({ fill = "#4B50EC", ...rest }) => {
       <path
         d="M2.5 10H17.5M2.5 5H17.5M2.5 15H12.5"
         stroke={fill}
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );
