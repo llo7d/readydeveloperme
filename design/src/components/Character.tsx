@@ -11,7 +11,7 @@ export default function Character({ selected, colors, }, props) {
 
 
     const group = useRef();
-    const { nodes, materials, animations } = useGLTF("/dev4_compress.glb");
+    const { nodes, materials, animations } = useGLTF("/dev5_compress.glb");
 
     const { actions, mixer, ref } = useAnimations(animations, group);
 
