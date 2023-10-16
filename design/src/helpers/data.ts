@@ -27,173 +27,151 @@ type Tool = {
 
 export const getToolbarData = (): Tool[] => {
   return [
-    // {
-    //   id: "tool_1",
-    //   label: "Poses",
-    //   icon: IconPose,
-    //   items: [...Array(12)].map((_, index) => ({
-    //     id: `tool_1_item_${index + 1}`,
-    //     icon: IconPose,
-    //   })),
-    // },
     {
-      id: "tool_1",
+      id: "pose",
       label: "Poses",
       icon: IconPose,
       items: [
         {
-          id: `tool_1_item_1`,
-          name: "CharacterStop",
+          id: `pose_crossed_arm`,
+          name: "CrossedArm",
           icon: IconPose,
         },
         {
-          id: `tool_1_item_2`,
+          id: `pose_confident`,
           name: "Confident",
           icon: IconPose,
         },
         {
-          id: `tool_1_item_3`,
+          id: `pose_character_stop`,
+          name: "CharacterStop",
+          icon: IconPose,
+        },
+        {
+          id: `pose_confused`,
           name: "Confused",
           icon: IconPose,
         },
+
         {
-          id: `tool_1_item_4`,
-          name: "CrossedArm",
-          icon: IconPose,
-        },
-        {
-          id: `tool_1_item_5`,
+          id: `pose_happy_open_arm`,
           name: "HappyOpenArm",
           icon: IconPose,
         },
         {
-          id: `tool_1_item_6`,
+          id: `pose_jump_happy`,
           name: "JumpHappy",
           icon: IconPose,
         },
         {
-          id: `tool_1_item_7`,
+          id: `pose_on_phone`,
           name: "OnPhone",
           icon: IconPose,
         },
         {
-          id: `tool_1_item_8`,
+          id: `pose_pc01`,
           name: "PC01",
           icon: IconPose,
         },
         {
-          id: `tool_1_item_9`,
+          id: `pose_pc02`,
           name: "PC02",
           icon: IconPose,
         },
         {
-          id: `tool_1_item_10`,
+          id: `pose_crossed_arm_1`,
           name: "CrossedArm",
           icon: IconPose,
         },
         {
-          id: `tool_1_item_11`,
+          id: `pose_pointing_down`,
           name: "PointingDown",
           icon: IconPose,
         },
         {
-          id: `tool_1_item_12`,
+          id: `pose_pointing_left`,
           name: "PointingLeft",
           icon: IconPose,
         },
         {
-          id: `tool_1_item_13`,
+          id: `pose_pointing_right`,
           name: "PointingRight",
           icon: IconPose,
         },
         {
-          id: `tool_1_item_14`,
+          id: `pose_pointing_up`,
           name: "PointingUp",
           icon: IconPose,
         },
         {
-          id: `tool_1_item_15`,
+          id: `pose_sitting_happy`,
           name: "SittingHappy",
           icon: IconPose,
         },
         {
-          id: `tool_1_item_16`,
+          id: `pose_sitting_sad`,
           name: "SittingSad",
           icon: IconPose,
         },
         {
-          id: `tool_1_item_17`,
+          id: `pose_standing1`,
           name: "Standing1",
           icon: IconPose,
         },
         {
-          id: `tool_1_item_18`,
+          id: `pose_standing_sad`,
           name: "StandingSad",
           icon: IconPose,
         },
         {
-          id: `tool_1_item_19`,
+          id: `pose_standing_thinking`,
           name: "StandingThinking",
           icon: IconPose,
         },
         {
-          id: `tool_1_item_20`,
+          id: `pose_waving`,
           name: "Waving",
           icon: IconPose,
         },
         {
-          id: `tool_1_item_21`,
+          id: `pose_welcome`,
           name: "Welcome",
           icon: IconPose,
         },
       ]
     },
-    // {
-    //   id: "tool_2",
-    //   label: "Colors",
-    //   icon: IconColor,
-    //   items: [...Array(12)].map((_, index) => ({
-    //     id: `tool_2_item_${index + 1}`,
-    //     icon: IconColor,
-    //   })),
-    // },
+
     {
       id: "tool_2",
       label: "Colors",
       icon: IconColor,
       items: [
         {
-          // id: `tool_2_item_1`,
           id: `tool_2_item_1`,
           icon: IconColor,
           color: "red",
         },
         {
-          // id: `tool_2_item_1`,
           id: `tool_2_item_2`,
           icon: IconColor,
           color: "green",
         },
         {
-          // id: `tool_2_item_1`,
           id: `tool_2_item_3`,
           icon: IconColor,
           color: "green",
         },
         {
-          // id: `tool_2_item_1`,
           id: `tool_2_item_4`,
           icon: IconColor,
           color: "green",
         },
         {
-          // id: `tool_2_item_1`,
           id: `tool_2_item_5`,
           icon: IconColor,
           color: "green",
         },
         {
-          // id: `tool_2_item_1`,
           id: `tool_2_item_6`,
           icon: IconColor,
           color: "green",
@@ -202,54 +180,39 @@ export const getToolbarData = (): Tool[] => {
     },
 
 
-    // {
-    //   id: "tool_3",
-    //   label: "Tool 3",
-    //   icon: IconHair,
-    //   items: [...Array(8)].map((_, index) => ({
-    //     id: `tool_3_item_${index + 1}`,
-    //     icon: IconHair,
-    //   })),
-    // },
-
     {
-      id: "tool_3",
-      label: "Tool 3",
+      id: "hair",
+      label: "Hair",
       icon: IconHair,
       items: [
         {
 
-          // id: `tool_2_item_1`,
-          id: `tool_3_item_0`,
+          id: `hair_none`,
           icon: IconNo,
           color: "green",
           name: "None"
         },
         {
 
-          // id: `tool_2_item_1`,
-          id: `tool_3_item_1`,
+          id: `hair_1`,
           icon: IconHair,
           color: "green",
           name: "GEO_Hair_01"
         },
         {
-          // id: `tool_2_item_1`,
-          id: `tool_3_item_2`,
+          id: `hair_2`,
           icon: IconHair,
           color: "green",
           name: "GEO_Hair_02"
         },
         {
-          // id: `tool_2_item_1`,
-          id: `tool_3_item_3`,
+          id: `hair_3`,
           icon: IconHair,
           color: "green",
           name: "GEO_Hair_03"
         },
         {
-          // id: `tool_2_item_1`,
-          id: `tool_3_item_4`,
+          id: `hair_4`,
           icon: IconHair,
           color: "green",
           name: "GEO_Hair_04"
@@ -257,55 +220,39 @@ export const getToolbarData = (): Tool[] => {
       ],
     },
 
-
-    // {
-    //   id: "tool_4",
-    //   label: "Tool 4",
-    //   icon: IconCamera,
-    //   items: [...Array(3)].map((_, index) => ({
-    //     id: `tool_4_item_${index + 1}`,
-    //     icon: IconCamera,
-    //   })),
-    // },
-
     {
-      id: "tool_4",
-      label: "Tool 4",
+      id: "beard",
+      label: "Beard",
       icon: IconBeard,
       items: [
         {
 
-          // id: `tool_2_item_1`,
-          id: `tool_4_item_0`,
+          id: `beard_none`,
           icon: IconNo,
           color: "green",
           name: "None"
         },
         {
 
-          // id: `tool_2_item_1`,
-          id: `tool_4_item_1`,
+          id: `beard_1`,
           icon: IconBeard,
           color: "green",
           name: "GEO_Beard_01"
         },
         {
-          // id: `tool_2_item_1`,
-          id: `tool_4_item_2`,
+          id: `beard_2`,
           icon: IconBeard,
           color: "green",
           name: "GEO_Beard_02"
         },
         {
-          // id: `tool_2_item_1`,
-          id: `tool_4_item_3`,
+          id: `beard_3`,
           icon: IconBeard,
           color: "green",
           name: "GEO_Beard_03"
         },
         {
-          // id: `tool_2_item_1`,
-          id: `tool_4_item_4`,
+          id: `beard_4`,
           icon: IconBeard,
           color: "green",
           name: "GEO_Beard_04"
@@ -326,7 +273,7 @@ export const getToolbarData = (): Tool[] => {
       id: "tool_6",
       label: "Tool 6",
       icon: IconCamera,
-      items: [...Array(7)].map((_, index) => ({
+      items: [...Array(3)].map((_, index) => ({
         id: `tool_6_item_${index + 1}`,
         icon: IconCamera,
       })),
@@ -335,18 +282,9 @@ export const getToolbarData = (): Tool[] => {
       id: "tool_7",
       label: "Tool 7",
       icon: IconImage,
-      items: [...Array(16)].map((_, index) => ({
+      items: [...Array(2)].map((_, index) => ({
         id: `tool_7_item_${index + 1}`,
         icon: IconImage,
-      })),
-    },
-    {
-      id: "tool_8",
-      label: "Tool 8",
-      icon: IconContrast,
-      items: [...Array(10)].map((_, index) => ({
-        id: `tool_8_item_${index + 1}`,
-        icon: IconContrast,
       })),
     },
   ];

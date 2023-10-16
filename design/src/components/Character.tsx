@@ -11,39 +11,59 @@ export default function Character({ selected, colors, }, props) {
 
     const { actions, mixer, ref } = useAnimations(animations, group);
 
-    console.log(nodes);
+    console.log(actions);
 
+    const pose = (() => {
+        switch (selected.pose) {
+            case "pose_character_stop": return "CharacterStop";
+            case "pose_confident": return "Confident";
+            case "pose_confused": return "Confused";
+            case "pose_crossed_arm": return "CrossedArm";
+            case "pose_happy_open_arm": return "HappyOpenArm";
+            case "pose_jump_happy": return "JumpHappy";
+            case "pose_on_phone": return "OnPhone";
+            case "pose_pc01": return "PC01";
+            case "pose_pc02": return "PC02";
+            case "pose_crossed_arm_1": return "CrossedArm";
+            case "pose_pointing_down": return "PointingDown";
+            case "pose_pointing_left": return "PointingLeft";
+            case "pose_pointing_right": return "PointingRight";
+            case "pose_pointing_up": return "PointingUp";
+            case "pose_sitting_happy": return "SittingHappy";
+            case "pose_sitting_sad": return "SittingSad";
+            case "pose_standing1": return "Standing1";
+            case "pose_standing_sad": return "StandingSad";
+            case "pose_standing_thinking": return "StandingThinking";
+            case "pose_waving": return "Waving";
+            case "pose_welcome": return "Welcome";
+            default: return "";
+        }
+    })()
 
-    // Change Poses 
+    // Change animation when the index changes
     useEffect(() => {
         // Reset and fade in animation after an index has been changed
-        actions[selected.pose].reset().fadeIn(0.4).play()
+        actions[pose].reset().fadeIn(0.5).play()
         // In the clean-up phase, fade it out
-        return () => actions[selected.pose].fadeOut(0.4)
-    }, [actions[selected.pose]])
+        return () => actions[pose].fadeOut(0.5)
+    }, [actions[pose]])
 
 
     const Phone = () => {
-        console.log(selected.pose);
-
-        if (selected.pose === "OnPhone") {
-            return (
-                <>
-                    <mesh
-                        name="iphone12"
-                        castShadow
-                        receiveShadow
-                        geometry={nodes.iphone12.geometry}
-                        material={materials.Iphone_Shader}
-                        position={[-0.143, 1.901, 0.168]}
-                        rotation={[0.303, -0.423, 1.473]}
-                        scale={1.744}
-                    />
-                </>
-            )
-        } else {
-            return <></>
-        }
+        return (
+            <>
+                <mesh
+                    name="iphone12"
+                    castShadow
+                    receiveShadow
+                    geometry={nodes.iphone12.geometry}
+                    material={materials.Iphone_Shader}
+                    position={[-0.143, 1.901, 0.168]}
+                    rotation={[0.303, -0.423, 1.473]}
+                    scale={1.744}
+                />
+            </>
+        )
     }
 
     const Hair = () => {
@@ -87,10 +107,10 @@ export default function Character({ selected, colors, }, props) {
         return (
             <>
                 {/* Return hair based on snap.selected.hair with a one of code*/}
-                {selected.hair === "GEO_Hair_01" && GEO_Hair_01}
-                {selected.hair === "GEO_Hair_02" && GEO_Hair_02}
-                {selected.hair === "GEO_Hair_03" && GEO_Hair_03}
-                {selected.hair === "GEO_Hair_04" && GEO_Hair_04}
+                {selected.hair === "hair_1" && GEO_Hair_01}
+                {selected.hair === "hair_2" && GEO_Hair_02}
+                {selected.hair === "hair_3" && GEO_Hair_03}
+                {selected.hair === "hair_4" && GEO_Hair_04}
             </>
         )
     }
@@ -134,10 +154,10 @@ export default function Character({ selected, colors, }, props) {
             <>
 
                 {/* Return hair based on snap.selected.hair with a one of code*/}
-                {selected.beard === "GEO_Beard_01" && GEO_Beard_01}
-                {selected.beard === "GEO_Beard_02" && GEO_Beard_02}
-                {selected.beard === "GEO_Beard_03" && GEO_Beard_03}
-                {selected.beard === "GEO_Beard_04" && GEO_Beard_04}
+                {selected.beard === "beard_1" && GEO_Beard_01}
+                {selected.beard === "beard_2" && GEO_Beard_02}
+                {selected.beard === "beard_3" && GEO_Beard_03}
+                {selected.beard === "beard_4" && GEO_Beard_04}
             </>
         )
     }
@@ -145,7 +165,7 @@ export default function Character({ selected, colors, }, props) {
     const Desktop = () => {
 
         // if seleceted.pose is SittingHappy or SittingSad return else null
-        if (selected.pose === "PC01" || selected.pose === "PC02") {
+        if (selected.pose === "pose_pc01" || selected.pose === "pose_pc02") {
             return (
                 <>
                     <primitive object={nodes.desktop_bone} visible={true} />
@@ -157,6 +177,7 @@ export default function Character({ selected, colors, }, props) {
         }
 
     }
+
 
     const Shoes = () => {
         return (
@@ -298,10 +319,6 @@ export default function Character({ selected, colors, }, props) {
         )
     }
 
-
-    console.log("material", materials);
-
-
     return (
         <group ref={group} {...props} dispose={null}>
             <group name="Scene">
@@ -332,8 +349,6 @@ export default function Character({ selected, colors, }, props) {
                             morphTargetInfluences={nodes.body_2.morphTargetInfluences}
                         />
                     </group>
-
-
                     <primitive object={nodes["DEF-pelvisL"]} />
                     <primitive object={nodes["DEF-pelvisR"]} />
                     <primitive object={nodes["DEF-thighL"]} />
@@ -346,9 +361,6 @@ export default function Character({ selected, colors, }, props) {
                     <primitive object={nodes["DEF-breastR"]} />
                     <primitive object={nodes["DEF-spine"]} />
                 </group>
-
-                {/*  Create a group thats position is [0,1.87,0] and rotated 90 degrees  */}
-
 
                 <skinnedMesh
                     name="tongue_GEO"
@@ -365,7 +377,6 @@ export default function Character({ selected, colors, }, props) {
                 <Tshirt />
                 <Watch />
                 <Pants />
-                <Phone />
                 <Desktop />
 
 

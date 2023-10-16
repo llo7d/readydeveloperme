@@ -1,4 +1,4 @@
-import { Suspense, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMediaQuery } from "react-responsive";
 import { Canvas } from "@react-three/fiber";
@@ -17,86 +17,11 @@ import IconMenu from "./assets/images/IconMenu";
 import ManualPopup from "./components/ManualPopup";
 import Camera from "./components/Camera";
 import Character from "./components/Character";
-import { useControls } from "leva";
+import Loader from "./components/Loader";
+import Ground from "./components/Ground";
 
 type Mode = "front" | "side" | "close_up" | "free";
 
-
-function Ground() {
-
-  // const { cellColor, sectionColor } = useControls('Grid', { cellColor: '#DFAD06', sectionColor: '#C19400' })
-
-  // Dark mode, c: #484848 ,s: #4e4e4e // Light c:#1922ad s:#4737ad
-
-  const theme = useStore((state) => state.theme);
-
-  console.log(theme);
-
-  if (theme === "light") {
-    const gridConfig = {
-      cellSize: 0, // 0,5
-      cellThickness: 0.5,
-      cellColor: "#1922ad",
-      sectionSize: 1, // 3
-      sectionThickness: 1,
-      sectionColor: "#4737ad",
-      fadeDistance: 30,
-      fadeStrength: 1,
-      followCamera: false,
-      infiniteGrid: true
-    }
-    return <Grid position={[0, -0.01, 0]} args={[10.5, 10.5]} {...gridConfig} />
-  }
-
-  else {
-    const gridConfig = {
-      cellSize: 0, // 0,5
-      cellThickness: 0.5,
-      cellColor: "#484848",
-      sectionSize: 1, // 3
-      sectionThickness: 1,
-      sectionColor: "#4e4e4e",
-      fadeDistance: 30,
-      fadeStrength: 1,
-      followCamera: false,
-      infiniteGrid: true
-    }
-    return <Grid position={[0, -0.01, 0]} args={[10.5, 10.5]} {...gridConfig} />
-  }
-
-
-}
-
-
-
-
-function Loader() {
-  const { progress } = useProgress()
-
-
-  // return <Html center>
-  //   {/* H1 in white */}
-  //   <h1 className="text-white">
-
-  //     {/* Show only first 2 digits from progress */}
-  //     {progress.toFixed(0)}%
-
-  //   </h1>
-
-  // </Html>
-
-  return (
-    <Html center >
-      {/* // create a h1 in geometry */}
-      <h1 className="text-white">
-        {/* Show only first 2 digits from progress */}
-        {progress.toFixed(0)}%
-      </h1>
-    </Html>
-  )
-
-
-}
 
 
 export default function App() {
@@ -110,31 +35,46 @@ export default function App() {
   const tools = getToolbarData();
 
   const [tool, setTool] = useState(tools[0]);
-  const [subTool, setSubTool] = useState(tools[0].items[0]);
 
-  const [selected, setSelected] = useState({
-    hair: "GEO_Hair_01",
-    beard: "GEO_Beard_01",
-    pose: "Waving",
-  })
 
-  const [camera, setCamera] = useState({
-    position: [0, 1, 10],
-    target: new THREE.Vector3(0, 1, 0),
-  })
-
+  // It has this format (you can see data.ts):
+  // tool.id: tool.items.id
+  const [selected, setSelected] = useState<Record<string, string>>({})
 
   // Tool 2 subtool colors.
   const [subToolColors, setSubToolColors] = useState(
     tools[1].items.map((item) => {
       return {
         subToolId: item.id,
-        color: "#4B50EC",
+        color: "#141414",
       };
     })
   );
 
   const trayWidth = 3.5 * tools.length + 1 * (tools.length - 1);
+
+  // Initialize selected tool.
+  useEffect(() => {
+    const newSelected: Record<string, string> = {
+
+    }
+
+    for (const tool of tools) {
+      console.log("tool", tool);
+
+      if (tool.id === "hair") {
+        newSelected[tool.id] = "hair_1"
+        continue
+      }
+
+      newSelected[tool.id] = tool.items[0].id
+    }
+
+    setSelected(newSelected)
+  }, [])
+
+  console.log(selected);
+
 
   if (!isDesktop) {
     return (
@@ -151,21 +91,16 @@ export default function App() {
         "bg-neutral-100": theme === "dark",
       })}
     >
-      {/* Background image */}
-      {/* <img
-        className="w-full h-screen object-cover"
-        src="/images/background.jpg"
-        alt="Mountain"
-      /> */}
+      <Loader />
 
       <div className="w-full h-screen">
         {/* <Canvas shadows camera={{ position: camera.position, fov: 20 }} > */}
         <Canvas shadows camera={{ fov: 20 }} >
 
 
-          <Suspense fallback={<Loader />}>
+          <Suspense fallback={null}>
             <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr" />
-            <Ground />
+            <Ground theme={theme} />
             <Character colors={subToolColors} selected={selected} />
             <Camera viewMode={viewMode} setViewMode={setViewMode} />
 
@@ -212,17 +147,20 @@ export default function App() {
 
       <div className="absolute bottom-8 right-8">
         <SubToolbar
-          setSelected={setSelected}
-          subToolId={subTool.id}
+          subToolId={selected[tool.id]}
           tool={tool}
           colors={subToolColors}
-          onClickItem={setSubTool}
-          setCamera={setCamera}
+          onClickItem={(item) => {
+            setSelected({
+              ...selected,
+              [tool.id]: item.id
+            })
+          }}
           // Uncomment below if you want hide/reveal version of the toolbar.
           // onHoverTool={setIsToolbarOpen}
           onChangeColor={(subToolColor) => {
             const newSubToolColors = subToolColors.map((color) => {
-              if (color.subToolId === subTool.id) {
+              if (color.subToolId === selected[tool.id]) {
                 return {
                   ...color,
                   color: subToolColor.color,
@@ -255,10 +193,7 @@ export default function App() {
               <Toolbar
                 toolId={tool.id}
                 items={tools}
-                onClickItem={(tool) => {
-                  setTool(tool);
-                  setSubTool(tool.items[0]);
-                }}
+                onClickItem={setTool}
               />
             </motion.div>
           )}

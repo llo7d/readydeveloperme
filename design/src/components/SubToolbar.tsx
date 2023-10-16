@@ -4,7 +4,6 @@ import { HexColorInput, HexColorPicker } from "react-colorful";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useStore } from "../store/store";
-import { log } from "three/examples/jsm/nodes/Nodes.js";
 
 type SubTool = {
   id: string;
@@ -25,10 +24,6 @@ type SubToolColor = {
 };
 
 type Props = {
-  setSelected: (selected: {
-    hair: string;
-    beard: string;
-  }) => void;
   subToolId: string;
   tool: Tool;
   colors: SubToolColor[];
@@ -44,8 +39,6 @@ const SubToolbar: React.FC<Props> = ({
   onClickItem,
   onHoverTool,
   onChangeColor,
-  setSelected,
-  setViewMode
 }) => {
   // Change to "true" if you want "always reveal" version of the toolbar.
   const [isSubToolbarOpen, setIsSubToolbarOpen] = useState(false);
@@ -195,47 +188,6 @@ const SubToolbar: React.FC<Props> = ({
                     type="button"
                     onClick={() => {
                       onClickItem(item);
-                      // Console loge item.id only first 5 characters
-
-                      const toolID = item.id.substring(0, 6)
-
-                      // get the state from valtio
-
-                      if (toolID === "tool_1") {
-                        // @ts-ignore 
-                        setSelected((prev) => ({
-                          ...prev,
-                          pose: item.name
-                        }))
-                      }
-
-
-                      if (toolID === "tool_3") {
-
-                        // @ts-ignore 
-                        setSelected((prev) => ({
-                          ...prev,
-                          hair: item.name
-                        }))
-
-                        // setCamera({
-                        //   position: [-10, -10, -10],
-                        //   target: [0, 2, 0],
-                        // })
-
-
-                      }
-
-                      if (toolID === "tool_4") {
-                        // @ts-ignore 
-                        setSelected((prev) => ({
-                          ...prev,
-                          beard: item.name
-                        }))
-                      }
-
-
-
 
                       if (hasColorPalette) {
                         setIsColorPaletteShow(true);
