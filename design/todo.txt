@@ -1,15 +1,4 @@
-- Change Pose ( X )
--> Change pose with button press ( )
-
-- Fix camera ( going to 0 then to front. )
-
-- Add loader ( X )
-
-- Add morph targets for facial shape. ( )+
-
-- Add change image on computer screen? ( X )
--> If press it, we change the pose to it. ( )
-
-- Fix glasses not fitting correctly ( )
-
+- Change logo ( )
+- Disable / enable debugger from App Settings ( X )
+-> Show hide debugger button somewhere 
 - Use nodes book to change color ( )

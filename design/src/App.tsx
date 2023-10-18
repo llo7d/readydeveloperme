@@ -2,7 +2,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMediaQuery } from "react-responsive";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Grid, useGLTF, useAnimations, Environment, Html, useProgress, CameraControls } from "@react-three/drei";
+import { OrbitControls, Grid, useGLTF, useAnimations, Environment, Html, useProgress, CameraControls, ContactShadows } from "@react-three/drei";
 import * as THREE from 'three'
 
 import ThemeToggle from "./components/ThemeToggle";
@@ -19,6 +19,7 @@ import Camera from "./components/Camera";
 import Character from "./components/Character";
 import Loader from "./components/Loader";
 import Ground from "./components/Ground";
+import { useControls } from "leva";
 
 type Mode = "front" | "side" | "close_up" | "free";
 
@@ -36,6 +37,7 @@ export default function App() {
 
   const [tool, setTool] = useState(tools[0]);
 
+  const { opacity, blur, scale, far } = useControls('Shadows', { opacity: 0.7, scale: 2, blur: 3.5, far: 1.2 })
 
   // It has this format (you can see data.ts):
   // tool.id: tool.items.id
@@ -53,16 +55,19 @@ export default function App() {
 
   const trayWidth = 3.5 * tools.length + 1 * (tools.length - 1);
 
-  // Initialize selected tool.
+  // Initialize selected tool. Select what you want to be selected by default.
   useEffect(() => {
-    const newSelected: Record<string, string> = {
-
-    }
+    const newSelected: Record<string, string> = {}
 
     for (const tool of tools) {
 
       if (tool.id === "hair") {
         newSelected[tool.id] = "hair_1"
+        continue
+      }
+
+      if (tool.id === "glasses") {
+        newSelected[tool.id] = "glasses_1"
         continue
       }
 
@@ -72,7 +77,6 @@ export default function App() {
     setSelected(newSelected)
   }, [])
 
-  console.log(selected);
 
 
   if (!isDesktop) {
@@ -102,6 +106,7 @@ export default function App() {
             <Ground theme={theme} />
             <Character colors={subToolColors} selected={selected} />
             <Camera viewMode={viewMode} setViewMode={setViewMode} />
+            <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
 
           </Suspense>
         </Canvas>

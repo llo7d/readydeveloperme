@@ -295,7 +295,7 @@ export const getToolbarData = (): Tool[] => {
           name: "glasses_none"
         },
         {
-          id: `glasses_1`,
+          id: "glasses_1",
           icon: IconGlasses,
           color: "black",
           name: "glasses_1"
@@ -303,13 +303,21 @@ export const getToolbarData = (): Tool[] => {
         ]
     },
     {
-      id: "tool_7",
-      label: "Tool 7",
+      id: "logo",
+      label: "Logo",
       icon: IconImage,
-      items: [...Array(2)].map((_, index) => ({
-        id: `tool_7_item_${index + 1}`,
-        icon: IconImage,
-      })),
+      items:
+        [{
+          id: "logo_none",
+          icon: IconNo,
+          name: "logo_none"
+        },
+        {
+          id: "logo_1",
+          icon: IconImage,
+          name: "logo_1",
+        },
+        ]
     },
   ];
 };
