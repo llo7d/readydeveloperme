@@ -1,6 +1,8 @@
 import { useAnimations, useGLTF } from "@react-three/drei";
+import { useControls } from "leva";
 import { useEffect, useRef } from "react";
 import * as THREE from 'three'
+
 
 
 // Default texture for PC screen
@@ -16,6 +18,7 @@ export default function Character({ selected, colors, }, props) {
     const { actions, mixer, ref } = useAnimations(animations, group);
 
 
+    // Pose thing
     const pose = (() => {
         switch (selected.pose) {
             case "pose_character_stop": return "CharacterStop";
@@ -51,6 +54,35 @@ export default function Character({ selected, colors, }, props) {
         return () => actions[pose].fadeOut(0.3)
     }, [actions[pose]])
 
+    // Morph target
+    // useEffect(() => {
+    //     // Set the morph target
+    //     nodes.body_2.morphTargetInfluences[0] = selected.morphTargetInfluences
+    // }, [selected.morphTargetInfluences]) morphTargetInfluences
+
+
+    nodes.body.morphTargetInfluences[0] = useControls('Morphing', { Nerd: 0 })['Nerd']
+    nodes.body.morphTargetInfluences[1] = useControls('Morphing', { Normal: 0 })['Normal']
+
+
+
+    // Controling the face morphing
+    const Face = () => {
+
+        if (selected.face === "default") {
+            nodes.body.morphTargetInfluences[0] = 0
+            nodes.body.morphTargetInfluences[1] = 1
+        }
+        else if (selected.face === "round") {
+            nodes.body.morphTargetInfluences[0] = 1
+            nodes.body.morphTargetInfluences[1] = 1
+        }
+        else if (selected.face === "square") {
+            nodes.body.morphTargetInfluences[0] = 0
+            nodes.body.morphTargetInfluences[1] = 0
+
+        }
+    }
 
     const Phone = () => {
 
@@ -205,7 +237,6 @@ export default function Character({ selected, colors, }, props) {
         }
 
     }
-
 
     const Shoes = () => {
         return (
@@ -419,6 +450,7 @@ export default function Character({ selected, colors, }, props) {
                 <Pants />
                 <Desktop />
                 <Phone />
+                <Face />
 
 
             </group>

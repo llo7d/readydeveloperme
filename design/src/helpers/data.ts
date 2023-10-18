@@ -261,13 +261,27 @@ export const getToolbarData = (): Tool[] => {
     },
 
     {
-      id: "tool_5",
-      label: "Tool 5",
+      id: "face",
+      label: "Face",
       icon: IconFace,
-      items: [...Array(3)].map((_, index) => ({
-        id: `tool_5_item_${index + 1}`,
-        icon: IconFace,
-      })),
+      items: [
+        {
+          id: `default`,
+          icon: IconFace,
+          name: "default"
+        },
+        {
+          id: `round`,
+          icon: IconFace,
+          name: "round"
+        },
+        {
+          id: `square`,
+          icon: IconFace,
+          name: "square"
+        },
+
+      ]
     },
     {
       id: "glasses",

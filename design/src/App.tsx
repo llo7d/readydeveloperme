@@ -72,6 +72,8 @@ export default function App() {
     setSelected(newSelected)
   }, [])
 
+  console.log(selected);
+
 
   if (!isDesktop) {
     return (
