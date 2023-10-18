@@ -1,16 +1,17 @@
 import { SVGProps } from "react";
 
-import IconCamera from "../assets/images/IconCamera";
-import IconPose from "../assets/images/IconPose";
-import IconColor from "../assets/images/IconColor";
-import IconAirpod from "../assets/images/IconAirpod";
-import IconFace from "../assets/images/IconFace";
-import IconImage from "../assets/images/IconImage";
-import IconContrast from "../assets/images/IconContrast";
-import IconHair from "../assets/images/IconHair";
-import IconNo from "../assets/images/IconNo";
-import IconBeard from "../assets/images/IconBeard";
-import IconGlasses from "../assets/images/IconGlasses";
+import IconCamera from "../assets/icons/IconCamera";
+import IconPose from "../assets/icons/IconPose";
+import IconColor from "../assets/icons/IconColor";
+import IconAirpod from "../assets/icons/IconAirpod";
+import IconFace from "../assets/icons/IconFace";
+import IconImage from "../assets/icons/IconImage";
+import IconContrast from "../assets/icons/IconContrast";
+import IconHair from "../assets/icons/IconHair";
+import IconNo from "../assets/icons/IconNo";
+import IconBeard from "../assets/icons/IconBeard";
+import IconGlasses from "../assets/icons/IconGlasses";
+import IconPose1 from "../assets/icons/IconPose1";
 
 type SubTool = {
   id: string;
@@ -36,7 +37,7 @@ export const getToolbarData = (): Tool[] => {
         {
           id: `pose_crossed_arm`,
           name: "CrossedArm",
-          icon: IconPose,
+          icon: IconPose1,
         },
         {
           id: `pose_confident`,

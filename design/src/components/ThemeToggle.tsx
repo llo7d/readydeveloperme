@@ -2,8 +2,8 @@ import React from "react";
 import { useStore } from "../store/store";
 import classNames from "classnames";
 
-import IconSun from "../assets/images/IconSun";
-import IconMoon from "../assets/images/IconMoon";
+import IconSun from "../assets/icons/IconSun";
+import IconMoon from "../assets/icons/IconMoon";
 
 type Props = Record<string, never>;
 

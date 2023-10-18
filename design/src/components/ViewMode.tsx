@@ -2,7 +2,7 @@ import React from "react";
 import { useStore } from "../store/store";
 import classNames from "classnames";
 
-import IconCamera from "../assets/images/IconCamera";
+import IconCamera from "../assets/icons/IconCamera";
 
 type Mode = "front" | "side" | "close_up" | "free";
 
