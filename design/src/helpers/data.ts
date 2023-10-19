@@ -1,17 +1,21 @@
 import { SVGProps } from "react";
 
-import IconCamera from "../assets/icons/IconCamera";
 import IconPose from "../assets/icons/IconPose";
 import IconColor from "../assets/icons/IconColor";
-import IconAirpod from "../assets/icons/IconAirpod";
 import IconFace from "../assets/icons/IconFace";
 import IconImage from "../assets/icons/IconImage";
-import IconContrast from "../assets/icons/IconContrast";
-import IconHair from "../assets/icons/IconHair";
 import IconNo from "../assets/icons/IconNo";
 import IconBeard from "../assets/icons/IconBeard";
 import IconGlasses from "../assets/icons/IconGlasses";
 import IconPose1 from "../assets/icons/IconPose1";
+import IconHair1 from "../assets/icons/IconHair1";
+import IconHair2 from "../assets/icons/IconHair2";
+import IconHair3 from "../assets/icons/IconHair3";
+import IconHair4 from "../assets/icons/IconHair4";
+import IconBeard1 from "../assets/icons/IconBeard1";
+import IconBeard2 from "../assets/icons/IconBeard2";
+import IconBeard3 from "../assets/icons/IconBeard3";
+import IconBeard4 from "../assets/icons/IconBeard4";
 
 type SubTool = {
   id: string;
@@ -150,7 +154,7 @@ export const getToolbarData = (): Tool[] => {
       items: [
         {
           id: `tool_2_item_1`,
-          icon: IconHair,
+          icon: IconHair1,
           color: "red",
         },
         {
@@ -185,7 +189,7 @@ export const getToolbarData = (): Tool[] => {
     {
       id: "hair",
       label: "Hair",
-      icon: IconHair,
+      icon: IconHair1,
       items: [
         {
           id: `hair_none`,
@@ -195,25 +199,25 @@ export const getToolbarData = (): Tool[] => {
         },
         {
           id: `hair_1`,
-          icon: IconHair,
+          icon: IconHair1,
           color: "green",
           name: "GEO_Hair_01"
         },
         {
           id: `hair_2`,
-          icon: IconHair,
+          icon: IconHair2,
           color: "green",
           name: "GEO_Hair_02"
         },
         {
           id: `hair_3`,
-          icon: IconHair,
+          icon: IconHair3,
           color: "green",
           name: "GEO_Hair_03"
         },
         {
           id: `hair_4`,
-          icon: IconHair,
+          icon: IconHair4,
           color: "green",
           name: "GEO_Hair_04"
         },
@@ -223,7 +227,7 @@ export const getToolbarData = (): Tool[] => {
     {
       id: "beard",
       label: "Beard",
-      icon: IconBeard,
+      icon: IconBeard1,
       items: [
         {
 
@@ -235,25 +239,25 @@ export const getToolbarData = (): Tool[] => {
         {
 
           id: `beard_1`,
-          icon: IconBeard,
+          icon: IconBeard1,
           color: "green",
           name: "GEO_Beard_01"
         },
         {
           id: `beard_2`,
-          icon: IconBeard,
+          icon: IconBeard2,
           color: "green",
           name: "GEO_Beard_02"
         },
         {
           id: `beard_3`,
-          icon: IconBeard,
+          icon: IconBeard3,
           color: "green",
           name: "GEO_Beard_03"
         },
         {
           id: `beard_4`,
-          icon: IconBeard,
+          icon: IconBeard4,
           color: "green",
           name: "GEO_Beard_04"
         },
