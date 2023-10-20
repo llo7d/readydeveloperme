@@ -211,16 +211,17 @@ export default function Character({ selected, colors, }, props) {
         // Get the a mesh from nodes, called desktop_bone
         const desktop_bone = nodes.desktop_bone
 
-        // desktop_bone.children[0].visible = false
+        desktop_bone.children[0].visible = false
 
-        // Change desktop_bone.children[0] texture to change_me.png from public
-        desktop_bone.children[0].material.map = texture
+        // Uncomment below to change Window texature.
+        // // Change desktop_bone.children[0] texture to change_me.png from public
+        // desktop_bone.children[0].material.map = texture
 
-        // Flip y axis of texture
-        desktop_bone.children[0].material.map.flipY = false
+        // // Flip y axis of texture
+        // desktop_bone.children[0].material.map.flipY = false
 
-        // Set the material to be more glossy
-        desktop_bone.children[0].material.metalness = 0.5
+        // // Set the material to be more glossy
+        // desktop_bone.children[0].material.metalness = 0.5
 
 
         // // if seleceted.pose is SittingHappy or SittingSad return else null
