@@ -1,8 +1,8 @@
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMediaQuery } from "react-responsive";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Grid, useGLTF, useAnimations, Environment, Html, useProgress, CameraControls, ContactShadows } from "@react-three/drei";
+import { ContactShadows } from "@react-three/drei";
 import * as THREE from 'three'
 
 import ThemeToggle from "./components/ThemeToggle";

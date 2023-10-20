@@ -1,16 +1,26 @@
-import { Environment } from '@react-three/drei'
+import { Environment, useHelper } from '@react-three/drei'
 import { useControls } from 'leva'
-import React from 'react'
-import { log } from 'three/examples/jsm/nodes/Nodes.js'
+import React, { useEffect, useRef } from 'react'
+import { SpotLightHelper } from 'three'
+import * as THREE from 'three'
 
 const Lights = () => {
 
-    // Using useControls, create a [0,0,0 ] poistion for the light
-    const { light_position } = useControls({ lights: [0, 0, 0] })
+    const light_ref = useRef()
+
+    useHelper(light_ref, SpotLightHelper, 'cyan')
 
 
+    // Using useControls, create a [0,0,0 ] poistion for the light, with 1 steps
+    const light_position = useControls('Light Position', {
+        position: {
+            value: [-1, 12, -10],
+            step: 1
+        }
+    })
 
-    console.log(light_position);
+
+    // console.log(light_position);
 
     const Lights1 = () => {
 
@@ -35,17 +45,24 @@ const Lights = () => {
     const Lights3 = () => {
 
 
+        // Create a new new THREE.Object3D() and set its cordinates to [0,5,0]
+        const light = new THREE.Object3D()
+        light.position.set(0, 1, 0)
+
+
+
         return <>
             {/* <ambientLight intensity={0.7} /> */}
             {/* <Environment preset="city" /> */}
-            <spotLight intensity={0.5} angle={0.1} penumbra={1} position={[5, 5, 5]} castShadow />
+            <spotLight ref={light_ref} intensity={150} angle={15} penumbra={1} position={light_position.position} castShadow target={light} />
+            {/* -1,3,5 angle 90, int80 */}
 
         </>
     }
 
     return (
         <>
-            <Lights2 />
+            <Lights3 />
         </>
     )
 }
