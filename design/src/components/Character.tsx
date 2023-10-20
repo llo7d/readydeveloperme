@@ -82,6 +82,7 @@ export default function Character({ selected, colors, }, props) {
             nodes.body.morphTargetInfluences[1] = 0
 
         }
+        return <></>
     }
 
     const Phone = () => {

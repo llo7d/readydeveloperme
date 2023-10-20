@@ -20,6 +20,7 @@ import Character from "./components/Character";
 import Loader from "./components/Loader";
 import Ground from "./components/Ground";
 import { useControls } from "leva";
+import Lights from "./components/Lights";
 
 type Mode = "front" | "side" | "close_up" | "free";
 
@@ -102,11 +103,11 @@ export default function App() {
 
 
           <Suspense fallback={null}>
-            <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr" />
             <Ground theme={theme} />
             <Character colors={subToolColors} selected={selected} />
             <Camera viewMode={viewMode} setViewMode={setViewMode} />
             <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
+            <Lights />
 
           </Suspense>
         </Canvas>

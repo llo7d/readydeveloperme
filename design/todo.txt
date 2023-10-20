@@ -2,3 +2,6 @@
 - Disable / enable debugger from App Settings ( X )
 -> Show hide debugger button somewhere 
 - Use nodes book to change color ( )
+
+
+- Add fog to white view ( )

@@ -16,6 +16,7 @@ import IconBeard1 from "../assets/icons/IconBeard1";
 import IconBeard2 from "../assets/icons/IconBeard2";
 import IconBeard3 from "../assets/icons/IconBeard3";
 import IconBeard4 from "../assets/icons/IconBeard4";
+import IconLight from "../assets/icons/IconLight";
 
 type SubTool = {
   id: string;
@@ -303,6 +304,23 @@ export const getToolbarData = (): Tool[] => {
           icon: IconGlasses,
           color: "black",
           name: "glasses_1"
+        },
+        ]
+    },
+    {
+      id: "lights",
+      label: "Lights",
+      icon: IconLight,
+      items:
+        [{
+          id: "lights_1",
+          icon: IconLight,
+          name: "lights_1",
+        },
+        {
+          id: "lights_2",
+          icon: IconLight,
+          name: "lights_2",
         },
         ]
     },
