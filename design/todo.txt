@@ -1,7 +1,16 @@
+- Setup the color change to actually change color for the things. ( )
+-> Add color changer for the chair? ( )
+
+- Camera animations on button presses... fe pose big view, close up for hair and beard... ()
+- Create 3 or 4 solid light setups and make them work ( )
+- Go over the characte and try improve his materials or something cooler? ( )
+
 - Change logo ( )
+- Make export button work ( )
 - Disable / enable debugger from App Settings ( X )
--> Show hide debugger button somewhere 
-- Use nodes book to change color ( )
-
-
+-> Show hide debugger button somewhere next to lloyd ( )
 - Add fog to white view ( )
+
+- Add text read more ( ) 
+
+

@@ -76,6 +76,16 @@ export default function App() {
   const handlePickedLogo = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
+    // Check if logo is a .jpg, if yes, alert the user "Only .png files are allowed"
+
+    if (!file) {
+      return;
+    } else if (file.type !== "image/png") {
+      alert("Only .png files are allowed");
+      return;
+    }
+
+
     console.log(file)
   }
 
@@ -210,7 +220,7 @@ export default function App() {
           ref={refLogoInput}
           className="hidden"
           type="file"
-          accept="image/*"
+          accept="image/png"
           onChange={handlePickedLogo}
         />
       </div>

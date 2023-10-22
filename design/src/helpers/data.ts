@@ -203,23 +203,23 @@ export const getToolbarData = (): Tool[] => {
           icon: IconPants2,
         },
         {
-          id: `tool_2_item_6`,
+          id: `tool_2_item_7`,
           icon: IconPants3,
         },
         {
-          id: `tool_2_item_7`,
+          id: `tool_2_item_8`,
           icon: IconShoes1,
         },
         {
-          id: `tool_2_item_8`,
+          id: `tool_2_item_9`,
           icon: IconShoes2,
         },
         {
-          id: `tool_2_item_9`,
+          id: `tool_2_item_10`,
           icon: IconShoes3,
         },
         {
-          id: `tool_2_item_10`,
+          id: `tool_2_item_11`,
           icon: IconShoes4,
         },
       ]
