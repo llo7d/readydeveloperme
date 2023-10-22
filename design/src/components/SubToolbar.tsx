@@ -47,9 +47,18 @@ const SubToolbar: React.FC<Props> = ({
   const refScroll = useRef<HTMLDivElement>(null);
   const refItems = useRef<(HTMLButtonElement | null)[]>([]);
 
-  const ToolIcon = tool.icon;
+  const ToolIcon = tool.items.find(item => item.id === subToolId)?.icon;
   const hasColorPalette = tool.id === "tool_2";
-  const trayHeight = 4 * tool.items.length + 0.5 * (tool.items.length - 1);
+  
+  const trayHeight = (() => {
+    const height = 4 * tool.items.length + 0.5 * (tool.items.length - 1)
+
+    if (tool.id === 'logo') {
+      return height + 1 + (1 / 16)
+    }
+
+    return height
+  })();
 
   const activeItemRect = (() => {
     const index = tool.items.findIndex((item) => item.id === subToolId);
@@ -153,7 +162,7 @@ const SubToolbar: React.FC<Props> = ({
 
 
             {tool.items.map((item, index) => {
-
+              const isLogoUpload = item.id === "logo_upload";
               const isActive = subToolId === item.id;
               const Icon = item.icon;
 
@@ -171,6 +180,15 @@ const SubToolbar: React.FC<Props> = ({
 
               return (
                 <div key={item.id} className="w-16 h-16">
+                  {isLogoUpload && (
+                    <div
+                      className={classNames("w-full border-b mb-3 mt-1", {
+                        "border-neutral-30": theme === "light",
+                        "border-neutral-80": theme === "dark",
+                      })}
+                    />
+                  )}
+
                   <button
                     key={item.id}
                     ref={(ref) => {
@@ -287,7 +305,7 @@ const SubToolbar: React.FC<Props> = ({
         )}
 
         <div className="w-16 h-16 flex items-center justify-center rounded-2xl border-2 border-primary/50 bg-primary">
-          <ToolIcon className="w-10 h-10" fill="white" />
+          {ToolIcon && <ToolIcon className="w-10 h-10" fill="white" />}
         </div>
       </div>
     </div>

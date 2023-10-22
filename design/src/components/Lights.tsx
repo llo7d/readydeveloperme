@@ -62,7 +62,7 @@ const Lights = () => {
 
     return (
         <>
-            <Lights3 />
+            <Lights2 />
         </>
     )
 }

@@ -17,6 +17,23 @@ import IconBeard2 from "../assets/icons/IconBeard2";
 import IconBeard3 from "../assets/icons/IconBeard3";
 import IconBeard4 from "../assets/icons/IconBeard4";
 import IconLight from "../assets/icons/IconLight";
+import IconAddImage from "../assets/icons/IconAddImage";
+import IconPose2 from "../assets/icons/IconPose2";
+import IconPose3 from "../assets/icons/IconPose3";
+import IconPose4 from "../assets/icons/IconPose4";
+import IconPose5 from "../assets/icons/IconPose5";
+import IconPose6 from "../assets/icons/IconPose6";
+import IconPose7 from "../assets/icons/IconPose7";
+import IconPose8 from "../assets/icons/IconPose8";
+import IconPose9 from "../assets/icons/IconPose9";
+import IconPose10 from "../assets/icons/IconPose10";
+import IconPose11 from "../assets/icons/IconPose11";
+import IconPose12 from "../assets/icons/IconPose12";
+import IconPose13 from "../assets/icons/IconPose13";
+import IconPose14 from "../assets/icons/IconPose14";
+import IconPose15 from "../assets/icons/IconPose15";
+import IconPose16 from "../assets/icons/IconPose16";
+import IconPose17 from "../assets/icons/IconPose17";
 
 type SubTool = {
   id: string;
@@ -47,88 +64,83 @@ export const getToolbarData = (): Tool[] => {
         {
           id: `pose_confident`,
           name: "Confident",
-          icon: IconPose,
+          icon: IconPose2,
         },
         {
           id: `pose_character_stop`,
           name: "CharacterStop",
-          icon: IconPose,
+          icon: IconPose3,
         },
         {
           id: `pose_confused`,
           name: "Confused",
-          icon: IconPose,
+          icon: IconPose4,
         },
 
         {
           id: `pose_happy_open_arm`,
           name: "HappyOpenArm",
-          icon: IconPose,
+          icon: IconPose6,
         },
         {
           id: `pose_jump_happy`,
           name: "JumpHappy",
-          icon: IconPose,
+          icon: IconPose5,
         },
         {
           id: `pose_on_phone`,
           name: "OnPhone",
-          icon: IconPose,
+          icon: IconPose7,
         },
         {
           id: `pose_pc01`,
           name: "PC01",
-          icon: IconPose,
+          icon: IconPose8,
         },
         {
           id: `pose_pc02`,
           name: "PC02",
-          icon: IconPose,
-        },
-        {
-          id: `pose_crossed_arm_1`,
-          name: "CrossedArm",
-          icon: IconPose,
+          icon: IconPose9,
         },
         {
           id: `pose_pointing_down`,
           name: "PointingDown",
-          icon: IconPose,
+          icon: IconPose10,
         },
         {
           id: `pose_pointing_left`,
           name: "PointingLeft",
-          icon: IconPose,
+          icon: IconPose11,
         },
         {
           id: `pose_pointing_right`,
           name: "PointingRight",
-          icon: IconPose,
+          icon: IconPose12,
         },
         {
           id: `pose_pointing_up`,
           name: "PointingUp",
-          icon: IconPose,
+          icon: IconPose13,
         },
         {
           id: `pose_sitting_happy`,
           name: "SittingHappy",
-          icon: IconPose,
+          icon: IconPose14,
         },
         {
           id: `pose_sitting_sad`,
           name: "SittingSad",
-          icon: IconPose,
+          icon: IconPose15,
         },
         {
           id: `pose_standing1`,
           name: "Standing1",
-          icon: IconPose,
+          icon: IconPose16,
         },
         {
           id: `pose_standing_sad`,
           name: "StandingSad",
-          icon: IconPose,
+          icon: IconPose17,
         },
         {
           id: `pose_standing_thinking`,
@@ -338,6 +350,11 @@ export const getToolbarData = (): Tool[] => {
           id: "logo_1",
           icon: IconImage,
           name: "logo_1",
+        },
+        {
+          id: "logo_upload",
+          icon: IconAddImage,
+          name: "logo_upload",
         },
         ]
     },

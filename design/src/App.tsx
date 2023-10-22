@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from "react";
+import { ChangeEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMediaQuery } from "react-responsive";
 import { Canvas } from "@react-three/fiber";
@@ -33,6 +33,7 @@ export default function App() {
   const [isManualOpen, setIsManualOpen] = useState(false);
   const theme = useStore((state) => state.theme);
   const isDesktop = useMediaQuery({ query: "(min-width: 960px)" });
+  const refLogoInput = useRef<HTMLInputElement>(null);
 
   const tools = getToolbarData();
 
@@ -54,7 +55,29 @@ export default function App() {
     })
   );
 
+  const toolItems = useMemo(() => {
+    cd
+    return tools.map((tool) => {
+      if (tool.id === "tool_2") {
+        return tool;
+      }
+
+      const subToolId = selected[tool.id];
+
+      const icon =
+        tool.items.find((item) => item.id === subToolId)?.icon || tool.icon;
+
+      return { ...tool, icon };
+    });
+  }, [selected]);
+
   const trayWidth = 3.5 * tools.length + 1 * (tools.length - 1);
+
+  const handlePickedLogo = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    console.log(file)
+  }
 
   // Initialize selected tool. Select what you want to be selected by default.
   useEffect(() => {
@@ -160,6 +183,10 @@ export default function App() {
               ...selected,
               [tool.id]: item.id
             })
+
+            if (item.id === 'logo_upload') {
+              refLogoInput.current?.click();
+            }
           }}
           // Uncomment below if you want hide/reveal version of the toolbar.
           // onHoverTool={setIsToolbarOpen}
@@ -179,6 +206,13 @@ export default function App() {
 
           }}
         />
+        <input
+          ref={refLogoInput}
+          className="hidden"
+          type="file"
+          accept="image/*"
+          onChange={handlePickedLogo}
+        />
       </div>
 
       <div
@@ -197,8 +231,40 @@ export default function App() {
             >
               <Toolbar
                 toolId={tool.id}
-                items={tools}
-                onClickItem={setTool}
+                items={toolItems}
+                onClickItem={(tool) => {
+                  const newTool = (() => {
+                    if (tool.id === 'tool_2') {
+                      return {
+                        ...tool,
+                        items: tool.items.map((item) => {
+                          const byId = (id: string) => {
+                            return (item: typeof tools[0]) => item.id === id
+                          }
+
+                          const icon = (() => {
+                            switch (item.id) {
+                              case "tool_2_item_1":
+                                return toolItems.find(byId('hair'))?.icon;
+
+                              case "tool_2_item_2":
+                                return toolItems.find(byId('beard'))?.icon;
+
+                              default:
+                                return item.icon;
+                            }
+                          })();
+
+                          return { ...item, icon: icon || item.icon };
+                        }),
+                      };
+                    }
+
+                    return tool
+                  })()
+
+                  setTool(newTool)
+                }}
               />
             </motion.div>
           )}
