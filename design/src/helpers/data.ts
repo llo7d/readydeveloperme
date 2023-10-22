@@ -34,6 +34,19 @@ import IconPose14 from "../assets/icons/IconPose14";
 import IconPose15 from "../assets/icons/IconPose15";
 import IconPose16 from "../assets/icons/IconPose16";
 import IconPose17 from "../assets/icons/IconPose17";
+import IconPose18 from "../assets/icons/IconPose18";
+import IconPose19 from "../assets/icons/IconPose19";
+import IconPose20 from "../assets/icons/IconPose20";
+import IconT1 from "../assets/icons/IconT1";
+import IconT2 from "../assets/icons/IconT2";
+import IconPants1 from "../assets/icons/IconPants1";
+import IconPants2 from "../assets/icons/IconPants2";
+import IconPants3 from "../assets/icons/IconPants3";
+import IconShoes1 from "../assets/icons/IconShoes1";
+import IconShoes2 from "../assets/icons/IconShoes2";
+import IconShoes3 from "../assets/icons/IconShoes3";
+import IconShoes4 from "../assets/icons/IconShoes4";
+
 
 type SubTool = {
   id: string;
@@ -145,17 +158,17 @@ export const getToolbarData = (): Tool[] => {
         {
           id: `pose_standing_thinking`,
           name: "StandingThinking",
-          icon: IconPose,
+          icon: IconPose18,
         },
         {
           id: `pose_waving`,
           name: "Waving",
-          icon: IconPose,
+          icon: IconPose19,
         },
         {
           id: `pose_welcome`,
           name: "Welcome",
-          icon: IconPose,
+          icon: IconPose20,
         },
       ]
     },
@@ -168,32 +181,46 @@ export const getToolbarData = (): Tool[] => {
         {
           id: `tool_2_item_1`,
           icon: IconHair1,
-          color: "red",
         },
         {
           id: `tool_2_item_2`,
           icon: IconBeard,
-          color: "green",
         },
         {
           id: `tool_2_item_3`,
-          icon: IconColor,
-          color: "green",
+          icon: IconT1,
         },
         {
           id: `tool_2_item_4`,
-          icon: IconColor,
-          color: "green",
+          icon: IconT2,
         },
         {
           id: `tool_2_item_5`,
-          icon: IconColor,
-          color: "green",
+          icon: IconPants1,
         },
         {
           id: `tool_2_item_6`,
-          icon: IconColor,
-          color: "green",
+          icon: IconPants2,
+        },
+        {
+          id: `tool_2_item_6`,
+          icon: IconPants3,
+        },
+        {
+          id: `tool_2_item_7`,
+          icon: IconShoes1,
+        },
+        {
+          id: `tool_2_item_8`,
+          icon: IconShoes2,
+        },
+        {
+          id: `tool_2_item_9`,
+          icon: IconShoes3,
+        },
+        {
+          id: `tool_2_item_10`,
+          icon: IconShoes4,
         },
       ]
     },

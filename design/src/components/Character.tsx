@@ -349,12 +349,15 @@ export default function Character({ selected, colors, }, props) {
                 name="body001_1"
                 geometry={nodes.body001_1.geometry}
                 material={materials.MAT_Watch_Plastic}
+
                 skeleton={nodes.body001_1.skeleton}
             />
             <skinnedMesh
                 name="body001_2"
                 geometry={nodes.body001_2.geometry}
                 material={materials.MAT_Watch_Screen}
+                material-metalness={0.5}
+                material-roughness={0.1}
                 skeleton={nodes.body001_2.skeleton}
             />
         </group>

@@ -56,7 +56,7 @@ export default function App() {
   );
 
   const toolItems = useMemo(() => {
-    cd
+
     return tools.map((tool) => {
       if (tool.id === "tool_2") {
         return tool;
