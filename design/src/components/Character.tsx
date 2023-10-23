@@ -52,7 +52,7 @@ export default function Character({ selected, colors }, props) {
         }
     })()
 
-    // Change animation when the index changes
+    //Change animation when the index changes
     useEffect(() => {
         // Reset and fade in animation after an index has been changed
         actions[pose].reset().fadeIn(0.3).play()

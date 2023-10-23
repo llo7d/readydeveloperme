@@ -45,7 +45,6 @@ import IconPants3 from "../assets/icons/IconPants3";
 import IconShoes1 from "../assets/icons/IconShoes1";
 import IconShoes2 from "../assets/icons/IconShoes2";
 import IconShoes3 from "../assets/icons/IconShoes3";
-import IconShoes4 from "../assets/icons/IconWatch";
 import IconWatch from "../assets/icons/IconWatch";
 
 

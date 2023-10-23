@@ -51,6 +51,73 @@ export default function App() {
   // Tool 2 subtool colors. Set default color state here.
   const [subToolColors, setSubToolColors] = useState(
     tools[1].items.map((item) => {
+      if (item.id === "tool_2_item_1") {
+        return {
+          subToolId: item.id,
+          color: "#131313",
+        };
+      }
+      if (item.id === "tool_2_item_2") {
+        return {
+          subToolId: item.id,
+          color: "#131313",
+        };
+      }
+      if (item.id === "tool_2_item_3") {
+        return {
+          subToolId: item.id,
+          color: "#d8d8d8",
+        };
+      }
+
+      if (item.id === "tool_2_item_4") {
+        return {
+          subToolId: item.id,
+          color: "#ffffff",
+        };
+      }
+      if (item.id === "tool_2_item_5") {
+        return {
+          subToolId: item.id,
+          color: "#aabef9",
+        };
+      }
+      if (item.id === "tool_2_item_6") {
+        return {
+          subToolId: item.id,
+          color: "#768bca",
+        };
+      }
+
+      if (item.id === "tool_2_item_8") {
+        return {
+          subToolId: item.id,
+          color: "#ffffff",
+        };
+      }
+
+      if (item.id === "tool_2_item_9") {
+        return {
+          subToolId: item.id,
+          color: "#4e5a87",
+        };
+      }
+
+      if (item.id === "tool_2_item_10") {
+        return {
+          subToolId: item.id,
+          color: "#3a4673",
+        };
+      }
+
+      if (item.id === "tool_2_item_11") {
+        return {
+          subToolId: item.id,
+          color: "#ffffff",
+        };
+      }
+
+
       return {
         subToolId: item.id,
         color: "#141414",
@@ -114,6 +181,11 @@ export default function App() {
 
       if (tool.id === "glasses") {
         newSelected[tool.id] = "glasses_1"
+        continue
+      }
+
+      if (tool.id === "beard") {
+        newSelected[tool.id] = "beard_1"
         continue
       }
 
