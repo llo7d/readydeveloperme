@@ -25,6 +25,8 @@ import Lights from "./components/Lights";
 type Mode = "front" | "side" | "close_up" | "free";
 
 
+// Loading default logo texture to avoid flickering
+// const defaultLogo = new THREE.TextureLoader().load("images/logo.png")
 
 export default function App() {
   // Change to "false" if you want hide/reveal version of the toolbar.
@@ -34,6 +36,7 @@ export default function App() {
   const theme = useStore((state) => state.theme);
   const isDesktop = useMediaQuery({ query: "(min-width: 960px)" });
   const refLogoInput = useRef<HTMLInputElement>(null);
+  const [logo, setLogo] = useState<any>(new THREE.TextureLoader().load("images/logo.png"))
 
   const tools = getToolbarData();
 
@@ -45,7 +48,7 @@ export default function App() {
   // tool.id: tool.items.id
   const [selected, setSelected] = useState<Record<string, string>>({})
 
-  // Tool 2 subtool colors.
+  // Tool 2 subtool colors. Set default color state here.
   const [subToolColors, setSubToolColors] = useState(
     tools[1].items.map((item) => {
       return {
@@ -85,8 +88,17 @@ export default function App() {
       return;
     }
 
+    // // if all is good, setLogo to the new logo
+    // setLogo(new THREE.TextureLoader().load(URL.createObjectURL(file)))
 
-    console.log(file)
+    if (refLogoInput.current) {
+      refLogoInput.current.value = ''
+    }
+
+    setSelected({
+      ...selected,
+      logo: 'logo_1'
+    })
   }
 
   // Initialize selected tool. Select what you want to be selected by default.
@@ -137,7 +149,7 @@ export default function App() {
 
           <Suspense fallback={null}>
             <Ground theme={theme} />
-            <Character colors={subToolColors} selected={selected} />
+            <Character colors={subToolColors} selected={selected} logo={logo} />
             <Camera viewMode={viewMode} setViewMode={setViewMode} />
             <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
             <Lights />

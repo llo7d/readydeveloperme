@@ -1,21 +1,27 @@
-import { useAnimations, useGLTF } from "@react-three/drei";
+import { useAnimations, useGLTF, useTexture } from "@react-three/drei";
+import { color } from "framer-motion";
 import { useControls } from "leva";
 import { useEffect, useRef } from "react";
 import * as THREE from 'three'
 
 
 
-// Default texture for PC screen
-const texture = new THREE.TextureLoader().load("images/change_me.png")
 
+// Loading default logo texture to avoid flickering
+// const defaultLogo = new THREE.TextureLoader().load("images/logo.png")
 
-export default function Character({ selected, colors, }, props) {
+export default function Character({ selected, colors }, props) {
 
 
     const group = useRef();
     const { nodes, materials, animations } = useGLTF("/dev6_compress.glb");
 
     const { actions, mixer, ref } = useAnimations(animations, group);
+
+
+    // // Logo:
+    // materials.logo.map = logo
+    console.log(props.logo);
 
 
     // Pose thing
@@ -248,18 +254,22 @@ export default function Character({ selected, colors, }, props) {
                     geometry={nodes.main_clothes002.geometry}
                     material={materials.shoes_main_sole}
                     skeleton={nodes.main_clothes002.skeleton}
+                    material-color={colors[7].color}
                 />
                 <skinnedMesh
                     name="main_clothes002_1"
                     geometry={nodes.main_clothes002_1.geometry}
                     material={materials.shoes_main_2}
                     skeleton={nodes.main_clothes002_1.skeleton}
+                    material-color={colors[8].color}
                 />
                 <skinnedMesh
                     name="main_clothes002_2"
                     geometry={nodes.main_clothes002_2.geometry}
                     material={materials.shoes_main_1}
                     skeleton={nodes.main_clothes002_2.skeleton}
+
+                    material-color={colors[9].color}
                 />
             </group>
         )
@@ -319,6 +329,7 @@ export default function Character({ selected, colors, }, props) {
                     geometry={nodes.t_shirt.geometry}
                     material={materials.Shirt_main}
                     skeleton={nodes.t_shirt.skeleton}
+                    material-color={colors[3].color}
                 />
                 <skinnedMesh
                     name="t_shirt_1"
@@ -331,26 +342,27 @@ export default function Character({ selected, colors, }, props) {
                     geometry={nodes.t_shirt_2.geometry}
                     material={materials.Shirt_main_cuffs}
                     skeleton={nodes.t_shirt_2.skeleton}
+                    material-color={colors[2].color}
                 />
             </group>
-
         )
     }
 
     const Watch = () => {
-        return (<group name="GEO_Watch">
+        return <group name="GEO_Watch">
             <skinnedMesh
                 name="body001"
                 geometry={nodes.body001.geometry}
                 material={materials.MAT_Watch_Belt}
                 skeleton={nodes.body001.skeleton}
+                material-color={colors[10].color}
             />
             <skinnedMesh
                 name="body001_1"
                 geometry={nodes.body001_1.geometry}
                 material={materials.MAT_Watch_Plastic}
-
                 skeleton={nodes.body001_1.skeleton}
+
             />
             <skinnedMesh
                 name="body001_2"
@@ -362,7 +374,7 @@ export default function Character({ selected, colors, }, props) {
             />
         </group>
 
-        )
+
     }
 
     const Pants = () => {
@@ -373,12 +385,14 @@ export default function Character({ selected, colors, }, props) {
                     geometry={nodes.pants002.geometry}
                     material={materials.Pants_main}
                     skeleton={nodes.pants002.skeleton}
+                    material-color={colors[4].color}
                 />
                 <skinnedMesh
                     name="pants002_1"
                     geometry={nodes.pants002_1.geometry}
                     material={materials.Pants_belt}
                     skeleton={nodes.pants002_1.skeleton}
+                    material-color={colors[6].color}
                 />
                 <skinnedMesh
                     name="pants002_2"
@@ -391,6 +405,7 @@ export default function Character({ selected, colors, }, props) {
                     geometry={nodes.pants002_3.geometry}
                     material={materials.Pants_bottom}
                     skeleton={nodes.pants002_3.skeleton}
+                    material-color={colors[5].color}
                 />
             </group>
         )

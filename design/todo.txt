@@ -1,7 +1,9 @@
 - Setup the color change to actually change color for the things. ( )
 -> Add color changer for the chair? ( )
+-> Create default colors for the main character ( ) #aabef9 pants
 
 - Camera animations on button presses... fe pose big view, close up for hair and beard... ()
+-> Camera not as far back. ( )
 - Create 3 or 4 solid light setups and make them work ( )
 - Go over the characte and try improve his materials or something cooler? ( )
 
@@ -10,7 +12,7 @@
 - Disable / enable debugger from App Settings ( X )
 -> Show hide debugger button somewhere next to lloyd ( )
 - Add fog to white view ( )
-
+- Camera is at default to "Front" ( )
 - Add text read more ( ) 
 
 

@@ -1,9 +1,9 @@
-import create, { GetState, SetState } from "zustand";
+import { create, } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import createThemeSlice from "./slices/themeSlice";
 
-const createRootSlice = (set: SetState<any>, get: GetState<any>) => ({
+const createRootSlice = (set, get) => ({
   ...createThemeSlice(set, get),
 });
 
