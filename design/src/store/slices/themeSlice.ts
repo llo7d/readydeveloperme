@@ -8,7 +8,7 @@ type Slice = {
 };
 
 const createThemeSlice: StoreSlice<Slice> = (set) => ({
-  theme: "light",
+  theme: "dark",
   setTheme: (theme) => set({ theme }),
 });
 
