@@ -7,7 +7,7 @@ import * as THREE from "three";
 const CameraPosition = {
 
     "front": {
-        position: new THREE.Vector3(0, 1, 10),
+        position: new THREE.Vector3(0, 1, 8),
         target: new THREE.Vector3(0, 1, 0),
     },
 
@@ -17,7 +17,7 @@ const CameraPosition = {
     },
 
     "side": {
-        position: new THREE.Vector3(10, 1, 0),
+        position: new THREE.Vector3(8, 1, 0),
         target: new THREE.Vector3(0, 1, 0),
     },
 
