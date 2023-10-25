@@ -1,4 +1,4 @@
-import React, { SVGProps, useRef, useState } from "react";
+import React, { SVGProps, SetStateAction, useEffect, useRef, useState } from "react";
 import classNames from "classnames";
 import { HexColorInput, HexColorPicker } from "react-colorful";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,6 +30,7 @@ type Props = {
   onClickItem: (subTool: SubTool) => void;
   onHoverTool?: (isEntered: boolean) => void;
   onChangeColor?: (color: SubToolColor) => void;
+  setViewMode: (viewMode: string) => void;
 };
 
 const SubToolbar: React.FC<Props> = ({
@@ -39,6 +40,7 @@ const SubToolbar: React.FC<Props> = ({
   onClickItem,
   onHoverTool,
   onChangeColor,
+  setViewMode,
 }) => {
   // Change to "true" if you want "always reveal" version of the toolbar.
   const [isSubToolbarOpen, setIsSubToolbarOpen] = useState(false);
@@ -49,7 +51,7 @@ const SubToolbar: React.FC<Props> = ({
 
   const ToolIcon = tool.items.find(item => item.id === subToolId)?.icon;
   const hasColorPalette = tool.id === "tool_2";
-  
+
   const trayHeight = (() => {
     const height = 4 * tool.items.length + 0.5 * (tool.items.length - 1)
 
@@ -127,7 +129,56 @@ const SubToolbar: React.FC<Props> = ({
 
   // We can change the position of the camera here
   // setViewMode with the subToolId
-  //
+  console.log("subToolId", subToolId);
+  console.log("tool", tool);
+
+
+  // Check what the previous state was, if it was also front, then do nothing.
+  function usePrevious(value) {
+    const ref = useRef();
+    useEffect(() => {
+      ref.current = value;
+    });
+    return ref.current;
+  }
+
+
+  // Maybe making custom camera positions for each tool would be good?
+  useEffect(() => {
+
+
+    // if (tool.id === "pose") {
+    //   if (usePrevious(viewMode) === "front") {
+    //     return;
+    //   }
+    //   else setViewMode("front");
+    // }
+
+    if (tool.id === "pose") {
+      setViewMode("front")
+    }
+    if (tool.id === "tool_2") {
+      setViewMode("front")
+    }
+    if (tool.id === "hair") {
+      setViewMode("close_up");
+    }
+    if (tool.id === "beard") {
+      setViewMode("close_up");
+    }
+    if (tool.id === "face") {
+      setViewMode("close_up");
+    }
+    if (tool.id === "glasses") {
+      setViewMode("close_up");
+    }
+    if (tool.id === "lights") {
+      setViewMode("front");
+    }
+
+  }, [tool.id]);
+
+
 
   return (
     <div

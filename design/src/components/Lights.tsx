@@ -18,8 +18,6 @@ const Lights = ({ selected }) => {
 
     useHelper(light_ref, SpotLightHelper, 'cyan')
 
-    console.log(selected.lights);
-
     // Using useControls, create a [0,0,0 ] poistion for the light, with 1 steps
     const light_position = useControls('Light Position', {
         position: {

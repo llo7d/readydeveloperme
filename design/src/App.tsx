@@ -281,6 +281,7 @@ export default function App() {
           subToolId={selected[tool.id]}
           tool={tool}
           colors={subToolColors}
+          setViewMode={setViewMode}
           onClickItem={(item) => {
             setSelected({
               ...selected,
@@ -290,6 +291,7 @@ export default function App() {
             if (item.id === 'logo_upload') {
               refLogoInput.current?.click();
             }
+
           }}
           // Uncomment below if you want hide/reveal version of the toolbar.
           // onHoverTool={setIsToolbarOpen}
