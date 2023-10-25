@@ -199,6 +199,11 @@ export default function App() {
         continue
       }
 
+      if (tool.id === "lights") {
+        newSelected[tool.id] = "lights_1"
+        continue
+      }
+
       newSelected[tool.id] = tool.items[0].id
     }
 
@@ -234,7 +239,7 @@ export default function App() {
             <Character colors={subToolColors} selected={selected} logo={logo} />
             <Camera viewMode={viewMode} setViewMode={setViewMode} />
             <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
-            <Lights />
+            <Lights selected={selected} />
 
           </Suspense>
         </Canvas>

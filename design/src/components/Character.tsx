@@ -51,12 +51,6 @@ export default function Character({ selected, colors, logo }, props) {
         return () => actions[pose].fadeOut(0.3)
     }, [actions[pose]])
 
-    // Morph target
-    // useEffect(() => {
-    //     // Set the morph target
-    //     nodes.body_2.morphTargetInfluences[0] = selected.morphTargetInfluences
-    // }, [selected.morphTargetInfluences]) morphTargetInfluences
-
 
     nodes.body.morphTargetInfluences[0] = useControls('Morphing', { Nerd: 0 })['Nerd']
     nodes.body.morphTargetInfluences[1] = useControls('Morphing', { Normal: 0 })['Normal']

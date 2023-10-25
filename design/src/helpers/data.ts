@@ -351,16 +351,34 @@ export const getToolbarData = (): Tool[] => {
       label: "Lights",
       icon: IconLight,
       items:
-        [{
-          id: "lights_1",
-          icon: IconLight,
-          name: "lights_1",
-        },
-        {
-          id: "lights_2",
-          icon: IconLight,
-          name: "lights_2",
-        },
+        [
+          {
+
+            id: "lights_0",
+            icon: IconNo,
+            name: "none",
+          },
+          {
+
+            id: "lights_1",
+            icon: IconLight,
+            name: "lights_1",
+          },
+          {
+            id: "lights_2",
+            icon: IconLight,
+            name: "lights_2",
+          },
+          {
+            id: "lights_3",
+            icon: IconLight,
+            name: "lights_3",
+          },
+          {
+            id: "lights_4",
+            icon: IconLight,
+            name: "lights_4",
+          },
         ]
     },
     {

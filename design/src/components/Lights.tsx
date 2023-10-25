@@ -1,15 +1,24 @@
-import { Environment, useHelper } from '@react-three/drei'
+import { Environment, useHelper, useTexture } from '@react-three/drei'
+import { useThree } from '@react-three/fiber'
 import { useControls } from 'leva'
 import React, { useEffect, useRef } from 'react'
 import { SpotLightHelper } from 'three'
 import * as THREE from 'three'
+import { RectAreaLightHelper } from 'three/examples/jsm/helpers/RectAreaLightHelper.js'
+import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLightUniformsLib.js'
 
-const Lights = () => {
 
+
+
+
+const Lights = ({ selected }) => {
+    // const env_map = 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr'
+    // preoload potsdamer_platz_1k.hdr from public folder using useTexture
     const light_ref = useRef()
 
     useHelper(light_ref, SpotLightHelper, 'cyan')
 
+    console.log(selected.lights);
 
     // Using useControls, create a [0,0,0 ] poistion for the light, with 1 steps
     const light_position = useControls('Light Position', {
@@ -26,7 +35,7 @@ const Lights = () => {
 
 
         return <>
-            <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/potsdamer_platz_1k.hdr" />
+            <Environment files={"./potsdamer_platz_1k.hdr"} />
         </>
     }
 
@@ -60,9 +69,50 @@ const Lights = () => {
         </>
     }
 
+    const Lights4 = () => {
+
+        // const { scene } = useThree();
+
+        // // This somehow changes the texture of the ground-plane and makes it more shiny? Very interesting
+        // RectAreaLightUniformsLib.init();
+
+        // const rectLight = new THREE.RectAreaLight("white", 1, 5, 5);
+        // rectLight.position.set(0, 2, -3);
+        // // Rotate rectlight 90 degrees on the x axis
+        // rectLight.rotation.x = THREE.MathUtils.degToRad(-180);
+        // scene.add(rectLight);
+        // scene.add(new RectAreaLightHelper(rectLight));
+
+
+        // // Add a hempehre light to the scene
+        // const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1);
+        // hemiLight.position.set(0, 20, 0);
+        // scene.add(hemiLight);
+
+        const rectAreaLight = useRef();
+        useHelper(rectAreaLight, RectAreaLightHelper);
+
+        return (
+            <rectAreaLight
+                ref={rectAreaLight}
+                position={[0, 2, -3]}
+                width={5}
+                height={5}
+                color={"white"}
+                intensity={1}
+            />
+        )
+
+    }
+
     return (
         <>
-            <Lights2 />
+            {selected.lights === "lights_0" && <></>}
+            {selected.lights === "lights_1" && <Lights1 />}
+            {selected.lights === "lights_2" && <Lights2 />}
+            {selected.lights === "lights_3" && <Lights3 />}
+            {selected.lights === "lights_4" && <Lights4 />}
+
         </>
     )
 }
