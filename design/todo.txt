@@ -7,7 +7,7 @@
 - Create 3 or 4 solid light setups and make them work ( )
 - Go over the characte and try improve his materials or something cooler? ( )
 
-- Change logo ( )
+- Change logo ( X )
 - Make export button work ( )
 - Disable / enable debugger from App Settings ( X )
 -> Show hide debugger button somewhere next to lloyd ( )

@@ -43,10 +43,6 @@ export default function App() {
   const { opacity, blur, scale, far } = useControls('Shadows', { opacity: 0.7, scale: 2, blur: 3.5, far: 1.2 })
 
 
-  //Logo Section
-  const defaultLogo = new THREE.TextureLoader().load("images/logo.png")
-  const [myLogo, setMyLogo] = useState(defaultLogo)
-
 
   // It has this format (you can see data.ts):
   // tool.id: tool.items.id
@@ -143,9 +139,15 @@ export default function App() {
 
       return { ...tool, icon };
     });
-  }, [selected]);
+  }, [selected, tools]);
 
   const trayWidth = 3.5 * tools.length + 1 * (tools.length - 1);
+
+
+
+  //Logo Section
+  const defaultLogo = new THREE.TextureLoader().load("images/logo.png")
+  const [logo, setLogo] = useState(defaultLogo)
 
   const handlePickedLogo = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -159,7 +161,7 @@ export default function App() {
     }
 
     // // if all is good, setLogo to the new logo
-    setMyLogo(new THREE.TextureLoader().load(URL.createObjectURL(file)))
+    setLogo(new THREE.TextureLoader().load(URL.createObjectURL(file)))
 
     if (refLogoInput.current) {
       refLogoInput.current.value = ''
@@ -191,6 +193,7 @@ export default function App() {
         newSelected[tool.id] = "beard_1"
         continue
       }
+
       if (tool.id === "logo") {
         newSelected[tool.id] = "logo_1"
         continue
@@ -228,7 +231,7 @@ export default function App() {
 
           <Suspense fallback={null}>
             <Ground theme={theme} />
-            <Character colors={subToolColors} selected={selected} myLogo={myLogo} />
+            <Character colors={subToolColors} selected={selected} logo={logo} />
             <Camera viewMode={viewMode} setViewMode={setViewMode} />
             <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
             <Lights />
@@ -260,12 +263,6 @@ export default function App() {
       <div className="absolute top-1/2 left-8 -translate-y-1/2">
         <ViewMode mode={viewMode} onClickMode={setViewMode} />
       </div>
-
-      {/* Illustration */}
-      {/* <img
-        className="w-[45rem] h-[40rem] object-contain absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-        src="/images/illustration.svg"
-      /> */}
 
       <div className="flex items-center mr-auto absolute bottom-8 left-8">
         <ThemeToggle />

@@ -6,19 +6,13 @@ import * as THREE from 'three'
 
 
 
-
-// // Loading default logo texture to avoid flickering
-// const defaultLogo = new THREE.TextureLoader().load("images/logo.png")
-
-export default function Character({ selected, colors, myLogo }, props) {
+export default function Character({ selected, colors, logo }, props) {
 
 
     const group = useRef();
     const { nodes, materials, animations } = useGLTF("/dev6_compress.glb");
 
     const { actions, mixer, ref } = useAnimations(animations, group);
-
-
 
 
     // Pose thing
@@ -320,13 +314,10 @@ export default function Character({ selected, colors, myLogo }, props) {
 
     const Tshirt = () => {
 
-        materials.logo.map = myLogo
+        materials.logo.map = logo
         materials.logo.map.flipY = false
 
-        // if (selected.logo)
-
         const Logo = () => {
-            console.log("selected.logo", selected.logo);
 
 
             if (selected.logo === "logo_1") {
