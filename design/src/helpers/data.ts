@@ -376,7 +376,7 @@ export const getToolbarData = (): Tool[] => {
         {
           id: "logo_1",
           icon: IconImage,
-          name: "logo_1",
+          name: "images/logo.png",
         },
         {
           id: "logo_upload",

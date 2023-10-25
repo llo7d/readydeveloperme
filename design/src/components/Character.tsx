@@ -7,10 +7,10 @@ import * as THREE from 'three'
 
 
 
-// Loading default logo texture to avoid flickering
+// // Loading default logo texture to avoid flickering
 // const defaultLogo = new THREE.TextureLoader().load("images/logo.png")
 
-export default function Character({ selected, colors }, props) {
+export default function Character({ selected, colors, myLogo }, props) {
 
 
     const group = useRef();
@@ -19,9 +19,6 @@ export default function Character({ selected, colors }, props) {
     const { actions, mixer, ref } = useAnimations(animations, group);
 
 
-    // // Logo:
-    // materials.logo.map = logo
-    console.log(props.logo);
 
 
     // Pose thing
@@ -322,6 +319,44 @@ export default function Character({ selected, colors }, props) {
     }
 
     const Tshirt = () => {
+
+        materials.logo.map = myLogo
+        materials.logo.map.flipY = false
+
+        // if (selected.logo)
+
+        const Logo = () => {
+            console.log("selected.logo", selected.logo);
+
+
+            if (selected.logo === "logo_1") {
+                return (
+                    <skinnedMesh
+                        name="t_shirt_1"
+                        geometry={nodes.t_shirt_1.geometry}
+                        material={materials.logo}
+                        skeleton={nodes.t_shirt_1.skeleton}
+                        visible={true}
+                        material-roughness={1}
+                        material-metalness={1}
+                    />
+                )
+            }
+            else {
+                return (
+                    <skinnedMesh
+                        name="t_shirt_1"
+                        geometry={nodes.t_shirt_1.geometry}
+                        material={materials.logo}
+                        skeleton={nodes.t_shirt_1.skeleton}
+                        visible={false}
+                    />
+                )
+            }
+
+        }
+
+
         return (
             <group name="GEO_CC_Tshirt">
                 <skinnedMesh
@@ -331,12 +366,7 @@ export default function Character({ selected, colors }, props) {
                     skeleton={nodes.t_shirt.skeleton}
                     material-color={colors[3].color}
                 />
-                <skinnedMesh
-                    name="t_shirt_1"
-                    geometry={nodes.t_shirt_1.geometry}
-                    material={materials.logo}
-                    skeleton={nodes.t_shirt_1.skeleton}
-                />
+                <Logo />
                 <skinnedMesh
                     name="t_shirt_2"
                     geometry={nodes.t_shirt_2.geometry}

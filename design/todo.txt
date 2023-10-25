@@ -1,6 +1,6 @@
-- Setup the color change to actually change color for the things. ( )
+- Setup the color change to actually change color for the things. ( X )
+-> Create default colors for the main character ( X ) 
 -> Add color changer for the chair? ( )
--> Create default colors for the main character ( ) 
 
 - Camera animations on button presses... fe pose big view, close up for hair and beard... ()
 -> Camera not as far back. ( )

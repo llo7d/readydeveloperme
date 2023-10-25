@@ -25,8 +25,6 @@ import Lights from "./components/Lights";
 type Mode = "front" | "side" | "close_up" | "free";
 
 
-// Loading default logo texture to avoid flickering
-// const defaultLogo = new THREE.TextureLoader().load("images/logo.png")
 
 export default function App() {
   // Change to "false" if you want hide/reveal version of the toolbar.
@@ -36,13 +34,19 @@ export default function App() {
   const theme = useStore((state) => state.theme);
   const isDesktop = useMediaQuery({ query: "(min-width: 960px)" });
   const refLogoInput = useRef<HTMLInputElement>(null);
-  const [logo, setLogo] = useState<any>(new THREE.TextureLoader().load("images/logo.png"))
+
 
   const tools = getToolbarData();
 
   const [tool, setTool] = useState(tools[0]);
 
   const { opacity, blur, scale, far } = useControls('Shadows', { opacity: 0.7, scale: 2, blur: 3.5, far: 1.2 })
+
+
+  //Logo Section
+  const defaultLogo = new THREE.TextureLoader().load("images/logo.png")
+  const [myLogo, setMyLogo] = useState(defaultLogo)
+
 
   // It has this format (you can see data.ts):
   // tool.id: tool.items.id
@@ -146,7 +150,6 @@ export default function App() {
   const handlePickedLogo = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
-    // Check if logo is a .jpg, if yes, alert the user "Only .png files are allowed"
 
     if (!file) {
       return;
@@ -156,7 +159,7 @@ export default function App() {
     }
 
     // // if all is good, setLogo to the new logo
-    // setLogo(new THREE.TextureLoader().load(URL.createObjectURL(file)))
+    setMyLogo(new THREE.TextureLoader().load(URL.createObjectURL(file)))
 
     if (refLogoInput.current) {
       refLogoInput.current.value = ''
@@ -186,6 +189,10 @@ export default function App() {
 
       if (tool.id === "beard") {
         newSelected[tool.id] = "beard_1"
+        continue
+      }
+      if (tool.id === "logo") {
+        newSelected[tool.id] = "logo_1"
         continue
       }
 
@@ -221,7 +228,7 @@ export default function App() {
 
           <Suspense fallback={null}>
             <Ground theme={theme} />
-            <Character colors={subToolColors} selected={selected} logo={logo} />
+            <Character colors={subToolColors} selected={selected} myLogo={myLogo} />
             <Camera viewMode={viewMode} setViewMode={setViewMode} />
             <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
             <Lights />
