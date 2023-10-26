@@ -126,55 +126,62 @@ const SubToolbar: React.FC<Props> = ({
     };
   })();
 
-
-  // We can change the position of the camera here
-  // setViewMode with the subToolId
-  console.log("subToolId", subToolId);
-  console.log("tool", tool);
-
-
-  // Check what the previous state was, if it was also front, then do nothing.
-  function usePrevious(value) {
-    const ref = useRef();
-    useEffect(() => {
-      ref.current = value;
-    });
-    return ref.current;
-  }
-
-
+  // Moving camera section. 
   // Maybe making custom camera positions for each tool would be good?
+  const prevToolId = useRef(tool.id)
   useEffect(() => {
 
-
-    // if (tool.id === "pose") {
-    //   if (usePrevious(viewMode) === "front") {
-    //     return;
-    //   }
-    //   else setViewMode("front");
-    // }
-
+    // I think this is somehow wrong but, it works for now. Jobs finished.
     if (tool.id === "pose") {
-      setViewMode("front")
+      if (prevToolId.current === "tool_2" || prevToolId.current === "pose" || prevToolId.current === "lights" || prevToolId.current === "logo") {
+        return;
+      }
+      setViewMode("front");
     }
     if (tool.id === "tool_2") {
-      setViewMode("front")
+      if (prevToolId.current === "tool_2" || prevToolId.current === "pose" || prevToolId.current === "lights" || prevToolId.current === "logo") {
+        return;
+      }
+      else setViewMode("front");
     }
     if (tool.id === "hair") {
+      if (prevToolId.current === "hair" || prevToolId.current === "beard" || prevToolId.current === "face" || prevToolId.current === "glasses") {
+        return;
+      }
       setViewMode("close_up");
     }
     if (tool.id === "beard") {
+      if (prevToolId.current === "hair" || prevToolId.current === "beard" || prevToolId.current === "face" || prevToolId.current === "glasses") {
+        return;
+      }
       setViewMode("close_up");
     }
     if (tool.id === "face") {
+      if (prevToolId.current === "hair" || prevToolId.current === "beard" || prevToolId.current === "face" || prevToolId.current === "glasses") {
+        return;
+      }
       setViewMode("close_up");
     }
     if (tool.id === "glasses") {
+      if (prevToolId.current === "hair" || prevToolId.current === "beard" || prevToolId.current === "face" || prevToolId.current === "glasses") {
+        return;
+      }
       setViewMode("close_up");
     }
     if (tool.id === "lights") {
-      setViewMode("front");
+      if (prevToolId.current === "tool_2" || prevToolId.current === "pose" || prevToolId.current === "lights" || prevToolId.current === "logo") {
+        return;
+      }
+      else setViewMode("front");
     }
+    if (tool.id === "logo") {
+      if (prevToolId.current === "tool_2" || prevToolId.current === "pose" || prevToolId.current === "lights" || prevToolId.current === "logo") {
+        return;
+      }
+      else setViewMode("front");
+    }
+    prevToolId.current = tool.id
+
 
   }, [tool.id]);
 
