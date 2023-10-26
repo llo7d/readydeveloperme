@@ -36,6 +36,7 @@ export default function App() {
   const refLogoInput = useRef<HTMLInputElement>(null);
 
 
+  const [visible, setVisible] = useState(true)
   const tools = getToolbarData();
 
   const [tool, setTool] = useState(tools[0]);
@@ -211,6 +212,36 @@ export default function App() {
   }, [])
 
 
+  // Download pose 
+  const DownloadPose = () => {
+
+
+    setVisible(false)
+    // Set view mode to "front" and wait for 1 second
+    setViewMode("front")
+    setTimeout((
+
+    ) => {
+      const canvas = document.querySelector("canvas");
+
+      console.log(canvas);
+
+      // const image = canvas.toDataURL("image/png", 1).replace("image/png", "image/octet-stream");
+      const image = canvas.toDataURL("image/png", 1)
+
+      // Upscale the image
+
+      const link = document.createElement('a');
+      link.download = "pose.png";
+      link.href = image;
+      link.click();
+
+      setVisible(true)
+    }, 1000);
+
+
+
+  };
 
   if (!isDesktop) {
     return (
@@ -229,13 +260,10 @@ export default function App() {
     >
       <Loader />
 
-      <div className="w-full h-screen">
-        {/* <Canvas shadows camera={{ position: camera.position, fov: 20 }} > */}
-        <Canvas shadows camera={{ fov: 20 }} >
-
-
+      <div className="w-full h-screen ">
+        <Canvas gl={{ preserveDrawingBuffer: true }} shadows camera={{ fov: 20 }} >
           <Suspense fallback={null}>
-            <Ground theme={theme} />
+            <Ground theme={theme} visible={visible} />
             <Character colors={subToolColors} selected={selected} logo={logo} />
             <Camera viewMode={viewMode} setViewMode={setViewMode} />
             <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
@@ -253,6 +281,7 @@ export default function App() {
         <button
           className="text-sm text-white font-medium h-11 px-4 bg-primary rounded-full ml-auto"
           type="button"
+          onClick={() => { DownloadPose() }}
         >
           Export
         </button>

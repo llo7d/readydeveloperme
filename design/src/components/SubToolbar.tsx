@@ -183,8 +183,7 @@ const SubToolbar: React.FC<Props> = ({
     prevToolId.current = tool.id
 
 
-  }, [tool.id]);
-
+  }, [tool.id, setViewMode]);
 
 
   return (

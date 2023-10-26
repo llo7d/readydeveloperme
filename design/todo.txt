@@ -2,8 +2,9 @@
 -> Create default colors for the main character ( X ) 
 -> Add color changer for the chair? ( )
 
-- Camera animations on button presses... fe pose big view, close up for hair and beard... ()
--> Camera not as far back. ( )
+- Camera animations on button presses... fe pose big view, close up for hair and beard... ( X )
+-> Camera not as far back. ( X )
+-> Create more specific view for each tool? ( ) For logo,
 - Create 3 or 4 solid light setups and make them work ( )
 - Go over the characte and try improve his materials or something cooler? ( )
 

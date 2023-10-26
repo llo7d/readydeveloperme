@@ -1,8 +1,10 @@
 import { useAnimations, useGLTF, useTexture } from "@react-three/drei";
+import { useLoader } from "@react-three/fiber";
 import { color } from "framer-motion";
 import { useControls } from "leva";
 import { useEffect, useRef } from "react";
 import * as THREE from 'three'
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 
 
@@ -10,6 +12,10 @@ export default function Character({ selected, colors, logo }, props) {
 
 
     const group = useRef();
+
+    // Load the textures as we are usin
+    // const { nodes, materials, animations } = useLoader(GLTFLoader, "/dev6_compress.glb")
+
     const { nodes, materials, animations } = useGLTF("/dev6_compress.glb");
 
     const { actions, mixer, ref } = useAnimations(animations, group);
