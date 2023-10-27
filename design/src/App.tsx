@@ -21,7 +21,7 @@ import Loader from "./components/Loader";
 import Ground from "./components/Ground";
 import { useControls } from "leva";
 import Lights from "./components/Lights";
-import DownloadPose from "./components/DownloadPose";
+import { Leva } from 'leva'
 
 type Mode = "front" | "side" | "close_up" | "free";
 
@@ -36,6 +36,8 @@ export default function App() {
   const theme = useStore((state) => state.theme);
   const isDesktop = useMediaQuery({ query: "(min-width: 960px)" });
   const refLogoInput = useRef<HTMLInputElement>(null);
+
+  const [debuggerVisible, setDebuggerVisible] = useState(false)
 
 
   const [visible, setVisible] = useState(true)
@@ -300,8 +302,23 @@ export default function App() {
 
       <div className="flex items-center mr-auto absolute bottom-8 left-8">
         <ThemeToggle />
-        <p className="text-[#8D98AF] text-xs font-medium ml-5">
-          © 2023, by llo7d
+        <button className="text-[#8D98AF] text-xs font-medium ml-5">
+          {
+            debuggerVisible ? (
+              <span onClick={() => setDebuggerVisible(!debuggerVisible)}>Show Debugger</span>
+            ) : (
+              <span onClick={() => setDebuggerVisible(!debuggerVisible)}>Hide Debugger</span>
+            )
+
+          }
+
+
+        </button>
+        <p className="text-[#8D98AF] text-xs font-medium ml-5" >
+          © 2023,
+          <a href="https://github.com/llo7d" target="_blank">
+            {" "}by llo7d
+          </a>
         </p>
       </div>
 
@@ -409,6 +426,9 @@ export default function App() {
         isOpen={isManualOpen}
         onClickClose={() => setIsManualOpen(false)}
       />
+
+      <Leva hidden={debuggerVisible} />
+
     </div >
   );
 }

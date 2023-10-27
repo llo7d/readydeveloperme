@@ -42,15 +42,14 @@ export default function Character({ selected, colors, logo }, props) {
         }
     })()
 
-    //Change animation when the index changes
+    //Change Pose when the index changes
     useEffect(() => {
-        // Reset and fade in animation after an index has been changed
+        // Reset and fade in pose after an index has been changed
         actions[pose].reset().fadeIn(0.3).play()
         // In the clean-up phase, fade it out
         return () => actions[pose].fadeOut(0.3)
     }, [actions[pose]])
 
-    // Controling the face morphing
     const Face = () => {
 
         if (selected.face === "default") {

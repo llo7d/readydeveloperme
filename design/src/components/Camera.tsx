@@ -23,7 +23,8 @@ const CameraPosition = {
 
     "logo": {
         position: new THREE.Vector3(0.19, 1.6, 3),
-        target: new THREE.Vector3(0.19, 1.6, 0),
+        // I could probably add the logo ref positiong here.
+        target: new THREE.Vector3(0.19, 1.6, 0.2),
     },
 
     "free": "free"
