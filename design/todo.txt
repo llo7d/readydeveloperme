@@ -6,6 +6,7 @@
 - Add text read more ( X ) 
 
 - Clean up code ( )
+-> Add favicon ( )
 - Publish on Vercel ( )
 
 

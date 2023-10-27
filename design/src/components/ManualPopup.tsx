@@ -98,7 +98,7 @@ const ManualPopup: React.FC<Props> = ({ isOpen, onClickClose }) => {
               })}
             >
               <a className="text-primary hover:underline" href="
-              https://github.com/llo7d/character_customizer" target="_blank">
+              https://github.com/llo7d/readydeveloperme" target="_blank">
                 See the source code of Ready Developer {" "}
               </a>
 
