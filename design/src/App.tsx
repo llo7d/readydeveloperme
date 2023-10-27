@@ -1,7 +1,7 @@
 import { ChangeEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMediaQuery } from "react-responsive";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import { ContactShadows } from "@react-three/drei";
 import * as THREE from 'three'
 
@@ -45,7 +45,7 @@ export default function App() {
 
   const [tool, setTool] = useState(tools[0]);
 
-  const { opacity, blur, scale, far } = useControls('Shadows', { opacity: 0.7, scale: 2, blur: 3.5, far: 1.2 })
+  const { opacity, blur, scale, far } = useControls('Ground Shadows', { opacity: 0.7, scale: 2, blur: 3.5, far: 1.2 })
 
 
 

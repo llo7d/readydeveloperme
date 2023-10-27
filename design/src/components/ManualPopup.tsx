@@ -47,19 +47,28 @@ const ManualPopup: React.FC<Props> = ({ isOpen, onClickClose }) => {
                 "text-white": theme === "dark",
               })}
             >
-              How to use this feature?
+              Ready Developer Me
+              <h1 className="text-primary">.</h1>
             </h1>
-
             <p
               className={classNames("text-xl mb-10", {
                 "text-[#121F3E]": theme === "light",
                 "text-white": theme === "dark",
               })}
             >
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Culpa
-              sapiente quos hic maiores eius. Itaque nisi error veritatis,
-              tempore maiores ipsa facilis nobis? Impedit, praesentium quia
-              tenetur non consequatur rerum.
+              The easiest way to your Developer Avatar
+
+              <ol >
+                <li>1. Customize the appearance </li>
+                <li>2. Choose from the 23 avaialble poses.</li>
+                <li>3. Click export.</li>
+              </ol>
+              <br></br>
+              Recommended logo size is 2000x2000px.
+              <br></br>
+              You can use the renders for your website, blog, social media, or anything
+              else. It's free to use, and you can use it for both personal and business purposes.
+
             </p>
 
             <p
@@ -68,10 +77,18 @@ const ManualPopup: React.FC<Props> = ({ isOpen, onClickClose }) => {
                 "text-white": theme === "dark",
               })}
             >
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Culpa
-              sapiente quos hic maiores eius. Itaque nisi error veritatis,
-              tempore maiores ipsa facilis nobis? Impedit, praesentium quia
-              tenetur non consequatur rerum.
+              The renders work great with a  {" "}
+              <a className="text-primary hover:underline" href="
+              https://3d-portfolio-beryl.vercel.app/" target="_blank">
+                Porfolio Template {" "}
+              </a>
+              I made.
+              {<br></br>}
+              <a className="text-primary hover:underline" href="
+            https://github.com/llo7d/PortfolioWebsite" target="_blank">
+                Grab the code {" "}
+              </a>
+              and make your own Portfolio Website in minutes.
             </p>
 
             <p
@@ -80,35 +97,13 @@ const ManualPopup: React.FC<Props> = ({ isOpen, onClickClose }) => {
                 "text-white": theme === "dark",
               })}
             >
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Culpa
-              sapiente quos hic maiores eius. Itaque nisi error veritatis,
-              tempore maiores ipsa facilis nobis? Impedit, praesentium quia
-              tenetur non consequatur rerum.
+              <a className="text-primary hover:underline" href="
+              https://github.com/llo7d/character_customizer" target="_blank">
+                See the source code of Ready Developer {" "}
+              </a>
+
             </p>
 
-            <p
-              className={classNames("text-xl mb-10", {
-                "text-[#121F3E]": theme === "light",
-                "text-white": theme === "dark",
-              })}
-            >
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Culpa
-              sapiente quos hic maiores eius. Itaque nisi error veritatis,
-              tempore maiores ipsa facilis nobis? Impedit, praesentium quia
-              tenetur non consequatur rerum.
-            </p>
-
-            <p
-              className={classNames("text-xl mb-10", {
-                "text-[#121F3E]": theme === "light",
-                "text-white": theme === "dark",
-              })}
-            >
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Culpa
-              sapiente quos hic maiores eius. Itaque nisi error veritatis,
-              tempore maiores ipsa facilis nobis? Impedit, praesentium quia
-              tenetur non consequatur rerum.
-            </p>
 
             <div className="flex items-center justify-between">
               <p
@@ -117,7 +112,11 @@ const ManualPopup: React.FC<Props> = ({ isOpen, onClickClose }) => {
                   "text-white": theme === "dark",
                 })}
               >
-                Created by llo7d
+                created by {" "}
+                <a className="text-primary hover:underline" href="
+              https://github.com/llo7d" target="_blank">
+                  llo7d{" "}
+                </a>
               </p>
 
               <p
@@ -126,13 +125,13 @@ const ManualPopup: React.FC<Props> = ({ isOpen, onClickClose }) => {
                   "text-white": theme === "dark",
                 })}
               >
-                <a className="text-primary hover:underline" href="#">
+                {/* <a className="text-primary hover:underline" href="#">
                   Terms
                 </a>{" "}
                 &{" "}
                 <a className="text-primary hover:underline" href="#">
                   Licensing
-                </a>
+                </a> */}
               </p>
             </div>
           </div>

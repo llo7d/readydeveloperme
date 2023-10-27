@@ -1,7 +1,11 @@
 - Go over the characte and try improve his materials or something cooler? ( X )
 -> Kinda did but can try again ( )
 
-- Camera is at default to "Front" ( )
-- Add text read more ( ) 
+
+- Camera is at default to "Front" (  )
+- Add text read more ( X ) 
+
+- Clean up code ( )
+- Publish on Vercel ( )
 
 

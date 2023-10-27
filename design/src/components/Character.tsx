@@ -1,5 +1,4 @@
 import { useAnimations, useGLTF } from "@react-three/drei";
-import { useControls } from "leva";
 import { useEffect, useRef } from "react";
 
 

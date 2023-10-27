@@ -373,11 +373,6 @@ export const getToolbarData = (): Tool[] => {
             icon: IconLight,
             name: "lights_2",
           },
-          {
-            id: "lights_3",
-            icon: IconLight,
-            name: "lights_3",
-          },
         ]
     },
     {

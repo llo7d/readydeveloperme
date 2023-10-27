@@ -1,4 +1,4 @@
-import React, { SVGProps, SetStateAction, useEffect, useRef, useState } from "react";
+import React, { SVGProps, useEffect, useRef, useState } from "react";
 import classNames from "classnames";
 import { HexColorInput, HexColorPicker } from "react-colorful";
 import { motion, AnimatePresence } from "framer-motion";
