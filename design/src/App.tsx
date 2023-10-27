@@ -1,7 +1,7 @@
 import { ChangeEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMediaQuery } from "react-responsive";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import { ContactShadows } from "@react-three/drei";
 import * as THREE from 'three'
 
@@ -21,12 +21,14 @@ import Loader from "./components/Loader";
 import Ground from "./components/Ground";
 import { useControls } from "leva";
 import Lights from "./components/Lights";
+import DownloadPose from "./components/DownloadPose";
 
 type Mode = "front" | "side" | "close_up" | "free";
 
 
 
 export default function App() {
+
   // Change to "false" if you want hide/reveal version of the toolbar.
   const [isToolbarOpen, setIsToolbarOpen] = useState(true);
   const [viewMode, setViewMode] = useState<Mode>("front");
@@ -212,7 +214,7 @@ export default function App() {
   }, [])
 
 
-  // Download pose 
+  // Download pose as png
   const DownloadPose = () => {
 
 
@@ -238,9 +240,6 @@ export default function App() {
 
       setVisible(true)
     }, 1000);
-
-
-
   };
 
   if (!isDesktop) {
@@ -250,7 +249,6 @@ export default function App() {
       </div>
     );
   }
-
   return (
     <div
       className={classNames("w-full h-screen relative", {
@@ -261,7 +259,7 @@ export default function App() {
       <Loader />
 
       <div className="w-full h-screen ">
-        <Canvas gl={{ preserveDrawingBuffer: true }} shadows camera={{ fov: 20 }} >
+        <Canvas gl={{ preserveDrawingBuffer: true, antialias: true }} shadows camera={{ fov: 20 }} linear={false} dpr={1.5}>
           <Suspense fallback={null}>
             <Ground theme={theme} visible={visible} />
             <Character colors={subToolColors} selected={selected} logo={logo} />
@@ -281,7 +279,9 @@ export default function App() {
         <button
           className="text-sm text-white font-medium h-11 px-4 bg-primary rounded-full ml-auto"
           type="button"
-          onClick={() => { DownloadPose() }}
+          onClick={() => {
+            DownloadPose();
+          }}
         >
           Export
         </button>

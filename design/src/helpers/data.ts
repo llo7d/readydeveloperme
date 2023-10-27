@@ -46,6 +46,7 @@ import IconShoes1 from "../assets/icons/IconShoes1";
 import IconShoes2 from "../assets/icons/IconShoes2";
 import IconShoes3 from "../assets/icons/IconShoes3";
 import IconWatch from "../assets/icons/IconWatch";
+import IconHats from "../assets/icons/IconHats";
 
 
 type SubTool = {
@@ -335,14 +336,17 @@ export const getToolbarData = (): Tool[] => {
         [{
           id: `glasses_none`,
           icon: IconNo,
-          color: "black",
           name: "glasses_none"
         },
         {
           id: "glasses_1",
           icon: IconGlasses,
-          color: "black",
           name: "glasses_1"
+        },
+        {
+          id: "glasses_2",
+          icon: IconGlasses,
+          name: "glasses_2"
         },
         ]
     },
@@ -374,11 +378,24 @@ export const getToolbarData = (): Tool[] => {
             icon: IconLight,
             name: "lights_3",
           },
-          {
-            id: "lights_4",
-            icon: IconLight,
-            name: "lights_4",
-          },
+        ]
+    },
+    {
+      id: "hats",
+      label: "Hats",
+      icon: IconHats,
+      items:
+        [{
+          id: "logo_none",
+          icon: IconNo,
+          name: "logo_none"
+        },
+        {
+          id: "logo_1",
+          icon: IconHats,
+          name: "logo_1",
+        },
+
         ]
     },
     {

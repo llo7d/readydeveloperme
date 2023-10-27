@@ -21,6 +21,11 @@ const CameraPosition = {
         target: new THREE.Vector3(0, 1, 0),
     },
 
+    "logo": {
+        position: new THREE.Vector3(0.19, 1.6, 3),
+        target: new THREE.Vector3(0.19, 1.6, 0),
+    },
+
     "free": "free"
 
 }
@@ -52,7 +57,10 @@ const CameraControls = ({ viewMode, setViewMode }) => {
             orbitControls.current.target.lerp(CameraPosition.side.target, 3 * delta)
 
         }
-
+        if (viewMode == "logo") {
+            state.camera.position.lerp(CameraPosition.logo.position, 3 * delta)
+            orbitControls.current.target.lerp(CameraPosition.logo.target, 3 * delta)
+        }
 
     }
     )

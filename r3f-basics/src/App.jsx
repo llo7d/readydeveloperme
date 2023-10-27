@@ -563,8 +563,6 @@ function App() {
 
     setLogo(URL.createObjectURL(e.target.files[0]));
 
-    console.log("logo", logo);
-
 
   }
 

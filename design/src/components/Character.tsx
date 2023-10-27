@@ -1,10 +1,6 @@
-import { useAnimations, useGLTF, useTexture } from "@react-three/drei";
-import { useLoader } from "@react-three/fiber";
-import { color } from "framer-motion";
+import { useAnimations, useGLTF } from "@react-three/drei";
 import { useControls } from "leva";
 import { useEffect, useRef } from "react";
-import * as THREE from 'three'
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 
 
@@ -12,9 +8,6 @@ export default function Character({ selected, colors, logo }, props) {
 
 
     const group = useRef();
-
-    // Load the textures as we are usin
-    // const { nodes, materials, animations } = useLoader(GLTFLoader, "/dev6_compress.glb")
 
     const { nodes, materials, animations } = useGLTF("/dev6_compress.glb");
 
@@ -56,12 +49,6 @@ export default function Character({ selected, colors, logo }, props) {
         // In the clean-up phase, fade it out
         return () => actions[pose].fadeOut(0.3)
     }, [actions[pose]])
-
-
-    nodes.body.morphTargetInfluences[0] = useControls('Morphing', { Nerd: 0 })['Nerd']
-    nodes.body.morphTargetInfluences[1] = useControls('Morphing', { Normal: 0 })['Normal']
-
-
 
     // Controling the face morphing
     const Face = () => {
@@ -115,6 +102,7 @@ export default function Character({ selected, colors, logo }, props) {
                 material={materials.MAT_Hair}
                 skeleton={nodes.GEO_Hair_01.skeleton}
                 material-color={colors[0].color}
+                material-roughness={0.5}
             />
 
         const GEO_Hair_02 = <skinnedMesh
@@ -160,6 +148,9 @@ export default function Character({ selected, colors, logo }, props) {
             material={materials.MAT_Beard}
             skeleton={nodes.GEO_Beard_01.skeleton}
             material-color={colors[1].color}
+            material-roughness={0.6}
+            material-metalness={0.1}
+            material-envMap={null}
         />
 
         const GEO_Beard_02 =
@@ -295,17 +286,55 @@ export default function Character({ selected, colors, logo }, props) {
                         localToWorld={nodes.Plane003.matrixWorld}
                     />
 
+                    {/* <skinnedMesh
+                        name="Plane003_1"
+                        geometry={nodes.Plane003_1.geometry}
+                        material={materials.glass_transparent}
+                        material-opacity={0.9}
+                        skeleton={nodes.Plane003_1.skeleton}
+                        material-metalness={-3}
+
+
+                    /> */}
+
                     <skinnedMesh
                         name="Plane003_1"
                         geometry={nodes.Plane003_1.geometry}
                         material={materials.glass_transparent}
+                        material-opacity={0.1}
+                        material-metalness={-12}
                         skeleton={nodes.Plane003_1.skeleton}
 
                     />
                 </group>
             )
-        }
 
+
+        }
+        else if (selected.glasses === "glasses_2") {
+            return (
+                <group name="GEO_Glassess_01">
+                    <skinnedMesh
+                        name="Plane003"
+                        geometry={nodes.Plane003.geometry}
+                        material={materials.glass_plastic}
+                        skeleton={nodes.Plane003.skeleton}
+                        localToWorld={nodes.Plane003.matrixWorld}
+                    />
+
+                    <skinnedMesh
+                        name="Plane003_1"
+                        geometry={nodes.Plane003_1.geometry}
+                        material={materials.glass_transparent}
+                        material-opacity={0.9}
+                        skeleton={nodes.Plane003_1.skeleton}
+                        material-metalness={-3}
+                    />
+
+
+                </group>
+            )
+        }
         else {
             return <></>
         }
@@ -460,6 +489,7 @@ export default function Character({ selected, colors, logo }, props) {
                             skeleton={nodes.body_2.skeleton}
                             morphTargetDictionary={nodes.body_2.morphTargetDictionary}
                             morphTargetInfluences={nodes.body_2.morphTargetInfluences}
+
                         />
                     </group>
                     <primitive object={nodes["DEF-pelvisL"]} />

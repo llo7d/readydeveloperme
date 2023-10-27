@@ -133,13 +133,13 @@ const SubToolbar: React.FC<Props> = ({
 
     // I think this is somehow wrong but, it works for now. Jobs finished.
     if (tool.id === "pose") {
-      if (prevToolId.current === "tool_2" || prevToolId.current === "pose" || prevToolId.current === "lights" || prevToolId.current === "logo") {
+      if (prevToolId.current === "tool_2" || prevToolId.current === "pose" || prevToolId.current === "lights") {
         return;
       }
       setViewMode("front");
     }
     if (tool.id === "tool_2") {
-      if (prevToolId.current === "tool_2" || prevToolId.current === "pose" || prevToolId.current === "lights" || prevToolId.current === "logo") {
+      if (prevToolId.current === "tool_2" || prevToolId.current === "pose" || prevToolId.current === "lights") {
         return;
       }
       else setViewMode("front");
@@ -169,16 +169,14 @@ const SubToolbar: React.FC<Props> = ({
       setViewMode("close_up");
     }
     if (tool.id === "lights") {
-      if (prevToolId.current === "tool_2" || prevToolId.current === "pose" || prevToolId.current === "lights" || prevToolId.current === "logo") {
+      if (prevToolId.current === "tool_2" || prevToolId.current === "pose" || prevToolId.current === "lights") {
         return;
       }
       else setViewMode("front");
     }
     if (tool.id === "logo") {
-      if (prevToolId.current === "tool_2" || prevToolId.current === "pose" || prevToolId.current === "lights" || prevToolId.current === "logo") {
-        return;
-      }
-      else setViewMode("front");
+
+      setViewMode("logo");
     }
     prevToolId.current = tool.id
 
