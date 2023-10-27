@@ -37,7 +37,7 @@ export default function App() {
   const isDesktop = useMediaQuery({ query: "(min-width: 960px)" });
   const refLogoInput = useRef<HTMLInputElement>(null);
 
-  const [debuggerVisible, setDebuggerVisible] = useState(false)
+  const [debuggerVisible, setDebuggerVisible] = useState(true)
 
 
   const [visible, setVisible] = useState(true)
