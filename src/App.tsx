@@ -45,7 +45,7 @@ export default function App() {
 
   const [tool, setTool] = useState(tools[0]);
 
-  const { opacity, blur, scale, far } = useControls('Ground Shadows', { opacity: 0.7, scale: 2, blur: 3.5, far: 1.2 })
+  const { opacity, blur, scale, far } = useControls('Ground Shadows', { opacity: 0.7, scale: 2, blur: 3.5, far: 1.2, step: 1, })
 
 
 
@@ -228,8 +228,9 @@ export default function App() {
     ) => {
       const canvas = document.querySelector("canvas");
 
-      console.log(canvas);
-
+      if (!canvas) {
+        return;
+      }
       // const image = canvas.toDataURL("image/png", 1).replace("image/png", "image/octet-stream");
       const image = canvas.toDataURL("image/png", 1)
 
@@ -262,14 +263,11 @@ export default function App() {
 
       <div className="w-full h-screen ">
         <Canvas gl={{ preserveDrawingBuffer: true, antialias: true }} shadows camera={{ fov: 20 }} linear={false} dpr={1.5}>
-          <Suspense fallback={null}>
-            <Ground theme={theme} visible={visible} />
-            <Character colors={subToolColors} selected={selected} logo={logo} />
-            <Camera viewMode={viewMode} setViewMode={setViewMode} />
-            <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
-            <Lights selected={selected} />
-
-          </Suspense>
+          <Ground theme={theme} visible={visible} />
+          <Character colors={subToolColors} selected={selected} logo={logo} />
+          <Camera viewMode={viewMode} setViewMode={setViewMode} />
+          <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
+          <Lights selected={selected} />
         </Canvas>
       </div>
 

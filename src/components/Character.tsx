@@ -191,10 +191,7 @@ export default function Character({ selected, colors, logo }, props) {
 
     const Desktop = () => {
 
-        // console.log("nodes", nodes);
-
         // Preload the texture to avoid flickering
-
         // Get the a mesh from nodes, called desktop_bone
         const desktop_bone = nodes.desktop_bone
 
@@ -283,17 +280,6 @@ export default function Character({ selected, colors, logo }, props) {
                         skeleton={nodes.Plane003.skeleton}
                         localToWorld={nodes.Plane003.matrixWorld}
                     />
-
-                    {/* <skinnedMesh
-                        name="Plane003_1"
-                        geometry={nodes.Plane003_1.geometry}
-                        material={materials.glass_transparent}
-                        material-opacity={0.9}
-                        skeleton={nodes.Plane003_1.skeleton}
-                        material-metalness={-3}
-
-
-                    /> */}
 
                     <skinnedMesh
                         name="Plane003_1"

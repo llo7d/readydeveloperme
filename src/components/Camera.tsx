@@ -7,7 +7,7 @@ import * as THREE from "three";
 const CameraPosition = {
 
     "front": {
-        position: new THREE.Vector3(0, 1, 8),
+        position: new THREE.Vector3(0, 1, 7.5),
         target: new THREE.Vector3(0, 1, 0),
     },
 
@@ -74,6 +74,7 @@ const CameraControls = ({ viewMode, setViewMode }) => {
                     setViewMode("free");
                 }}
                 ameraminPolarAngle={Math.PI / 2} maxPolarAngle={Math.PI / 2} enableZoom={true} enablePan={false}
+                minDistance={2} maxDistance={10}
 
             />
         </>
