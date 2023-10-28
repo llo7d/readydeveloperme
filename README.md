@@ -1,5 +1,5 @@
-# R3F + THREE.JS + React + TypeScript + Vite
+THREE.JS + React + TypeScript (React-Three-Fiber)
 
+I should update this, but fow now if you want to use it just: 
 1. npm install
-2. npm run start
-
+2. npm run dev or npm run build
