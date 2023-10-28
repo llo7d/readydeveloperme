@@ -45,7 +45,13 @@ export default function App() {
 
   const [tool, setTool] = useState(tools[0]);
 
-  const { opacity, blur, scale, far } = useControls('Ground Shadows', { opacity: 0.7, scale: 2, blur: 3.5, far: 1.2, step: 1, })
+  const { opacity, blur, scale, far } =
+    useControls('Ground Shadows', {
+      opacity: { value: 0.7, step: 0.05 },
+      scale: { value: 2, step: 0.05 },
+      blur: { value: 3.5, step: 0.05 },
+      far: { value: 1.2, step: 0.05 },
+    })
 
 
 
