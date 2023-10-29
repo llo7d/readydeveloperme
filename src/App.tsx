@@ -215,10 +215,10 @@ export default function App() {
         continue
       }
 
-      // if (tool.id === "pose") {
-      //   newSelected[tool.id] = "pose_confident"
-      //   continue
-      // }
+      if (tool.id === "pose") {
+        newSelected[tool.id] = "pose_crossed_arm"
+        continue
+      }
 
 
       newSelected[tool.id] = tool.items[0].id
