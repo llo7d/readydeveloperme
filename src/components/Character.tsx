@@ -37,11 +37,12 @@ export default function Character({ selected, colors, logo }, props) {
             case "pose_standing_thinking": return "StandingThinking";
             case "pose_waving": return "Waving";
             case "pose_welcome": return "Welcome";
-            default: return "";
+            default: return "Default";
+
         }
     })()
 
-    //Change Pose when the index changes
+
     useEffect(() => {
         // Reset and fade in pose after an index has been changed
         actions[pose].reset().fadeIn(0.3).play()

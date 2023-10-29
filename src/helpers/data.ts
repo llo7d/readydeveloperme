@@ -47,6 +47,7 @@ import IconShoes2 from "../assets/icons/IconShoes2";
 import IconShoes3 from "../assets/icons/IconShoes3";
 import IconWatch from "../assets/icons/IconWatch";
 import IconHats from "../assets/icons/IconHats";
+import IconPose0 from "../assets/icons/IconPose0";
 
 
 type SubTool = {
@@ -70,6 +71,11 @@ export const getToolbarData = (): Tool[] => {
       label: "Poses",
       icon: IconPose,
       items: [
+        {
+          id: `Default`,
+          name: "Default",
+          icon: IconPose0,
+        },
         {
           id: `pose_crossed_arm`,
           name: "CrossedArm",

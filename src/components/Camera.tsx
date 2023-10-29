@@ -13,6 +13,7 @@ const CameraPosition = {
 
     "close_up": {
         position: new THREE.Vector3(0, 1.8, 3),
+        // I could probably add the head ref positiong&target here.
         target: new THREE.Vector3(0, 1.8, 0),
     },
 
@@ -23,7 +24,7 @@ const CameraPosition = {
 
     "logo": {
         position: new THREE.Vector3(0.19, 1.6, 3),
-        // I could probably add the logo ref positiong here.
+        // I could probably add the logo ref positiong&target here.
         target: new THREE.Vector3(0.19, 1.6, 0.2),
     },
 
@@ -38,9 +39,7 @@ const CameraControls = ({ viewMode, setViewMode }) => {
 
     useFrame((state, delta) => {
 
-        if (viewMode == "free") {
-            return;
-        }
+
 
         if (viewMode == "front") {
             state.camera.position.lerp(CameraPosition.front.position, 3 * delta)
@@ -63,6 +62,7 @@ const CameraControls = ({ viewMode, setViewMode }) => {
             orbitControls.current.target.lerp(CameraPosition.logo.target, 3 * delta)
         }
 
+
     }
     )
 
@@ -75,6 +75,7 @@ const CameraControls = ({ viewMode, setViewMode }) => {
                 }}
                 ameraminPolarAngle={Math.PI / 2} maxPolarAngle={Math.PI / 2} enableZoom={true} enablePan={false}
                 minDistance={2} maxDistance={10}
+
 
             />
         </>

@@ -215,6 +215,12 @@ export default function App() {
         continue
       }
 
+      // if (tool.id === "pose") {
+      //   newSelected[tool.id] = "pose_confident"
+      //   continue
+      // }
+
+
       newSelected[tool.id] = tool.items[0].id
     }
 
