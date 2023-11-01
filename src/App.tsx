@@ -30,6 +30,7 @@ type Mode = "front" | "side" | "close_up" | "free";
 
 export default function App() {
 
+
   // Change to "false" if you want hide/reveal version of the toolbar.
   const [isToolbarOpen, setIsToolbarOpen] = useState(true);
   const [viewMode, setViewMode] = useState<Mode>("front");
@@ -274,12 +275,14 @@ export default function App() {
     );
   }
   return (
+
     <div
       className={classNames("w-full h-screen relative", {
         "bg-white": theme === "light",
         "bg-neutral-100": theme === "dark",
       })}
     >
+      <Analytics />
       <Loader />
 
       <div className="w-full h-screen ">
@@ -448,7 +451,6 @@ export default function App() {
       />
 
       <Leva hidden={debuggerVisible} />
-      <Analytics />
 
     </div >
   );
