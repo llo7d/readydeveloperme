@@ -289,7 +289,6 @@ export default function App() {
           <Camera viewMode={viewMode} setViewMode={setViewMode} />
           <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
           <Lights selected={selected} />
-          <Analytics />
         </Canvas>
       </div>
 
@@ -449,6 +448,7 @@ export default function App() {
       />
 
       <Leva hidden={debuggerVisible} />
+      <Analytics />
 
     </div >
   );
