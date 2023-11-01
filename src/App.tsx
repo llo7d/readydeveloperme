@@ -21,6 +21,7 @@ import Loader from "./components/Loader";
 import Ground from "./components/Ground";
 import { useControls } from "leva";
 import Lights from "./components/Lights";
+import { Analytics } from "@vercel/analytics/react";
 import { Leva } from 'leva'
 
 type Mode = "front" | "side" | "close_up" | "free";
@@ -288,6 +289,7 @@ export default function App() {
           <Camera viewMode={viewMode} setViewMode={setViewMode} />
           <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
           <Lights selected={selected} />
+          <Analytics />
         </Canvas>
       </div>
 
