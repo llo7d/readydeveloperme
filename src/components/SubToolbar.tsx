@@ -145,25 +145,25 @@ const SubToolbar: React.FC<Props> = ({
       else setViewMode("front");
     }
     if (tool.id === "hair") {
-      if (prevToolId.current === "hair" || prevToolId.current === "beard" || prevToolId.current === "face" || prevToolId.current === "glasses") {
+      if (prevToolId.current === "hair" || prevToolId.current === "beard" || prevToolId.current === "face" || prevToolId.current === "glasses" || prevToolId.current === "hats") {
         return;
       }
       setViewMode("close_up");
     }
     if (tool.id === "beard") {
-      if (prevToolId.current === "hair" || prevToolId.current === "beard" || prevToolId.current === "face" || prevToolId.current === "glasses") {
+      if (prevToolId.current === "hair" || prevToolId.current === "beard" || prevToolId.current === "face" || prevToolId.current === "glasses" || prevToolId.current === "hats") {
         return;
       }
       setViewMode("close_up");
     }
     if (tool.id === "face") {
-      if (prevToolId.current === "hair" || prevToolId.current === "beard" || prevToolId.current === "face" || prevToolId.current === "glasses") {
+      if (prevToolId.current === "hair" || prevToolId.current === "beard" || prevToolId.current === "face" || prevToolId.current === "glasses" || prevToolId.current === "hats") {
         return;
       }
       setViewMode("close_up");
     }
     if (tool.id === "glasses") {
-      if (prevToolId.current === "hair" || prevToolId.current === "beard" || prevToolId.current === "face" || prevToolId.current === "glasses") {
+      if (prevToolId.current === "hair" || prevToolId.current === "beard" || prevToolId.current === "face" || prevToolId.current === "glasses" || prevToolId.current === "hats") {
         return;
       }
       setViewMode("close_up");
@@ -175,8 +175,13 @@ const SubToolbar: React.FC<Props> = ({
       else setViewMode("front");
     }
     if (tool.id === "logo") {
-
       setViewMode("logo");
+    }
+    if (tool.id === "hats") {
+      if (prevToolId.current === "hair" || prevToolId.current === "beard" || prevToolId.current === "face" || prevToolId.current === "glasses" || prevToolId.current === "hats") {
+        return;
+      }
+      setViewMode("close_up");
     }
     prevToolId.current = tool.id
 

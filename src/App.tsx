@@ -345,6 +345,7 @@ export default function App() {
           subToolId={selected[tool.id]}
           tool={tool}
           colors={subToolColors}
+          viewMode={viewMode}
           setViewMode={setViewMode}
           onClickItem={(item) => {
             setSelected({
