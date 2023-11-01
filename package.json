@@ -13,6 +13,7 @@
     "@react-three/drei": "^9.85.2",
     "@react-three/fiber": "^8.14.3",
     "@types/three": "^0.156.0",
+    "@vercel/analytics": "^1.1.1",
     "classnames": "^2.3.2",
     "framer-motion": "^10.16.4",
     "leva": "^0.9.35",
