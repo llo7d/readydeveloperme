@@ -39,7 +39,7 @@ const CameraControls = ({ viewMode, setViewMode }) => {
 
     useFrame((state, delta) => {
 
-
+        if (viewMode === "free") return;
 
         if (viewMode == "front") {
             state.camera.position.lerp(CameraPosition.front.position, 3 * delta)

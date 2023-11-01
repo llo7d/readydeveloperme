@@ -128,11 +128,19 @@ export default function App() {
         };
       }
 
+      if (item.id === "tool_2_item_12") {
+        return {
+          subToolId: item.id,
+          color: "#3a4673",
+        };
+      }
 
       return {
         subToolId: item.id,
         color: "#141414",
       };
+
+
     })
   );
 

@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 todo.txt
 
+*/dev7.glb
+*/dev6_compress.glb

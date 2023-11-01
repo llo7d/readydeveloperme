@@ -8,7 +8,7 @@ export default function Character({ selected, colors, logo }, props) {
 
     const group = useRef();
 
-    const { nodes, materials, animations } = useGLTF("/dev6_compress.glb");
+    const { nodes, materials, animations } = useGLTF("/dev7_compress.glb");
 
     const { actions, mixer, ref } = useAnimations(animations, group);
 
@@ -296,7 +296,7 @@ export default function Character({ selected, colors, logo }, props) {
 
 
         }
-        else if (selected.glasses === "glasses_2") {
+        if (selected.glasses === "glasses_2") {
             return (
                 <group name="GEO_Glassess_01">
                     <skinnedMesh
@@ -320,6 +320,51 @@ export default function Character({ selected, colors, logo }, props) {
                 </group>
             )
         }
+
+
+
+        if (selected.glasses === "glasses_3") {
+            return (
+                <group name="GEO_Glassess_02">
+                    <skinnedMesh
+                        name="Torus002"
+                        geometry={nodes.Torus002.geometry}
+                        material={materials["MAT_Glassess.002_glass"]}
+                        skeleton={nodes.Torus002.skeleton}
+                        // material-metalness={-3}
+                        material-opacity={0}
+                    />
+                    <skinnedMesh
+                        name="Torus002_1"
+                        geometry={nodes.Torus002_1.geometry}
+                        material={materials["MAT_Glassess.002_plastic"]}
+                        skeleton={nodes.Torus002_1.skeleton}
+                    />
+                </group>
+            )
+        }
+
+        if (selected.glasses === "glasses_4") {
+            return (
+                <group name="GEO_Glassess_02">
+                    <skinnedMesh
+                        name="Torus002"
+                        geometry={nodes.Torus002.geometry}
+                        material={materials["MAT_Glassess.002_glass"]}
+                        skeleton={nodes.Torus002.skeleton}
+                        material-metalness={-3}
+                        material-opacity={0.9}
+                    />
+                    <skinnedMesh
+                        name="Torus002_1"
+                        geometry={nodes.Torus002_1.geometry}
+                        material={materials["MAT_Glassess.002_plastic"]}
+                        skeleton={nodes.Torus002_1.skeleton}
+                    />
+                </group>
+            )
+        }
+
         else {
             return <></>
         }
@@ -446,6 +491,26 @@ export default function Character({ selected, colors, logo }, props) {
         )
     }
 
+    const Hat = () => {
+
+        if (selected.hats === "hat_1") {
+            return (
+                <skinnedMesh
+                    name="GEO_Hat"
+                    geometry={nodes.GEO_Hat.geometry}
+                    material={materials.MAT_Cap}
+                    skeleton={nodes.GEO_Hat.skeleton}
+                    material-color={colors[11].color}
+
+                />
+            )
+        }
+
+        return <></>
+
+
+    }
+
     return (
         <group ref={group} {...props} dispose={null}>
             <group name="Scene">
@@ -496,6 +561,9 @@ export default function Character({ selected, colors, logo }, props) {
                     skeleton={nodes.tongue_GEO.skeleton}
                 />
 
+
+
+
                 <Hair />
                 <Beard />
                 <Shoes />
@@ -507,6 +575,7 @@ export default function Character({ selected, colors, logo }, props) {
                 <Desktop />
                 <Phone />
                 <Face />
+                <Hat />
 
 
             </group>
@@ -514,4 +583,4 @@ export default function Character({ selected, colors, logo }, props) {
     );
 }
 
-useGLTF.preload("/dev6_compress.glb");
+useGLTF.preload("/dev7_compress.glb");
