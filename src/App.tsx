@@ -337,7 +337,7 @@ export default function App() {
 
         </button>
         <p className="text-[#8D98AF] text-xs font-medium ml-5" >
-          © 2023,
+          © 2024,
           <a href="https://github.com/llo7d" target="_blank">
             {" "}by llo7d
           </a>
