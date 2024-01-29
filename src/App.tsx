@@ -282,7 +282,7 @@ export default function App() {
         "bg-neutral-100": theme === "dark",
       })}
     >
-      <Analytics mode="development" debug={true} />
+      <Analytics mode="production" debug={true} />
       <Loader />
 
       <div className="w-full h-screen ">
