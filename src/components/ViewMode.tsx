@@ -4,7 +4,7 @@ import classNames from "classnames";
 
 import IconCamera from "../assets/icons/IconCamera";
 
-type Mode = "front" | "side" | "close_up" | "free";
+type Mode = "front" | "side" | "close_up" | "free" | "third_person";
 
 type Props = {
   mode: Mode;
@@ -18,7 +18,7 @@ const ViewMode: React.FC<Props> = ({ mode, onClickMode }) => {
     <div className="flex">
       <div
         className={classNames(
-          "w-16 h-44 rounded-[1.125rem] p-2 flex flex-col items-center justify-between mr-5",
+          "w-16 h-56 rounded-[1.125rem] p-2 flex flex-col items-center justify-between mr-5",
           {
             "bg-neutral-10": theme === "light",
             "bg-[#2A2B2F]": theme === "dark",
@@ -88,6 +88,27 @@ const ViewMode: React.FC<Props> = ({ mode, onClickMode }) => {
             fill={mode === "close_up" ? "white" : "#6D7D93"}
           />
         </button>
+        <button
+          className={classNames(
+            "w-12 h-12 flex items-center justify-center rounded-2xl border",
+            {
+              "bg-primary": mode === "third_person",
+              "border-primary": mode === "third_person",
+              "border-dashed": mode !== "third_person",
+              "bg-neutral-10": mode !== "third_person" && theme === "light",
+              "border-neutral-30": mode !== "third_person" && theme === "light",
+              "bg-[#2A2B2F]": mode !== "third_person" && theme === "dark",
+              "border-white/20": mode !== "third_person" && theme === "dark",
+            }
+          )}
+          type="button"
+          onClick={() => onClickMode("third_person")}
+        >
+          <IconCamera
+            className="w-6 h-6"
+            fill={mode === "third_person" ? "white" : "#6D7D93"}
+          />
+        </button>
       </div>
 
       <div className="flex flex-col justify-between w-20 py-2">
@@ -125,6 +146,18 @@ const ViewMode: React.FC<Props> = ({ mode, onClickMode }) => {
             })}
           >
             Close Up
+          </p>
+        </div>
+        <div className="flex items-center h-12">
+          <p
+            className={classNames("text-sm", {
+              "font-medium": mode === "third_person",
+              "text-white": mode === "third_person" && theme === "dark",
+              "text-[#121F3E]": mode === "third_person" && theme === "light",
+              "text-[#8D98AF]": mode !== "third_person",
+            })}
+          >
+            Walk Mode
           </p>
         </div>
       </div>

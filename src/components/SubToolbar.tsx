@@ -30,7 +30,6 @@ type Props = {
   onClickItem: (subTool: SubTool) => void;
   onHoverTool?: (isEntered: boolean) => void;
   onChangeColor?: (color: SubToolColor) => void;
-  setViewMode: (viewMode: string) => void;
 };
 
 const SubToolbar: React.FC<Props> = ({
@@ -40,7 +39,6 @@ const SubToolbar: React.FC<Props> = ({
   onClickItem,
   onHoverTool,
   onChangeColor,
-  setViewMode,
 }) => {
   // Change to "true" if you want "always reveal" version of the toolbar.
   const [isSubToolbarOpen, setIsSubToolbarOpen] = useState(false);
@@ -130,63 +128,9 @@ const SubToolbar: React.FC<Props> = ({
   // Maybe making custom camera positions for each tool would be good?
   const prevToolId = useRef(tool.id)
   useEffect(() => {
-
-    // I think this is somehow wrong but, it works for now. Jobs finished.
-    if (tool.id === "pose") {
-      if (prevToolId.current === "tool_2" || prevToolId.current === "pose" || prevToolId.current === "lights") {
-        return;
-      }
-      setViewMode("front");
-    }
-    if (tool.id === "tool_2") {
-      if (prevToolId.current === "tool_2" || prevToolId.current === "pose" || prevToolId.current === "lights") {
-        return;
-      }
-      else setViewMode("front");
-    }
-    if (tool.id === "hair") {
-      if (prevToolId.current === "hair" || prevToolId.current === "beard" || prevToolId.current === "face" || prevToolId.current === "glasses" || prevToolId.current === "hats") {
-        return;
-      }
-      setViewMode("close_up");
-    }
-    if (tool.id === "beard") {
-      if (prevToolId.current === "hair" || prevToolId.current === "beard" || prevToolId.current === "face" || prevToolId.current === "glasses" || prevToolId.current === "hats") {
-        return;
-      }
-      setViewMode("close_up");
-    }
-    if (tool.id === "face") {
-      if (prevToolId.current === "hair" || prevToolId.current === "beard" || prevToolId.current === "face" || prevToolId.current === "glasses" || prevToolId.current === "hats") {
-        return;
-      }
-      setViewMode("close_up");
-    }
-    if (tool.id === "glasses") {
-      if (prevToolId.current === "hair" || prevToolId.current === "beard" || prevToolId.current === "face" || prevToolId.current === "glasses" || prevToolId.current === "hats") {
-        return;
-      }
-      setViewMode("close_up");
-    }
-    if (tool.id === "lights") {
-      if (prevToolId.current === "tool_2" || prevToolId.current === "pose" || prevToolId.current === "lights") {
-        return;
-      }
-      else setViewMode("front");
-    }
-    if (tool.id === "logo") {
-      setViewMode("logo");
-    }
-    if (tool.id === "hats") {
-      if (prevToolId.current === "hair" || prevToolId.current === "beard" || prevToolId.current === "face" || prevToolId.current === "glasses" || prevToolId.current === "hats") {
-        return;
-      }
-      setViewMode("close_up");
-    }
+    // Store the current tool id for reference
     prevToolId.current = tool.id
-
-
-  }, [tool.id, setViewMode]);
+  }, [tool.id]);
 
 
   return (

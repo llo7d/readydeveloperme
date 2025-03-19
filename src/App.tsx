@@ -1,4 +1,4 @@
-import { ChangeEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import React, { ChangeEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMediaQuery } from "react-responsive";
 import { Canvas } from "@react-three/fiber";
@@ -6,7 +6,6 @@ import { ContactShadows } from "@react-three/drei";
 import * as THREE from 'three'
 
 import ThemeToggle from "./components/ThemeToggle";
-import ViewMode from "./components/ViewMode";
 import { useStore } from "./store/store";
 import classNames from "classnames";
 import Logo from "./assets/icons/Logo";
@@ -15,8 +14,9 @@ import { getToolbarData } from "./helpers/data";
 import SubToolbar from "./components/SubToolbar";
 import IconMenu from "./assets/icons/IconMenu";
 import ManualPopup from "./components/ManualPopup";
-import Camera from "./components/Camera";
+import ThirdPersonCamera from "./components/Camera";
 import Character from "./components/Character";
+import CharacterControls from "./components/CharacterControls";
 import Loader from "./components/Loader";
 import Ground from "./components/Ground";
 import { useControls } from "leva";
@@ -24,27 +24,20 @@ import Lights from "./components/Lights";
 import { Analytics } from "@vercel/analytics/react";
 import { Leva } from 'leva'
 
-type Mode = "front" | "side" | "close_up" | "free";
-
-
-
 export default function App() {
-
+  // Character reference for controlling movement
+  const characterRef = useRef<THREE.Group>(null);
 
   // Change to "false" if you want hide/reveal version of the toolbar.
   const [isToolbarOpen, setIsToolbarOpen] = useState(true);
-  const [viewMode, setViewMode] = useState<Mode>("front");
   const [isManualOpen, setIsManualOpen] = useState(false);
   const theme = useStore((state) => state.theme);
   const isDesktop = useMediaQuery({ query: "(min-width: 960px)" });
   const refLogoInput = useRef<HTMLInputElement>(null);
 
-  const [debuggerVisible, setDebuggerVisible] = useState(true)
-
-
-  const [visible, setVisible] = useState(true)
+  const [debuggerVisible, setDebuggerVisible] = useState(true);
+  const [visible, setVisible] = useState(true);
   const tools = getToolbarData();
-
   const [tool, setTool] = useState(tools[0]);
 
   const { opacity, blur, scale, far } =
@@ -54,8 +47,6 @@ export default function App() {
       blur: { value: 3.5, step: 0.05 },
       far: { value: 1.2, step: 0.05 },
     })
-
-
 
   // It has this format (you can see data.ts):
   // tool.id: tool.items.id
@@ -141,13 +132,10 @@ export default function App() {
         subToolId: item.id,
         color: "#141414",
       };
-
-
     })
   );
 
   const toolItems = useMemo(() => {
-
     return tools.map((tool) => {
       if (tool.id === "tool_2") {
         return tool;
@@ -164,15 +152,12 @@ export default function App() {
 
   const trayWidth = 3.5 * tools.length + 1 * (tools.length - 1);
 
-
-
   //Logo Section
   const defaultLogo = new THREE.TextureLoader().load("images/logo.png")
   const [logo, setLogo] = useState(defaultLogo)
 
   const handlePickedLogo = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-
 
     if (!file) {
       return;
@@ -199,7 +184,6 @@ export default function App() {
     const newSelected: Record<string, string> = {}
 
     for (const tool of tools) {
-
       if (tool.id === "hair") {
         newSelected[tool.id] = "hair_1"
         continue
@@ -226,10 +210,9 @@ export default function App() {
       }
 
       if (tool.id === "pose") {
-        newSelected[tool.id] = "pose_crossed_arm"
+        newSelected[tool.id] = "pose_standing1" // Use a standing pose for movement
         continue
       }
-
 
       newSelected[tool.id] = tool.items[0].id
     }
@@ -237,29 +220,21 @@ export default function App() {
     setSelected(newSelected)
   }, [])
 
-
   // Download pose as png
   const DownloadPose = () => {
-
-
     setVisible(false)
-    // Set view mode to "front" and wait for 1 second
-    setViewMode("front")
-    setTimeout((
-
-    ) => {
+    
+    setTimeout(() => {
       const canvas = document.querySelector("canvas");
 
       if (!canvas) {
         return;
       }
-      // const image = canvas.toDataURL("image/png", 1).replace("image/png", "image/octet-stream");
+      
       const image = canvas.toDataURL("image/png", 1)
-
-      // Upscale the image
-
+      
       const link = document.createElement('a');
-      link.download = "pose.png";
+      link.download = "character.png";
       link.href = image;
       link.click();
 
@@ -274,8 +249,8 @@ export default function App() {
       </div>
     );
   }
+  
   return (
-
     <div
       className={classNames("w-full h-screen relative", {
         "bg-white": theme === "light",
@@ -285,11 +260,12 @@ export default function App() {
       <Analytics mode="production" debug={true} />
       <Loader />
 
-      <div className="w-full h-screen ">
-        <Canvas gl={{ preserveDrawingBuffer: true, antialias: true }} shadows camera={{ fov: 20 }} linear={false} dpr={1.5}>
+      <div className="w-full h-screen">
+        <Canvas gl={{ preserveDrawingBuffer: true, antialias: true }} shadows camera={{ fov: 30 }} linear={false} dpr={1.5}>
           <Ground theme={theme} visible={visible} />
-          <Character colors={subToolColors} selected={selected} logo={logo} />
-          <Camera viewMode={viewMode} setViewMode={setViewMode} />
+          <Character colors={subToolColors} selected={selected} logo={logo} characterRef={characterRef} />
+          <ThirdPersonCamera characterRef={characterRef} />
+          <CharacterControls characterRef={characterRef} />
           <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
           <Lights selected={selected} />
         </Canvas>
@@ -300,8 +276,11 @@ export default function App() {
       </div>
 
       <div className="flex items-center absolute top-8 right-8">
+        <div className="text-sm text-white font-medium h-11 px-4 bg-primary rounded-full flex items-center">
+          Controls: W=back, S=forward, A=right, D=left, SHIFT=run
+        </div>
         <button
-          className="text-sm text-white font-medium h-11 px-4 bg-primary rounded-full ml-auto"
+          className="text-sm text-white font-medium h-11 px-4 bg-primary rounded-full ml-4"
           type="button"
           onClick={() => {
             DownloadPose();
@@ -318,10 +297,6 @@ export default function App() {
         </button>
       </div>
 
-      <div className="absolute top-1/2 left-8 -translate-y-1/2">
-        <ViewMode mode={viewMode} onClickMode={setViewMode} />
-      </div>
-
       <div className="flex items-center mr-auto absolute bottom-8 left-8">
         <ThemeToggle />
         <button className="text-[#8D98AF] text-xs font-medium ml-5">
@@ -331,10 +306,7 @@ export default function App() {
             ) : (
               <span onClick={() => setDebuggerVisible(!debuggerVisible)}>Hide Debugger</span>
             )
-
           }
-
-
         </button>
         <p className="text-[#8D98AF] text-xs font-medium ml-5" >
           © 2024,
@@ -349,8 +321,6 @@ export default function App() {
           subToolId={selected[tool.id]}
           tool={tool}
           colors={subToolColors}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
           onClickItem={(item) => {
             setSelected({
               ...selected,
@@ -360,10 +330,7 @@ export default function App() {
             if (item.id === 'logo_upload') {
               refLogoInput.current?.click();
             }
-
           }}
-          // Uncomment below if you want hide/reveal version of the toolbar.
-          // onHoverTool={setIsToolbarOpen}
           onChangeColor={(subToolColor) => {
             const newSubToolColors = subToolColors.map((color) => {
               if (color.subToolId === selected[tool.id]) {
@@ -377,7 +344,6 @@ export default function App() {
             });
 
             setSubToolColors(newSubToolColors);
-
           }}
         />
         <input
@@ -389,12 +355,7 @@ export default function App() {
         />
       </div>
 
-      <div
-        className="absolute right-32 bottom-10"
-      // Uncomment below if you want hide/reveal version of the toolbar.
-      // onMouseEnter={() => setIsToolbarOpen(true)}
-      // onMouseLeave={() => setIsToolbarOpen(false)}
-      >
+      <div className="absolute right-32 bottom-10">
         <AnimatePresence>
           {isToolbarOpen && (
             <motion.div
@@ -451,8 +412,7 @@ export default function App() {
       />
 
       <Leva hidden={debuggerVisible} />
-
-    </div >
+    </div>
   );
 }
 

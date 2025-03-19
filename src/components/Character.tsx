@@ -1,17 +1,34 @@
 import { useAnimations, useGLTF } from "@react-three/drei";
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef, MutableRefObject } from "react";
+import * as THREE from 'three';
 
+interface CharacterProps {
+    selected: any;
+    colors: any[];
+    logo: any;
+    characterRef?: MutableRefObject<THREE.Group | null>;
+}
 
-
-export default function Character({ selected, colors, logo }, props) {
-
-
-    const group = useRef();
-
+export default function Character({ selected, colors, logo, characterRef }: CharacterProps) {
+    // Create an internal ref if no external ref is provided
+    const internalRef = useRef<THREE.Group>(null);
+    
+    // @ts-ignore - ignoring GLTF typing issues
     const { nodes, materials, animations } = useGLTF("/dev7_compress.glb");
 
-    const { actions, mixer, ref } = useAnimations(animations, group);
+    // Use the animations with the appropriate ref
+    const { actions, mixer } = useAnimations(animations, characterRef || internalRef);
 
+    // Set initial position
+    useEffect(() => {
+        if (characterRef?.current || internalRef.current) {
+            // Set initial position at ground level
+            const ref = characterRef?.current || internalRef.current;
+            if (ref) {
+                ref.position.set(0, 0, 0);
+            }
+        }
+    }, [characterRef]);
 
     // Pose thing
     const pose = (() => {
@@ -38,20 +55,26 @@ export default function Character({ selected, colors, logo }, props) {
             case "pose_waving": return "Waving";
             case "pose_welcome": return "Welcome";
             default: return "Default";
-
         }
-    })()
+    })();
 
-
+    // Handle animations with proper effect callback
     useEffect(() => {
-        // Reset and fade in pose after an index has been changed
-        actions[pose].reset().fadeIn(0.3).play()
-        // In the clean-up phase, fade it out
-        return () => actions[pose].fadeOut(0.3)
-    }, [actions[pose]])
+        // Check if the action exists
+        if (actions && actions[pose]) {
+            // Reset and fade in pose
+            actions[pose].reset().fadeIn(0.3).play();
+            
+            // Clean up function
+            return () => {
+                if (actions[pose]) {
+                    actions[pose].fadeOut(0.3);
+                }
+            };
+        }
+    }, [actions, pose]);
 
     const Face = () => {
-
         if (selected.face === "default") {
             nodes.body.morphTargetInfluences[0] = 0
             nodes.body.morphTargetInfluences[1] = 1
@@ -63,13 +86,11 @@ export default function Character({ selected, colors, logo }, props) {
         else if (selected.face === "square") {
             nodes.body.morphTargetInfluences[0] = 0
             nodes.body.morphTargetInfluences[1] = 0
-
         }
         return <></>
     }
 
     const Phone = () => {
-
         if (selected.pose === "pose_on_phone") {
             return (
                 <>
@@ -91,9 +112,6 @@ export default function Character({ selected, colors, logo }, props) {
     }
 
     const Hair = () => {
-
-        // props.selected.hair
-
         const GEO_Hair_01 =
             <skinnedMesh
                 name="GEO_Hair_01"
@@ -110,7 +128,6 @@ export default function Character({ selected, colors, logo }, props) {
             material={materials.MAT_Hair}
             skeleton={nodes.GEO_Hair_02.skeleton}
             material-color={colors[0].color}
-
         />
 
         const GEO_Hair_03 = <skinnedMesh
@@ -131,7 +148,6 @@ export default function Character({ selected, colors, logo }, props) {
 
         return (
             <>
-                {/* Return hair based on snap.selected.hair with a one of code*/}
                 {selected.hair === "hair_1" && GEO_Hair_01}
                 {selected.hair === "hair_2" && GEO_Hair_02}
                 {selected.hair === "hair_3" && GEO_Hair_03}
@@ -177,11 +193,8 @@ export default function Character({ selected, colors, logo }, props) {
             material-color={colors[1].color}
         />
 
-
         return (
             <>
-
-                {/* Return hair based on snap.selected.hair with a one of code*/}
                 {selected.beard === "beard_1" && GEO_Beard_01}
                 {selected.beard === "beard_2" && GEO_Beard_02}
                 {selected.beard === "beard_3" && GEO_Beard_03}
@@ -191,27 +204,11 @@ export default function Character({ selected, colors, logo }, props) {
     }
 
     const Desktop = () => {
-
-        // Preload the texture to avoid flickering
-        // Get the a mesh from nodes, called desktop_bone
         const desktop_bone = nodes.desktop_bone
 
         desktop_bone.children[0].visible = false
 
-        // Uncomment below to change Window texature.
-        // // Change desktop_bone.children[0] texture to change_me.png from public
-        // desktop_bone.children[0].material.map = texture
-
-        // // Flip y axis of texture
-        // desktop_bone.children[0].material.map.flipY = false
-
-        // // Set the material to be more glossy
-        // desktop_bone.children[0].material.metalness = 0.5
-
-
-        // // if seleceted.pose is SittingHappy or SittingSad return else null
         if (selected.pose === "pose_pc01" || selected.pose === "pose_pc02") {
-
             return (
                 <>
                     <primitive object={desktop_bone} visible={true} />
@@ -221,7 +218,6 @@ export default function Character({ selected, colors, logo }, props) {
             return <><primitive object={desktop_bone} visible={false} />
             </>
         }
-
     }
 
     const Shoes = () => {
@@ -246,7 +242,6 @@ export default function Character({ selected, colors, logo }, props) {
                     geometry={nodes.main_clothes002_2.geometry}
                     material={materials.shoes_main_1}
                     skeleton={nodes.main_clothes002_2.skeleton}
-
                     material-color={colors[9].color}
                 />
             </group>
@@ -268,11 +263,8 @@ export default function Character({ selected, colors, logo }, props) {
     }
 
     const Glasses = () => {
-
         if (selected.glasses === "glasses_1") {
-
             return (
-
                 <group name="GEO_Glassess_01">
                     <skinnedMesh
                         name="Plane003"
@@ -289,12 +281,9 @@ export default function Character({ selected, colors, logo }, props) {
                         material-opacity={0.1}
                         material-metalness={-12}
                         skeleton={nodes.Plane003_1.skeleton}
-
                     />
                 </group>
             )
-
-
         }
         if (selected.glasses === "glasses_2") {
             return (
@@ -315,13 +304,9 @@ export default function Character({ selected, colors, logo }, props) {
                         skeleton={nodes.Plane003_1.skeleton}
                         material-metalness={-3}
                     />
-
-
                 </group>
             )
         }
-
-
 
         if (selected.glasses === "glasses_3") {
             return (
@@ -331,7 +316,6 @@ export default function Character({ selected, colors, logo }, props) {
                         geometry={nodes.Torus002.geometry}
                         material={materials["MAT_Glassess.002_glass"]}
                         skeleton={nodes.Torus002.skeleton}
-                        // material-metalness={-3}
                         material-opacity={0}
                     />
                     <skinnedMesh
@@ -368,17 +352,13 @@ export default function Character({ selected, colors, logo }, props) {
         else {
             return <></>
         }
-
     }
 
     const Tshirt = () => {
-
         materials.logo.map = logo
         materials.logo.map.flipY = false
 
         const Logo = () => {
-
-
             if (selected.logo === "logo_1") {
                 return (
                     <skinnedMesh
@@ -403,9 +383,7 @@ export default function Character({ selected, colors, logo }, props) {
                     />
                 )
             }
-
         }
-
 
         return (
             <group name="GEO_CC_Tshirt">
@@ -442,7 +420,6 @@ export default function Character({ selected, colors, logo }, props) {
                 geometry={nodes.body001_1.geometry}
                 material={materials.MAT_Watch_Plastic}
                 skeleton={nodes.body001_1.skeleton}
-
             />
             <skinnedMesh
                 name="body001_2"
@@ -453,8 +430,6 @@ export default function Character({ selected, colors, logo }, props) {
                 skeleton={nodes.body001_2.skeleton}
             />
         </group>
-
-
     }
 
     const Pants = () => {
@@ -492,7 +467,6 @@ export default function Character({ selected, colors, logo }, props) {
     }
 
     const Hat = () => {
-
         if (selected.hats === "hat_1") {
             return (
                 <skinnedMesh
@@ -501,18 +475,15 @@ export default function Character({ selected, colors, logo }, props) {
                     material={materials.MAT_Cap}
                     skeleton={nodes.GEO_Hat.skeleton}
                     material-color={colors[11].color}
-
                 />
             )
         }
 
         return <></>
-
-
     }
 
     return (
-        <group ref={group} {...props} dispose={null}>
+        <group ref={characterRef || internalRef} dispose={null}>
             <group name="Scene">
                 <group name="DP-Character_RIG">
                     <group name="GEO_Body">
@@ -539,7 +510,6 @@ export default function Character({ selected, colors, logo }, props) {
                             skeleton={nodes.body_2.skeleton}
                             morphTargetDictionary={nodes.body_2.morphTargetDictionary}
                             morphTargetInfluences={nodes.body_2.morphTargetInfluences}
-
                         />
                     </group>
                     <primitive object={nodes["DEF-pelvisL"]} />
@@ -561,9 +531,6 @@ export default function Character({ selected, colors, logo }, props) {
                     skeleton={nodes.tongue_GEO.skeleton}
                 />
 
-
-
-
                 <Hair />
                 <Beard />
                 <Shoes />
@@ -576,8 +543,6 @@ export default function Character({ selected, colors, logo }, props) {
                 <Phone />
                 <Face />
                 <Hat />
-
-
             </group>
         </group>
     );
