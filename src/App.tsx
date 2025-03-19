@@ -480,7 +480,7 @@ export default function App() {
 
       {/* Only show toolbar when customizing clothing */}
       {customizingClothing && (
-        <div className="absolute bottom-8 right-8">
+        <div className="fixed bottom-1/2 right-56 transform translate-y-1/2 z-30">
           <SubToolbar
             subToolId={selected[tool.id]}
             tool={tool}
@@ -517,59 +517,6 @@ export default function App() {
             accept="image/png"
             onChange={handlePickedLogo}
           />
-        </div>
-      )}
-
-      {customizingClothing && (
-        <div className="absolute right-32 bottom-10">
-          <AnimatePresence>
-            {isToolbarOpen && (
-              <motion.div
-                className="overflow-hidden h-24 flex items-end"
-                initial={{ width: 0 }}
-                animate={{ width: `${trayWidth}rem` }}
-                exit={{ width: 0 }}
-              >
-                <Toolbar
-                  toolId={tool.id}
-                  items={toolItems}
-                  onClickItem={(tool) => {
-                    const newTool = (() => {
-                      if (tool.id === 'tool_2') {
-                        return {
-                          ...tool,
-                          items: tool.items.map((item) => {
-                            const byId = (id: string) => {
-                              return (item: typeof tools[0]) => item.id === id
-                            }
-
-                            const icon = (() => {
-                              switch (item.id) {
-                                case "tool_2_item_1":
-                                  return toolItems.find(byId('hair'))?.icon;
-
-                                case "tool_2_item_2":
-                                  return toolItems.find(byId('beard'))?.icon;
-
-                                default:
-                                  return item.icon;
-                              }
-                            })();
-
-                            return { ...item, icon: icon || item.icon };
-                          }),
-                        };
-                      }
-
-                      return tool
-                    })()
-
-                    setTool(newTool)
-                  }}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       )}
 

@@ -33,8 +33,8 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
   const lastMovementDirection = useRef(new THREE.Vector2(0, -1)); // Initial direction facing forward (z-)
   
   // Movement configuration
-  const walkSpeed = 0.035;
-  const runSpeed = 0.07;
+  const walkSpeed = 0.042;
+  const runSpeed = 0.084;
   const acceleration = 0.015; // Improved responsiveness
   const rotationSpeed = 0.12; // How quickly character rotates to face movement direction
   const friction = 0.82; // More friction to prevent sliding

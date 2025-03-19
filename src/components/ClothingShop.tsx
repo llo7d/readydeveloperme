@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Text, Html } from '@react-three/drei';
+import { Text, Html, Shadow } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface ClothingShopProps {
@@ -62,42 +62,42 @@ const ClothingShop = ({ position = [0, 0, 0], onChangeClothing, canChangeClothin
   return (
     <group ref={groupRef} position={positionVector}>
       {/* House base */}
-      <mesh material={wallMaterial} position={[0, 1.5, 0]}>
+      <mesh material={wallMaterial} position={[0, 1.5, 0]} castShadow>
         <boxGeometry args={[5, 3, 5]} />
       </mesh>
       
       {/* Roof */}
-      <mesh material={roofMaterial} position={[0, 3.5, 0]} rotation={[0, Math.PI / 4, 0]}>
+      <mesh material={roofMaterial} position={[0, 3.5, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
         <coneGeometry args={[4, 2, 4]} />
       </mesh>
       
       {/* Door */}
-      <mesh material={doorMaterial} position={[0, 1, 2.51]}>
+      <mesh material={doorMaterial} position={[0, 1, 2.51]} castShadow>
         <boxGeometry args={[1, 2, 0.1]} />
       </mesh>
       
       {/* Windows */}
-      <mesh material={doorMaterial} position={[1.5, 1.7, 2.51]}>
+      <mesh material={doorMaterial} position={[1.5, 1.7, 2.51]} castShadow>
         <boxGeometry args={[0.8, 0.8, 0.05]} />
       </mesh>
       
-      <mesh material={doorMaterial} position={[-1.5, 1.7, 2.51]}>
+      <mesh material={doorMaterial} position={[-1.5, 1.7, 2.51]} castShadow>
         <boxGeometry args={[0.8, 0.8, 0.05]} />
       </mesh>
       
       {/* T-Shirt Sign */}
       <group position={[0, 3, 2.6]}>
         {/* T-shirt base */}
-        <mesh material={tshirtMaterial} position={[0, 0, 0]}>
+        <mesh material={tshirtMaterial} position={[0, 0, 0]} castShadow>
           <boxGeometry args={[1.5, 1, 0.1]} />
         </mesh>
         
         {/* T-shirt sleeves */}
-        <mesh material={tshirtMaterial} position={[-0.8, 0.2, 0]}>
+        <mesh material={tshirtMaterial} position={[-0.8, 0.2, 0]} castShadow>
           <boxGeometry args={[0.4, 0.4, 0.1]} />
         </mesh>
         
-        <mesh material={tshirtMaterial} position={[0.8, 0.2, 0]}>
+        <mesh material={tshirtMaterial} position={[0.8, 0.2, 0]} castShadow>
           <boxGeometry args={[0.4, 0.4, 0.1]} />
         </mesh>
       </group>
@@ -110,6 +110,7 @@ const ClothingShop = ({ position = [0, 0, 0], onChangeClothing, canChangeClothin
           onClick={handleButtonClick}
           onPointerOver={() => setButtonHovered(true)}
           onPointerOut={() => setButtonHovered(false)}
+          castShadow
         >
           <boxGeometry args={[3, 0.5, 0.1]} />
         </mesh>
@@ -126,6 +127,32 @@ const ClothingShop = ({ position = [0, 0, 0], onChangeClothing, canChangeClothin
           {buttonText}
         </Text>
       </group>
+
+      {/* 
+        Custom shadow under the house
+        To adjust shadow intensity manually:
+        - Increase opacity (0.0-1.0) for stronger shadow
+        - Decrease colorStop (0.0-1.0) for a more concentrated shadow
+        - Increase scale values for a larger shadow area
+      */}
+      <Shadow 
+        color="black" 
+        colorStop={0.50}
+        opacity={0.7}
+        position={[0, 0.01, 0]} 
+        scale={[10, 10, 10]}
+      />
+
+      {/* Additional green shadow when user is close enough to change clothing */}
+      {canChangeClothing && (
+        <Shadow 
+          color="#22aa22" 
+          colorStop={0.6}
+          opacity={0.4}
+          position={[0, 0.02, 0]} 
+          scale={[12, 12, 12]}
+        />
+      )}
     </group>
   );
 };

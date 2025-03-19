@@ -7,12 +7,19 @@ import * as THREE from "three";
 const cameraConfig = {
   distance: 7.5, // Distance behind character
   height: 3, // Height above character
-  rotationSpeed: 0.003, // How fast camera rotates with mouse
+  rotationSpeed: {
+    horizontal: 0.003, // How fast camera rotates horizontally with mouse
+    vertical: 0.002 // How fast camera rotates vertically with mouse
+  },
   minZoom: 3, 
   maxZoom: 20,
   returnSpeed: 0.05, // Speed at which camera returns to behind character
   followSpeed: 3, // How quickly camera follows character rotation when moving
-  customizationDistance: 6 // Distance when customizing clothes - in front but not too close
+  customizationDistance: 6, // Distance when customizing clothes - in front but not too close
+  verticalLimits: {
+    min: -Math.PI / 6, // Minimum vertical angle (looking down but not below ground)
+    max: Math.PI / 3    // Maximum vertical angle (looking up)
+  }
 };
 
 interface ThirdPersonCameraProps {
@@ -32,7 +39,8 @@ const ThirdPersonCamera = ({
   
   // Camera state
   const cameraDistance = useRef(cameraConfig.distance);
-  const cameraAngle = useRef(0); // 0 = directly behind character
+  const cameraAngle = useRef(0); // Horizontal angle (around Y axis)
+  const cameraPitch = useRef(0); // Vertical angle (looking up/down)
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
   
@@ -46,11 +54,17 @@ const ThirdPersonCamera = ({
       // Prevent camera rotation when clicking on color picker or other UI elements
       if (e.target.closest('.leva-c-iWIXMl') || // Color picker component
           e.target.closest('.leva-c-PJLV') ||    // General Leva UI components
+          e.target.closest('.leva-panel') ||     // Entire Leva panel
           e.target.closest('.toolbar') ||        // Our toolbar
           e.target.closest('.subtoolbar') ||     // Our subtoolbar
-          e.target.closest('button')) {          // Any button element
+          e.target.closest('.color-picker') ||   // Additional class for color picker
+          e.target.closest('button') ||          // Any button element
+          e.target.closest('input')) {           // Any input element including hex color input
         return;
       }
+      
+      // Remove the blanket restriction that prevented all camera rotation during customization
+      // This allows rotation during customization as long as we're not interacting with UI elements
       
       if (e.button === 0) { // Left mouse button
         setIsDragging(true);
@@ -66,17 +80,31 @@ const ThirdPersonCamera = ({
       // Additional check to prevent rotation when hovering over UI elements
       if (e.target.closest('.leva-c-iWIXMl') || 
           e.target.closest('.leva-c-PJLV') ||
+          e.target.closest('.leva-panel') ||
           e.target.closest('.toolbar') ||
           e.target.closest('.subtoolbar') ||
-          e.target.closest('button')) {
+          e.target.closest('.color-picker') ||
+          e.target.closest('button') ||
+          e.target.closest('input') ||
+          document.activeElement?.tagName === 'INPUT') {
         setIsDragging(false);
         return;
       }
       
       if (isDragging) {
-        // Simple angle calculation for orbit
+        // Horizontal rotation (around Y axis)
         const deltaX = e.clientX - dragStartPos.x;
-        cameraAngle.current -= deltaX * cameraConfig.rotationSpeed;
+        cameraAngle.current -= deltaX * cameraConfig.rotationSpeed.horizontal;
+        
+        // Vertical rotation (pitch - looking up/down)
+        const deltaY = e.clientY - dragStartPos.y;
+        
+        // Apply vertical rotation with limits to prevent looking below ground
+        const newPitch = cameraPitch.current + deltaY * cameraConfig.rotationSpeed.vertical;
+        cameraPitch.current = Math.max(
+          cameraConfig.verticalLimits.min,
+          Math.min(cameraConfig.verticalLimits.max, newPitch)
+        );
         
         // Update drag start position
         setDragStartPos({ x: e.clientX, y: e.clientY });
@@ -178,20 +206,29 @@ const ThirdPersonCamera = ({
       // Apply smooth rotation to appropriate position but only if not in customization mode
       if (!customizingClothing) {
         cameraAngle.current += rotationDiff * cameraConfig.returnSpeed;
+        
+        // Also reset vertical angle when not in customization mode
+        cameraPitch.current *= 0.95; // Gradually return to horizontal
       }
       
       // Smoothly adjust distance
       cameraDistance.current += (targetDistance - cameraDistance.current) * 0.1;
     }
     
-    // Calculate camera position in orbit around character
+    // Calculate camera position in orbit around character with vertical angle
     const distance = cameraDistance.current;
-    const offsetX = Math.sin(cameraAngle.current) * distance;
-    const offsetZ = Math.cos(cameraAngle.current) * distance;
+    
+    // Calculate horizontal position (around character)
+    const horizontalDistance = distance * Math.cos(cameraPitch.current);
+    const offsetX = Math.sin(cameraAngle.current) * horizontalDistance;
+    const offsetZ = Math.cos(cameraAngle.current) * horizontalDistance;
+    
+    // Calculate vertical offset (height based on pitch)
+    const heightOffset = distance * Math.sin(cameraPitch.current);
     
     const desiredCameraPos = new THREE.Vector3(
       characterPos.x - offsetX,
-      characterPos.y + cameraConfig.height,
+      characterPos.y + cameraConfig.height + heightOffset,
       characterPos.z - offsetZ
     );
     
@@ -208,12 +245,13 @@ const ThirdPersonCamera = ({
       // Test multiple angles to find a valid position
       for (let i = 0; i < 12; i++) {
         testAngle += Math.PI / 6; // 30 degree increments
-        const testOffsetX = Math.sin(testAngle) * distance;
-        const testOffsetZ = Math.cos(testAngle) * distance;
+        const testHorizontalDistance = distance * Math.cos(cameraPitch.current);
+        const testOffsetX = Math.sin(testAngle) * testHorizontalDistance;
+        const testOffsetZ = Math.cos(testAngle) * testHorizontalDistance;
         
         const testPos = new THREE.Vector3(
           characterPos.x - testOffsetX,
-          characterPos.y + cameraConfig.height,
+          characterPos.y + cameraConfig.height + heightOffset,
           characterPos.z - testOffsetZ
         );
         
