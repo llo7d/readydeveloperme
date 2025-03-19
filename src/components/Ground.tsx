@@ -1,3 +1,4 @@
+import React from 'react';
 import { Grid } from "@react-three/drei";
 
 export default function Ground({ theme, visible }: { theme: string, visible: boolean }) {
@@ -15,12 +16,12 @@ export default function Ground({ theme, visible }: { theme: string, visible: boo
             sectionSize: 1, // 3
             sectionThickness: 1,
             sectionColor: "#4737ad",
-            fadeDistance: 30,
-            fadeStrength: 1,
+            fadeDistance: 45,
+            fadeStrength: 0.8,
             followCamera: false,
             infiniteGrid: true
         }
-        return <Grid position={[0, -0.01, 0]} args={[10.5, 10.5]} {...gridConfig} />
+        return <Grid position={[0, -0.01, 0]} args={[15, 15]} {...gridConfig} />
     }
 
     else {
@@ -31,12 +32,12 @@ export default function Ground({ theme, visible }: { theme: string, visible: boo
             sectionSize: 1, // 3
             sectionThickness: 1,
             sectionColor: "#4e4e4e",
-            fadeDistance: 30,
-            fadeStrength: 1,
+            fadeDistance: 45,
+            fadeStrength: 0.8,
             followCamera: false,
             infiniteGrid: true
         }
-        return <Grid position={[0, -0.01, 0]} args={[10.5, 10.5]} {...gridConfig} />
+        return <Grid position={[0, -0.01, 0]} args={[15, 15]} {...gridConfig} />
     }
 
 

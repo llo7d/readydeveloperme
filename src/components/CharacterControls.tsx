@@ -45,19 +45,15 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
     const handleKeyDown = (e) => {
       switch (e.key.toLowerCase()) {
         case 'w':
-          // Invert W to move backward instead of forward
           setMovement(prev => ({ ...prev, backward: true }));
           break;
         case 's':
-          // Invert S to move forward instead of backward
           setMovement(prev => ({ ...prev, forward: true }));
           break;
         case 'a':
-          // Invert A to move right instead of left
           setMovement(prev => ({ ...prev, right: true }));
           break;
         case 'd':
-          // Invert D to move left instead of right
           setMovement(prev => ({ ...prev, left: true }));
           break;
         case 'shift':
@@ -69,19 +65,15 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
     const handleKeyUp = (e) => {
       switch (e.key.toLowerCase()) {
         case 'w':
-          // Invert W to move backward instead of forward
           setMovement(prev => ({ ...prev, backward: false }));
           break;
         case 's':
-          // Invert S to move forward instead of backward
           setMovement(prev => ({ ...prev, forward: false }));
           break;
         case 'a':
-          // Invert A to move right instead of left
           setMovement(prev => ({ ...prev, right: false }));
           break;
         case 'd':
-          // Invert D to move left instead of right
           setMovement(prev => ({ ...prev, left: false }));
           break;
         case 'shift':

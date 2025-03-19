@@ -1,7 +1,7 @@
 import React, { ChangeEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMediaQuery } from "react-responsive";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { ContactShadows } from "@react-three/drei";
 import * as THREE from 'three'
 
@@ -17,6 +17,9 @@ import ManualPopup from "./components/ManualPopup";
 import ThirdPersonCamera from "./components/Camera";
 import Character from "./components/Character";
 import CharacterControls from "./components/CharacterControls";
+import ClothingShop from "./components/ClothingShop";
+import ProximityDetector from "./components/ProximityDetector";
+import ShopCollision from "./components/ShopCollision";
 import Loader from "./components/Loader";
 import Ground from "./components/Ground";
 import { useControls } from "leva";
@@ -24,9 +27,98 @@ import Lights from "./components/Lights";
 import { Analytics } from "@vercel/analytics/react";
 import { Leva } from 'leva'
 
+// This component handles all scene-specific behaviors that need to use hooks like useFrame
+const SceneManager = ({ 
+  characterRef, 
+  shopPosition, 
+  onNearShop, 
+  onCharacterMovementChange 
+}) => {
+  // Convert shop position array to Vector3
+  const shopVec = new THREE.Vector3(shopPosition[0], shopPosition[1], shopPosition[2]);
+  
+  // Shop dimensions matching the ClothingShop component
+  const shopSize = { width: 5, height: 3, depth: 5 };
+  const doorSize = { width: 1, height: 2 };
+  const doorPosition = { x: 0, z: shopSize.depth/2 }; // Door is centered on front wall
+  
+  // Store last position to detect movement
+  const lastPosition = useRef(new THREE.Vector3());
+  const isMoving = useRef(false);
+  const movementCheckInterval = useRef(0);
+  
+  // Initialize character rotation to face away from the shop (180 degrees around Y axis)
+  useEffect(() => {
+    if (characterRef.current) {
+      // Position character further away from the shop initially
+      characterRef.current.position.set(0, 0, 30); // Start much further away from the shop
+      characterRef.current.rotation.y = Math.PI; // 180 degrees, facing the shop
+      lastPosition.current.copy(characterRef.current.position);
+    }
+  }, [characterRef]);
+  
+  // Check if character is moving
+  useFrame(() => {
+    if (!characterRef.current) return;
+    
+    // Only check movement every few frames for performance
+    movementCheckInterval.current += 1;
+    if (movementCheckInterval.current < 5) return;
+    movementCheckInterval.current = 0;
+    
+    const position = characterRef.current.position;
+    const distance = lastPosition.current.distanceTo(position);
+    
+    // If position changed significantly, character is moving
+    const wasMoving = isMoving.current;
+    isMoving.current = distance > 0.005;
+    
+    // Update last position
+    lastPosition.current.copy(position);
+    
+    // Notify parent component of movement state change
+    if (wasMoving !== isMoving.current) {
+      onCharacterMovementChange(isMoving.current);
+    }
+  });
+  
+  return (
+    <>
+      <ProximityDetector 
+        target={shopVec}
+        characterRef={characterRef}
+        threshold={8}
+        onNear={onNearShop}
+      />
+      <ShopCollision
+        shopPosition={shopVec}
+        characterRef={characterRef}
+        shopSize={shopSize}
+        doorSize={doorSize}
+        doorPosition={doorPosition}
+      />
+    </>
+  );
+};
+
 export default function App() {
   // Character reference for controlling movement
   const characterRef = useRef<THREE.Group>(null);
+  
+  // Add state to track if we're in the clothing shop mode
+  const [inClothingShop, setInClothingShop] = useState(false);
+  
+  // Add state to track if clothing customization is active
+  const [customizingClothing, setCustomizingClothing] = useState(false);
+
+  // Add state to track proximity to the clothing shop
+  const [nearShop, setNearShop] = useState(false);
+  
+  // Add state to track if character is moving
+  const [isCharacterMoving, setIsCharacterMoving] = useState(false);
+  
+  // Update the clothing shop position to be further away
+  const clothingShopPosition: [number, number, number] = [0, 0, 5.25]; // Moved 45% closer to spawn
 
   // Change to "false" if you want hide/reveal version of the toolbar.
   const [isToolbarOpen, setIsToolbarOpen] = useState(true);
@@ -135,8 +227,21 @@ export default function App() {
     })
   );
 
+  // Filter the tools array to only show Colors when in clothing customization mode
+  const filteredTools = useMemo(() => {
+    if (customizingClothing) {
+      // Only show Colors tool when customizing clothing
+      return tools.filter(tool => tool.id === "tool_2");
+    } else if (inClothingShop) {
+      // Don't show any tools when in clothing shop but not customizing
+      return [];
+    }
+    // Otherwise show all tools (normal mode, though we won't actually use this)
+    return tools;
+  }, [tools, inClothingShop, customizingClothing]);
+
   const toolItems = useMemo(() => {
-    return tools.map((tool) => {
+    return filteredTools.map((tool) => {
       if (tool.id === "tool_2") {
         return tool;
       }
@@ -148,9 +253,9 @@ export default function App() {
 
       return { ...tool, icon };
     });
-  }, [selected, tools]);
+  }, [selected, filteredTools]);
 
-  const trayWidth = 3.5 * tools.length + 1 * (tools.length - 1);
+  const trayWidth = 3.5 * toolItems.length + 1 * (toolItems.length - 1);
 
   //Logo Section
   const defaultLogo = new THREE.TextureLoader().load("images/logo.png")
@@ -218,7 +323,33 @@ export default function App() {
     }
 
     setSelected(newSelected)
+    
+    // Set the clothing shop mode to true by default
+    setInClothingShop(true);
   }, [])
+  
+  // Toggle clothing customization mode
+  const toggleClothingCustomization = () => {
+    // Only allow toggling if the character is not moving
+    if (isCharacterMoving) return;
+    
+    if (!customizingClothing) {
+      // Entering customization mode
+      setCustomizingClothing(true);
+      
+      // Rotate character to face away from the house (away from door/shop) for better camera view
+      if (characterRef.current) {
+        // Face character away from the shop (door is at z+ direction of shop)
+        characterRef.current.rotation.y = 0; // This makes character face along z+ direction, away from shop door
+      }
+      
+      // Force select the color tool
+      setTool(tools.find(t => t.id === "tool_2") || tools[0]);
+    } else {
+      // Exiting customization mode
+      setCustomizingClothing(false);
+    }
+  };
 
   // Download pose as png
   const DownloadPose = () => {
@@ -242,6 +373,21 @@ export default function App() {
     }, 1000);
   };
 
+  // Handle shop proximity changes
+  const handleNearShop = (isNear) => {
+    setNearShop(isNear);
+  };
+  
+  // Handle character movement state changes
+  const handleCharacterMovementChange = (moving) => {
+    setIsCharacterMoving(moving);
+    
+    // If character starts moving while customizing, exit customization mode
+    if (moving && customizingClothing) {
+      setCustomizingClothing(false);
+    }
+  };
+
   if (!isDesktop) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
@@ -262,10 +408,26 @@ export default function App() {
 
       <div className="w-full h-screen">
         <Canvas gl={{ preserveDrawingBuffer: true, antialias: true }} shadows camera={{ fov: 30 }} linear={false} dpr={1.5}>
+          <fog attach="fog" args={[theme === "light" ? '#1C1D22' : '#1C1D22', 17, 42.5]} />
           <Ground theme={theme} visible={visible} />
           <Character colors={subToolColors} selected={selected} logo={logo} characterRef={characterRef} />
-          <ThirdPersonCamera characterRef={characterRef} />
+          {inClothingShop && (
+            <ClothingShop 
+              position={clothingShopPosition} 
+              onChangeClothing={toggleClothingCustomization}
+              canChangeClothing={nearShop && !isCharacterMoving}
+            />
+          )}
+          <ThirdPersonCamera characterRef={characterRef} customizingClothing={customizingClothing} shopPosition={clothingShopPosition} />
           <CharacterControls characterRef={characterRef} />
+          {inClothingShop && (
+            <SceneManager 
+              characterRef={characterRef} 
+              shopPosition={clothingShopPosition} 
+              onNearShop={handleNearShop}
+              onCharacterMovementChange={handleCharacterMovementChange}
+            />
+          )}
           <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
           <Lights selected={selected} />
         </Canvas>
@@ -309,102 +471,107 @@ export default function App() {
           }
         </button>
         <p className="text-[#8D98AF] text-xs font-medium ml-5" >
-          © 2024,
+          © 2025,
           <a href="https://github.com/llo7d" target="_blank">
             {" "}by llo7d
           </a>
         </p>
       </div>
 
-      <div className="absolute bottom-8 right-8">
-        <SubToolbar
-          subToolId={selected[tool.id]}
-          tool={tool}
-          colors={subToolColors}
-          onClickItem={(item) => {
-            setSelected({
-              ...selected,
-              [tool.id]: item.id
-            })
+      {/* Only show toolbar when customizing clothing */}
+      {customizingClothing && (
+        <div className="absolute bottom-8 right-8">
+          <SubToolbar
+            subToolId={selected[tool.id]}
+            tool={tool}
+            colors={subToolColors}
+            onClickItem={(item) => {
+              setSelected({
+                ...selected,
+                [tool.id]: item.id
+              })
 
-            if (item.id === 'logo_upload') {
-              refLogoInput.current?.click();
-            }
-          }}
-          onChangeColor={(subToolColor) => {
-            const newSubToolColors = subToolColors.map((color) => {
-              if (color.subToolId === selected[tool.id]) {
-                return {
-                  ...color,
-                  color: subToolColor.color,
-                };
+              if (item.id === 'logo_upload') {
+                refLogoInput.current?.click();
               }
+            }}
+            onChangeColor={(subToolColor) => {
+              const newSubToolColors = subToolColors.map((color) => {
+                if (color.subToolId === selected[tool.id]) {
+                  return {
+                    ...color,
+                    color: subToolColor.color,
+                  };
+                }
 
-              return color;
-            });
+                return color;
+              });
 
-            setSubToolColors(newSubToolColors);
-          }}
-        />
-        <input
-          ref={refLogoInput}
-          className="hidden"
-          type="file"
-          accept="image/png"
-          onChange={handlePickedLogo}
-        />
-      </div>
+              setSubToolColors(newSubToolColors);
+            }}
+          />
+          <input
+            ref={refLogoInput}
+            className="hidden"
+            type="file"
+            accept="image/png"
+            onChange={handlePickedLogo}
+          />
+        </div>
+      )}
 
-      <div className="absolute right-32 bottom-10">
-        <AnimatePresence>
-          {isToolbarOpen && (
-            <motion.div
-              className="overflow-hidden h-24 flex items-end"
-              initial={{ width: 0 }}
-              animate={{ width: `${trayWidth}rem` }}
-              exit={{ width: 0 }}
-            >
-              <Toolbar
-                toolId={tool.id}
-                items={toolItems}
-                onClickItem={(tool) => {
-                  const newTool = (() => {
-                    if (tool.id === 'tool_2') {
-                      return {
-                        ...tool,
-                        items: tool.items.map((item) => {
-                          const byId = (id: string) => {
-                            return (item: typeof tools[0]) => item.id === id
-                          }
-
-                          const icon = (() => {
-                            switch (item.id) {
-                              case "tool_2_item_1":
-                                return toolItems.find(byId('hair'))?.icon;
-
-                              case "tool_2_item_2":
-                                return toolItems.find(byId('beard'))?.icon;
-
-                              default:
-                                return item.icon;
+      {customizingClothing && (
+        <div className="absolute right-32 bottom-10">
+          <AnimatePresence>
+            {isToolbarOpen && (
+              <motion.div
+                className="overflow-hidden h-24 flex items-end"
+                initial={{ width: 0 }}
+                animate={{ width: `${trayWidth}rem` }}
+                exit={{ width: 0 }}
+              >
+                <Toolbar
+                  toolId={tool.id}
+                  items={toolItems}
+                  onClickItem={(tool) => {
+                    const newTool = (() => {
+                      if (tool.id === 'tool_2') {
+                        return {
+                          ...tool,
+                          items: tool.items.map((item) => {
+                            const byId = (id: string) => {
+                              return (item: typeof tools[0]) => item.id === id
                             }
-                          })();
 
-                          return { ...item, icon: icon || item.icon };
-                        }),
-                      };
-                    }
+                            const icon = (() => {
+                              switch (item.id) {
+                                case "tool_2_item_1":
+                                  return toolItems.find(byId('hair'))?.icon;
 
-                    return tool
-                  })()
+                                case "tool_2_item_2":
+                                  return toolItems.find(byId('beard'))?.icon;
 
-                  setTool(newTool)
-                }}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+                                default:
+                                  return item.icon;
+                              }
+                            })();
+
+                            return { ...item, icon: icon || item.icon };
+                          }),
+                        };
+                      }
+
+                      return tool
+                    })()
+
+                    setTool(newTool)
+                  }}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
 
       <ManualPopup
         isOpen={isManualOpen}
