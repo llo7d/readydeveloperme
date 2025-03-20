@@ -26,6 +26,7 @@ import { useControls } from "leva";
 import Lights from "./components/Lights";
 import { Analytics } from "@vercel/analytics/react";
 import { Leva } from 'leva'
+import HelperCharacter from "./components/HelperCharacter";
 
 // This component handles all scene-specific behaviors that need to use hooks like useFrame
 const SceneManager = ({ 
@@ -428,6 +429,7 @@ export default function App() {
               onCharacterMovementChange={handleCharacterMovementChange}
             />
           )}
+          <HelperCharacter characterRef={characterRef} />
           <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
           <Lights selected={selected} />
         </Canvas>
