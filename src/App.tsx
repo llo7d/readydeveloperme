@@ -105,6 +105,8 @@ const SceneManager = ({
 export default function App() {
   // Character reference for controlling movement
   const characterRef = useRef<THREE.Group>(null);
+  // Helper character reference for camera focus
+  const helperCharacterRef = useRef<THREE.Group>(null);
   
   // Add state to track if we're in the clothing shop mode
   const [inClothingShop, setInClothingShop] = useState(false);
@@ -419,7 +421,12 @@ export default function App() {
               canChangeClothing={nearShop && !isCharacterMoving}
             />
           )}
-          <ThirdPersonCamera characterRef={characterRef} customizingClothing={customizingClothing} shopPosition={clothingShopPosition} />
+          <ThirdPersonCamera 
+            characterRef={characterRef} 
+            customizingClothing={customizingClothing} 
+            shopPosition={clothingShopPosition} 
+            helperCharacterRef={helperCharacterRef}
+          />
           <CharacterControls characterRef={characterRef} />
           {inClothingShop && (
             <SceneManager 
@@ -429,7 +436,7 @@ export default function App() {
               onCharacterMovementChange={handleCharacterMovementChange}
             />
           )}
-          <HelperCharacter characterRef={characterRef} />
+          <HelperCharacter characterRef={characterRef} ref={helperCharacterRef} />
           <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
           <Lights selected={selected} />
         </Canvas>

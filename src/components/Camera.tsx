@@ -3,9 +3,18 @@ import { useFrame, useThree } from '@react-three/fiber'
 import React, { useRef, useEffect, useState, MutableRefObject } from 'react'
 import * as THREE from "three";
 
+// Add TypeScript declaration for the global window property
+declare global {
+  interface Window {
+    chatboxOpen: boolean;
+    cameraConfig: typeof cameraConfig;
+    helperUIConfig: any;
+  }
+}
+
 // Configuration for the third-person camera
 const cameraConfig = {
-  distance: 7.5, // Distance behind character
+  distance: 10.0, // Distance behind character - increased from 8.5 to 10.0 for more zoom out
   height: 3, // Height above character
   rotationSpeed: {
     horizontal: 0.003, // How fast camera rotates horizontally with mouse
@@ -13,25 +22,43 @@ const cameraConfig = {
   },
   minZoom: 3, 
   maxZoom: 20,
-  returnSpeed: 0.05, // Speed at which camera returns to behind character
+  returnSpeed: 0.15, // Speed at which camera returns to behind character - increased from 0.1 to 0.15
   followSpeed: 3, // How quickly camera follows character rotation when moving
   customizationDistance: 6, // Distance when customizing clothes - in front but not too close
   verticalLimits: {
     min: -Math.PI / 6, // Minimum vertical angle (looking down but not below ground)
     max: Math.PI / 3    // Maximum vertical angle (looking up)
+  },
+  helperFocus: {
+    distance: 3.5, // Distance from helper character
+    height: 2.5,    // Height to focus on face rather than above head
+    transitionSpeed: 6, // How quickly to transition to/from helper
+    // Adjustable offsets for fine-tuning
+    offset: {
+      x: 0,      // Left/right offset for target
+      y: -0.65,  // Up/down offset for target (lowered by 0.65)
+      z: 0,      // Forward/back offset for target
+      pitch: -0.2,  // Adjust pitch angle (vertical rotation) to -0.2
+      angle: 0.4    // Adjust horizontal angle around helper to 0.4
+    }
   }
 };
+
+// Make the config available globally for manual adjustments with a message
+window.cameraConfig = cameraConfig;
 
 interface ThirdPersonCameraProps {
   characterRef: MutableRefObject<THREE.Group | null>;
   customizingClothing?: boolean;
   shopPosition?: [number, number, number]; // Add shop position for clipping check
+  helperCharacterRef?: MutableRefObject<THREE.Group | null> | null; // Reference to helper character
 }
 
 const ThirdPersonCamera = ({ 
   characterRef, 
   customizingClothing = false,
-  shopPosition = [0, 0, -20]
+  shopPosition = [0, 0, -20],
+  helperCharacterRef = null
 }: ThirdPersonCameraProps) => {
   // Basic refs
   const orbitControlsRef = useRef<any>(null);
@@ -44,9 +71,30 @@ const ThirdPersonCamera = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
   
+  // Helper character focus state
+  const [focusingHelper, setFocusingHelper] = useState(false);
+  const lastCharacterPos = useRef(new THREE.Vector3());
+  const helperCharacterPos = useRef(new THREE.Vector3());
+  
   // Shop dimensions (matching the ClothingShop component)
   const shopSize = { width: 5, height: 3, depth: 5 };
   const shopVec = new THREE.Vector3(shopPosition[0], shopPosition[1], shopPosition[2]);
+  
+  // Check for chatbox open status
+  useEffect(() => {
+    const checkChatboxStatus = () => {
+      // Update focusing state based on chatbox
+      setFocusingHelper(window.chatboxOpen || false);
+    }
+    
+    // Check immediately and set up interval
+    checkChatboxStatus();
+    const interval = setInterval(checkChatboxStatus, 100);
+    
+    return () => {
+      clearInterval(interval);
+    }
+  }, []);
   
   // Set up mouse and wheel controls
   useEffect(() => {
@@ -174,12 +222,31 @@ const ThirdPersonCamera = ({
     const characterPos = character.position.clone();
     const characterRot = character.rotation.y;
     
-    // Always maintain a fixed target at character's position
-    const targetPos = new THREE.Vector3(
-      characterPos.x,
-      characterPos.y + cameraConfig.height * 0.5, // Target slightly above character center
-      characterPos.z
-    );
+    // Save last character position for transitions
+    lastCharacterPos.current.copy(characterPos);
+    
+    // Check if we have a helper character to focus on
+    if (helperCharacterRef?.current && focusingHelper) {
+      helperCharacterPos.current.copy(helperCharacterRef.current.position);
+    }
+    
+    // Calculate target based on which character to focus on
+    let targetPos;
+    if (helperCharacterRef?.current && focusingHelper) {
+      // Focus on helper character face with configurable offsets
+      targetPos = new THREE.Vector3(
+        helperCharacterPos.current.x + cameraConfig.helperFocus.offset.x,
+        helperCharacterPos.current.y + cameraConfig.helperFocus.height + cameraConfig.helperFocus.offset.y,
+        helperCharacterPos.current.z + cameraConfig.helperFocus.offset.z
+      );
+    } else {
+      // Focus on main character
+      targetPos = new THREE.Vector3(
+        characterPos.x,
+        characterPos.y + cameraConfig.height * 0.5,
+        characterPos.z
+      );
+    }
     
     // When not dragging, determine the appropriate camera position
     if (!isDragging) {
@@ -191,9 +258,26 @@ const ThirdPersonCamera = ({
         // rather than forcing a specific view, allowing free rotation
         targetAngle = cameraAngle.current;
         targetDistance = cameraConfig.customizationDistance;
+      } else if (helperCharacterRef?.current && focusingHelper) {
+        // When focusing on helper, determine angle to look at helper's face
+        const direction = new THREE.Vector2(
+          helperCharacterPos.current.x - lastCharacterPos.current.x,
+          helperCharacterPos.current.z - lastCharacterPos.current.z
+        ).normalize();
+        targetAngle = Math.atan2(direction.x, direction.y) + cameraConfig.helperFocus.offset.angle;
+        targetDistance = cameraConfig.helperFocus.distance;
       } else {
         // Position camera behind character (default)
         targetAngle = characterRot;
+        
+        // Check if we just transitioned from helper focus to main character
+        // This creates a more dramatic zoom out effect when stopping conversation
+        if (cameraDistance.current < cameraConfig.distance * 0.9) {
+          // We're closer than 90% of target distance, apply stronger zoom out
+          targetDistance = cameraConfig.distance * 1.15; // Zoom out 15% extra
+        } else {
+          targetDistance = cameraConfig.distance;
+        }
       }
       
       // Smoothly transition to target angle
@@ -205,14 +289,26 @@ const ThirdPersonCamera = ({
       
       // Apply smooth rotation to appropriate position but only if not in customization mode
       if (!customizingClothing) {
-        cameraAngle.current += rotationDiff * cameraConfig.returnSpeed;
+        // Use helper transition speed when focusing on helper
+        const rotationSpeed = focusingHelper 
+          ? cameraConfig.helperFocus.transitionSpeed * delta 
+          : cameraConfig.returnSpeed;
         
-        // Also reset vertical angle when not in customization mode
-        cameraPitch.current *= 0.95; // Gradually return to horizontal
+        cameraAngle.current += rotationDiff * rotationSpeed;
+        
+        // Also reset vertical angle when not in customization mode and not focusing helper
+        if (!focusingHelper) {
+          cameraPitch.current *= 0.95; // Gradually return to horizontal
+        } else {
+          // When focusing helper, adjust pitch with configurable offset
+          const targetPitch = cameraConfig.helperFocus.offset.pitch;
+          cameraPitch.current += (targetPitch - cameraPitch.current) * cameraConfig.helperFocus.transitionSpeed * delta;
+        }
       }
       
-      // Smoothly adjust distance
-      cameraDistance.current += (targetDistance - cameraDistance.current) * 0.1;
+      // Smoothly adjust distance with appropriate speed based on focus state
+      const distanceSpeed = focusingHelper ? 0.2 : 0.1;
+      cameraDistance.current += (targetDistance - cameraDistance.current) * distanceSpeed;
     }
     
     // Calculate camera position in orbit around character with vertical angle
@@ -226,10 +322,16 @@ const ThirdPersonCamera = ({
     // Calculate vertical offset (height based on pitch)
     const heightOffset = distance * Math.sin(cameraPitch.current);
     
+    // The position to place the camera depends on which character we're focusing
+    const focusPos = focusingHelper ? helperCharacterPos.current : characterPos;
+    const verticalBaseOffset = focusingHelper 
+      ? cameraConfig.helperFocus.height 
+      : cameraConfig.height;
+    
     const desiredCameraPos = new THREE.Vector3(
-      characterPos.x - offsetX,
-      characterPos.y + cameraConfig.height + heightOffset,
-      characterPos.z - offsetZ
+      focusPos.x - offsetX,
+      focusPos.y + verticalBaseOffset + heightOffset,
+      focusPos.z - offsetZ
     );
     
     // Check if camera line of sight passes through the shop building
@@ -250,9 +352,9 @@ const ThirdPersonCamera = ({
         const testOffsetZ = Math.cos(testAngle) * testHorizontalDistance;
         
         const testPos = new THREE.Vector3(
-          characterPos.x - testOffsetX,
-          characterPos.y + cameraConfig.height + heightOffset,
-          characterPos.z - testOffsetZ
+          focusPos.x - testOffsetX,
+          focusPos.y + verticalBaseOffset + heightOffset,
+          focusPos.z - testOffsetZ
         );
         
         if (!intersectsWithShop(targetPos, testPos)) {
@@ -274,11 +376,16 @@ const ThirdPersonCamera = ({
       // Direct positioning during drag for stability
       camera.position.copy(finalCameraPos);
     } else {
+      // Different follow speed based on whether we're transitioning to/from helper
+      const followSpeedFactor = focusingHelper 
+        ? cameraConfig.helperFocus.transitionSpeed 
+        : cameraConfig.followSpeed;
+      
       // Smooth positioning when not dragging
-      camera.position.lerp(finalCameraPos, cameraConfig.followSpeed * delta);
+      camera.position.lerp(finalCameraPos, followSpeedFactor * delta);
     }
     
-    // Always update orbit controls target to character position
+    // Always update orbit controls target to target position
     orbitControlsRef.current.target.copy(targetPos);
     orbitControlsRef.current.update();
   });

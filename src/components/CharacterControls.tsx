@@ -2,6 +2,13 @@ import { useFrame } from '@react-three/fiber';
 import { useRef, useState, useEffect, MutableRefObject } from 'react';
 import * as THREE from 'three';
 
+// Add TypeScript declaration for the global window property
+declare global {
+  interface Window {
+    chatboxOpen: boolean;
+  }
+}
+
 interface MovementState {
   forward: boolean;
   backward: boolean;
@@ -43,6 +50,9 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
   
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Skip movement if chatbox is open
+      if (window.chatboxOpen) return;
+      
       switch (e.key.toLowerCase()) {
         case 'w':
           setMovement(prev => ({ ...prev, backward: true }));
@@ -63,6 +73,9 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
     };
 
     const handleKeyUp = (e) => {
+      // Skip movement if chatbox is open
+      if (window.chatboxOpen) return;
+      
       switch (e.key.toLowerCase()) {
         case 'w':
           setMovement(prev => ({ ...prev, backward: false }));
@@ -94,6 +107,16 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
   useFrame((state, delta) => {
     // Check if characterRef exists and is valid
     if (!characterRef?.current) return;
+    
+    // If chatbox is open, stop all movement
+    if (window.chatboxOpen) {
+      // Reset movement state to prevent character movement
+      if (isMoving.current) {
+        currentVelocity.current.set(0, 0, 0);
+        isMoving.current = false;
+      }
+      return;
+    }
     
     // Initialize last position if needed
     if (!lastPosition.current.x && !lastPosition.current.y && !lastPosition.current.z) {
