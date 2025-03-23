@@ -1,6 +1,13 @@
 import { useAnimations, useGLTF } from "@react-three/drei";
-import React, { useEffect, useRef, MutableRefObject } from "react";
+import React, { useEffect, useRef, MutableRefObject, useState } from "react";
 import * as THREE from 'three';
+
+// Extend window type definition to include our debug function
+declare global {
+    interface Window {
+        logAnimStates?: () => string;
+    }
+}
 
 interface CharacterProps {
     selected: any;
@@ -14,10 +21,41 @@ export default function Character({ selected, colors, logo, characterRef }: Char
     const internalRef = useRef<THREE.Group>(null);
     
     // @ts-ignore - ignoring GLTF typing issues
-    const { nodes, materials, animations } = useGLTF("/dev7_compress.glb");
+    const { nodes, materials, animations } = useGLTF("/dev7.glb");
+
+    // Track character movement
+    const [isWalking, setIsWalking] = useState(false);
+    const lastPosition = useRef(new THREE.Vector3());
+    const walkingStateTimeout = useRef<number | null>(null);
 
     // Use the animations with the appropriate ref
     const { actions, mixer } = useAnimations(animations, characterRef || internalRef);
+
+    // Log available actions/animations for debugging - only once on initialization
+    useEffect(() => {
+        if (actions) {
+            // Add a utility function to monitor animation states without auto-logging
+            window.logAnimStates = () => {
+                const states = {};
+                Object.entries(actions).forEach(([name, action]) => {
+                    if (action) {
+                        states[name] = {
+                            isRunning: action.isRunning(),
+                            time: action.time,
+                            weight: action.getEffectiveWeight(),
+                            timeScale: action.getEffectiveTimeScale(),
+                            enabled: action.enabled
+                        };
+                    }
+                });
+                console.table(states);
+                return "Animation states logged";
+            };
+            
+            // Log available animations once at startup only
+            console.log("Available character animations:", Object.keys(actions));
+        }
+    }, [actions]);
 
     // Set initial position
     useEffect(() => {
@@ -26,14 +64,69 @@ export default function Character({ selected, colors, logo, characterRef }: Char
             const ref = characterRef?.current || internalRef.current;
             if (ref) {
                 ref.position.set(0, 0, 0);
+                // Initialize last position
+                lastPosition.current.copy(ref.position);
             }
         }
     }, [characterRef]);
 
+    // Track character movement to detect walking
+    useEffect(() => {
+        if (!characterRef?.current && !internalRef.current) return;
+        
+        const ref = characterRef?.current || internalRef.current;
+        if (!ref) return;
+        
+        const checkForMovement = () => {
+            if (!ref) return;
+            
+            // Calculate distance moved since last check
+            const currentPos = ref.position.clone();
+            const distance = currentPos.distanceTo(lastPosition.current);
+            
+            // If moved more than threshold, character is walking
+            const MOVEMENT_THRESHOLD = 0.01;
+            const nowWalking = distance > MOVEMENT_THRESHOLD;
+            
+            // Update walking state with debounce for stopping
+            if (nowWalking && !isWalking) {
+                // Clear any existing timeout to stop walking
+                if (walkingStateTimeout.current !== null) {
+                    window.clearTimeout(walkingStateTimeout.current);
+                    walkingStateTimeout.current = null;
+                }
+                
+                // Start walking immediately
+                setIsWalking(true);
+            } else if (!nowWalking && isWalking) {
+                // Debounce stopping to prevent flickering
+                if (walkingStateTimeout.current === null) {
+                    walkingStateTimeout.current = window.setTimeout(() => {
+                        setIsWalking(false);
+                        walkingStateTimeout.current = null;
+                    }, 300); // 300ms debounce before stopping
+                }
+            }
+            
+            // Update last position
+            lastPosition.current.copy(currentPos);
+        };
+        
+        // Check for movement regularly
+        const intervalId = setInterval(checkForMovement, 100);
+        
+        return () => {
+            clearInterval(intervalId);
+            if (walkingStateTimeout.current !== null) {
+                window.clearTimeout(walkingStateTimeout.current);
+            }
+        };
+    }, [characterRef, isWalking]);
+    
     // Pose thing
     const pose = (() => {
         switch (selected.pose) {
-            case "pose_character_stop": return "CharacterStop";
+            case "pose_character_stop": return "CrossedArm";
             case "pose_confident": return "Confident";
             case "pose_confused": return "Confused";
             case "pose_crossed_arm": return "CrossedArm";
@@ -54,38 +147,121 @@ export default function Character({ selected, colors, logo, characterRef }: Char
             case "pose_standing_thinking": return "StandingThinking";
             case "pose_waving": return "Waving";
             case "pose_welcome": return "Welcome";
-            default: return "Default";
+            default: return "CrossedArm";
         }
     })();
-
-    // Handle animations with proper effect callback
-    useEffect(() => {
-        // Check if the action exists
-        if (actions && actions[pose]) {
-            // Reset and fade in pose
-            actions[pose].reset().fadeIn(0.3).play();
-            
-            // Clean up function
-            return () => {
-                if (actions[pose]) {
-                    actions[pose].fadeOut(0.3);
-                }
-            };
+    
+    // Helper function to completely reset all animations
+    const resetAllAnimations = () => {
+        if (!actions) return;
+        
+        Object.values(actions).forEach(action => {
+            if (action) {
+                action.stop();
+                action.reset();
+                action.setEffectiveWeight(0);
+                action.enabled = false;
+            }
+        });
+        
+        if (mixer) {
+            mixer.stopAllAction();
+            mixer.update(0);
         }
-    }, [actions, pose]);
+    };
+    
+    // Initialize default animation on first load with a clean slate
+    useEffect(() => {
+        if (!actions) return;
+        
+        // Start with a clean slate
+        resetAllAnimations();
+        
+        const crossedArmAnimation = actions["CrossedArm"];
+        const standingAnimation = actions["Standing1"];
+        const defaultAnim = crossedArmAnimation || standingAnimation;
+        
+        if (defaultAnim && !isWalking) {
+            // Stop all other animations completely first
+            Object.values(actions).forEach(action => {
+                if (action && action !== defaultAnim) {
+                    action.stop();
+                    action.reset();
+                    action.setEffectiveWeight(0);
+                }
+            });
+            
+            // Set default pose with full weight
+            defaultAnim.reset();
+            defaultAnim.setEffectiveTimeScale(1);
+            defaultAnim.setEffectiveWeight(1);
+            defaultAnim.play();
+        }
+    }, [actions, isWalking]);
+    
+    // Handle movement animations separately from pose
+    useEffect(() => {
+        if (!actions) return;
+        
+        // Define our main animations
+        const walkingAnimation = actions["walking_loop"];
+        const standingAnimation = actions["Standing1"];
+        const crossedArmAnimation = actions["CrossedArm"];
+        const defaultAnim = crossedArmAnimation || standingAnimation; // Use CrossedArm as default
+        
+        // Helper function to ensure clean animation transitions
+        const transitionToAnimation = (targetAnim) => {
+            if (!targetAnim) return;
+            
+            // First completely reset all animations
+            resetAllAnimations();
+            
+            // Ensure target animation has full weight and is playing
+            targetAnim.reset();
+            targetAnim.enabled = true;
+            targetAnim.setEffectiveWeight(1);
+            targetAnim.play();
+        };
+        
+        // Determine which animation should be active
+        if (isWalking && walkingAnimation) {
+            transitionToAnimation(walkingAnimation);
+        } else if (!isWalking) {
+            // Determine which animation to use when not walking
+            let targetAnimation;
+            
+            if (selected.pose === "pose_character_stop") {
+                // Use CrossedArm for the default stance
+                targetAnimation = crossedArmAnimation || standingAnimation;
+            } else if (actions[pose]) {
+                // Use the specifically selected pose
+                targetAnimation = actions[pose];
+            } else {
+                // Fallback to crossed arms if pose not found
+                targetAnimation = crossedArmAnimation || standingAnimation;
+            }
+            
+            if (targetAnimation) {
+                transitionToAnimation(targetAnimation);
+            }
+        }
+    }, [actions, isWalking, selected.pose, pose]);
 
     const Face = () => {
-        if (selected.face === "default") {
-            nodes.body.morphTargetInfluences[0] = 0
-            nodes.body.morphTargetInfluences[1] = 1
-        }
-        else if (selected.face === "round") {
-            nodes.body.morphTargetInfluences[0] = 1
-            nodes.body.morphTargetInfluences[1] = 1
-        }
-        else if (selected.face === "square") {
-            nodes.body.morphTargetInfluences[0] = 0
-            nodes.body.morphTargetInfluences[1] = 0
+        // Safely modify morphTargetInfluences if they exist
+        if (nodes.body && nodes.body.morphTargetInfluences) {
+            if (selected.face === "default") {
+                nodes.body.morphTargetInfluences[0] = 0
+                nodes.body.morphTargetInfluences[1] = 1
+            }
+            else if (selected.face === "round") {
+                nodes.body.morphTargetInfluences[0] = 1
+                nodes.body.morphTargetInfluences[1] = 1
+            }
+            else if (selected.face === "square") {
+                nodes.body.morphTargetInfluences[0] = 0
+                nodes.body.morphTargetInfluences[1] = 0
+            }
         }
         return <></>
     }
@@ -205,8 +381,11 @@ export default function Character({ selected, colors, logo, characterRef }: Char
 
     const Desktop = () => {
         const desktop_bone = nodes.desktop_bone
-
-        desktop_bone.children[0].visible = false
+        
+        // Ensure desktop_bone exists and has children before accessing
+        if (desktop_bone && desktop_bone.children && desktop_bone.children.length > 0) {
+            desktop_bone.children[0].visible = false
+        }
 
         if (selected.pose === "pose_pc01" || selected.pose === "pose_pc02") {
             return (
@@ -215,8 +394,11 @@ export default function Character({ selected, colors, logo, characterRef }: Char
                 </>
             )
         } else {
-            return <><primitive object={desktop_bone} visible={false} />
-            </>
+            return (
+                <>
+                    <primitive object={desktop_bone} visible={false} />
+                </>
+            )
         }
     }
 
@@ -244,6 +426,18 @@ export default function Character({ selected, colors, logo, characterRef }: Char
                     skeleton={nodes.main_clothes002_2.skeleton}
                     material-color={colors[9].color}
                 />
+                <skinnedMesh
+                    name="main_clothes002_3"
+                    geometry={nodes.main_clothes002_3.geometry}
+                    material={materials.shoes_main_laces}
+                    skeleton={nodes.main_clothes002_3.skeleton}
+                />
+                <skinnedMesh
+                    name="main_clothes002_4"
+                    geometry={nodes.main_clothes002_4.geometry}
+                    material={materials.shoes_main_gromments}
+                    skeleton={nodes.main_clothes002_4.skeleton}
+                />
             </group>
         )
     }
@@ -255,8 +449,6 @@ export default function Character({ selected, colors, logo, characterRef }: Char
                 geometry={nodes.Brows.geometry}
                 material={materials.MAT_Brows}
                 skeleton={nodes.Brows.skeleton}
-                morphTargetDictionary={nodes.Brows.morphTargetDictionary}
-                morphTargetInfluences={nodes.Brows.morphTargetInfluences}
                 material-color={"black"}
             />
         )
@@ -434,7 +626,7 @@ export default function Character({ selected, colors, logo, characterRef }: Char
 
     const Pants = () => {
         return (
-            <group name="GEO_CC_Pants_Baked">
+            <group name="GEO_CC_Pants">
                 <skinnedMesh
                     name="pants002"
                     geometry={nodes.pants002.geometry}
@@ -482,8 +674,30 @@ export default function Character({ selected, colors, logo, characterRef }: Char
         return <></>
     }
 
+    // Define a character shadow component
+    const CharacterShadow = () => {
+        return (
+            <mesh 
+                rotation={[-Math.PI / 2, 0, 0]} 
+                position={[0, 0.01, 0]} 
+                receiveShadow={false}
+            >
+                <circleGeometry args={[1, 32]} />
+                <meshBasicMaterial 
+                    color="#000000"
+                    transparent={true}
+                    opacity={0.3}
+                    depthWrite={false}
+                />
+            </mesh>
+        );
+    };
+
     return (
         <group ref={characterRef || internalRef} dispose={null}>
+            {/* Character shadow */}
+            <CharacterShadow />
+            
             <group name="Scene">
                 <group name="DP-Character_RIG">
                     <group name="GEO_Body">
@@ -492,38 +706,45 @@ export default function Character({ selected, colors, logo, characterRef }: Char
                             geometry={nodes.body.geometry}
                             material={materials.MAT_Skin}
                             skeleton={nodes.body.skeleton}
-                            morphTargetDictionary={nodes.body.morphTargetDictionary}
-                            morphTargetInfluences={nodes.body.morphTargetInfluences}
+                            {...(nodes.body.morphTargetDictionary && { morphTargetDictionary: nodes.body.morphTargetDictionary })}
+                            {...(nodes.body.morphTargetInfluences && { morphTargetInfluences: nodes.body.morphTargetInfluences })}
                         />
                         <skinnedMesh
                             name="body_1"
                             geometry={nodes.body_1.geometry}
                             material={materials.MAT_Teeth}
                             skeleton={nodes.body_1.skeleton}
-                            morphTargetDictionary={nodes.body_1.morphTargetDictionary}
-                            morphTargetInfluences={nodes.body_1.morphTargetInfluences}
+                            {...(nodes.body_1.morphTargetDictionary && { morphTargetDictionary: nodes.body_1.morphTargetDictionary })}
+                            {...(nodes.body_1.morphTargetInfluences && { morphTargetInfluences: nodes.body_1.morphTargetInfluences })}
                         />
                         <skinnedMesh
                             name="body_2"
                             geometry={nodes.body_2.geometry}
                             material={materials.MAT_Eyes}
                             skeleton={nodes.body_2.skeleton}
-                            morphTargetDictionary={nodes.body_2.morphTargetDictionary}
-                            morphTargetInfluences={nodes.body_2.morphTargetInfluences}
+                            {...(nodes.body_2.morphTargetDictionary && { morphTargetDictionary: nodes.body_2.morphTargetDictionary })}
+                            {...(nodes.body_2.morphTargetInfluences && { morphTargetInfluences: nodes.body_2.morphTargetInfluences })}
                         />
                     </group>
-                    <primitive object={nodes["DEF-pelvisL"]} />
-                    <primitive object={nodes["DEF-pelvisR"]} />
-                    <primitive object={nodes["DEF-thighL"]} />
-                    <primitive object={nodes["DEF-thighR"]} />
-                    <primitive object={nodes["DEF-shoulderL"]} />
-                    <primitive object={nodes["DEF-upper_armL"]} />
-                    <primitive object={nodes["DEF-shoulderR"]} />
-                    <primitive object={nodes["DEF-upper_armR"]} />
-                    <primitive object={nodes["DEF-breastL"]} />
-                    <primitive object={nodes["DEF-breastR"]} />
-                    <primitive object={nodes["DEF-spine"]} />
+                    <primitive object={nodes.desktop_bone} />
+                    <primitive object={nodes['DEF-pelvisL']} />
+                    <primitive object={nodes['DEF-pelvisR']} />
+                    <primitive object={nodes['DEF-thighL']} />
+                    <primitive object={nodes['DEF-thighR']} />
+                    <primitive object={nodes['DEF-shoulderL']} />
+                    <primitive object={nodes['DEF-upper_armL']} />
+                    <primitive object={nodes['DEF-shoulderR']} />
+                    <primitive object={nodes['DEF-upper_armR']} />
+                    <primitive object={nodes['DEF-breastL']} />
+                    <primitive object={nodes['DEF-breastR']} />
+                    <primitive object={nodes['DEF-spine']} />
                 </group>
+                <skinnedMesh
+                    name="Brows"
+                    geometry={nodes.Brows.geometry}
+                    material={materials.MAT_Brows}
+                    skeleton={nodes.Brows.skeleton}
+                />
                 <skinnedMesh
                     name="tongue_GEO"
                     geometry={nodes.tongue_GEO.geometry}
@@ -548,4 +769,4 @@ export default function Character({ selected, colors, logo, characterRef }: Char
     );
 }
 
-useGLTF.preload("/dev7_compress.glb");
+useGLTF.preload("/dev7.glb");
