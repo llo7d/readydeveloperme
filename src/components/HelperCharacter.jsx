@@ -103,7 +103,7 @@ const HelperCharacter = forwardRef(({ characterRef }, ref) => {
   const [message, setMessage] = useState('')
   const [reply, setReply] = useState([])
   const chatContainerRef = useRef(null)
-  const { scene, animations } = useGLTF('/helperCharacter.glb')
+  const { scene, animations } = useGLTF('/AI_HELPER.glb')
   const clone = React.useMemo(() => SkeletonUtils.clone(scene), [scene])
   const { nodes, materials } = useGraph(clone)
   const { actions } = useAnimations(animations, group)
@@ -111,10 +111,23 @@ const HelperCharacter = forwardRef(({ characterRef }, ref) => {
   // Connect the forwarded ref to our group
   React.useImperativeHandle(ref, () => group.current)
 
+  // Set up a state to track post-chat transition
+  const [inPostChatTransition, setInPostChatTransition] = useState(false);
+
   // Set global flag when chatbox state changes
   useEffect(() => {
     console.log("Chatbox state changed:", showChatbox);
     window.chatboxOpen = showChatbox;
+    
+    // If transitioning from open to closed, start transition period
+    if (!showChatbox && !inPostChatTransition) {
+      setInPostChatTransition(true);
+      // Exit transition period after camera has had time to reposition
+      setTimeout(() => {
+        setInPostChatTransition(false);
+      }, 1500); // 1.5 second transition time (increased from 1 second)
+    }
+    
     if (showChatbox) {
       console.log("Global chatboxOpen flag set to TRUE");
     } else {
@@ -125,24 +138,84 @@ const HelperCharacter = forwardRef(({ characterRef }, ref) => {
       window.chatboxOpen = false;
       console.log("Component unmounted: Global chatboxOpen flag set to FALSE");
     }
-  }, [showChatbox])
+  }, [showChatbox, inPostChatTransition]);
+  
+  // Make the post-chat transition state available globally
+  useEffect(() => {
+    window.inChatTransition = inPostChatTransition;
+    console.log("In post-chat transition:", inPostChatTransition);
+  }, [inPostChatTransition]);
 
-  // Set up the initial pose (4th pose) and stop animation
+  // Set up the initial pose (Animation4) and animations
   useEffect(() => {
     if (!actions) return;
     
-    const animationNames = Object.keys(actions)
-    if (animationNames.length >= 4) {
-      const fourthAnimation = animationNames[3]
-      if (actions[fourthAnimation]) {
-        const action = actions[fourthAnimation]
-        action.reset()
-        action.setEffectiveTimeScale(0)
-        action.play()
-        action.time = 0.5
-      }
+    // Log available animations for debugging
+    console.log("Available animations:", Object.keys(actions));
+    
+    // Find Animation4 and Animation5
+    const idleAnimation = actions['Animation4'] || Object.values(actions)[3]; // Fallback to 4th animation if not named
+    const talkAnimation = actions['Animation5'] || Object.values(actions)[4]; // Fallback to 5th animation if not named
+    
+    // Set up animations with appropriate settings
+    if (idleAnimation) {
+      console.log("Setting up idle animation");
+      idleAnimation.reset();
+      idleAnimation.setEffectiveTimeScale(1);
+      idleAnimation.setLoop(THREE.LoopRepeat, Infinity);
+      idleAnimation.clampWhenFinished = false;
+      idleAnimation.play();
     }
-  }, [actions])
+    
+    if (talkAnimation) {
+      console.log("Setting up talk animation");
+      talkAnimation.reset();
+      talkAnimation.setEffectiveTimeScale(1);
+      talkAnimation.setLoop(THREE.LoopRepeat, Infinity);
+      talkAnimation.clampWhenFinished = false;
+      // Don't play it yet - we'll play it when needed
+      talkAnimation.stop();
+    }
+    
+    // Store animations in refs for later use
+    window.helperAnimations = {
+      idle: idleAnimation,
+      talk: talkAnimation
+    };
+    
+  }, [actions]);
+  
+  // Handle animations based on chatbox state and reply changes
+  useEffect(() => {
+    if (!window.helperAnimations?.idle || !window.helperAnimations?.talk) return;
+    
+    const { idle, talk } = window.helperAnimations;
+    
+    // Only trigger on chatbox close or open, not on every reply change
+    // (The reply-based animation is now handled in handleSubmit)
+    if (!showChatbox) {
+      // When chatbox is closed, ensure we're in idle state
+      console.log("Chatbox closed - returning to idle animation");
+      
+      // Stop any running animation transition
+      if (window.animationTransitionTimeout) {
+        clearTimeout(window.animationTransitionTimeout);
+      }
+      
+      // Crossfade between animations
+      talk.fadeOut(0.3);
+      idle.reset();
+      idle.fadeIn(0.3);
+      idle.play();
+    }
+    
+    // Cleanup
+    return () => {
+      if (window.animationTransitionTimeout) {
+        clearTimeout(window.animationTransitionTimeout);
+      }
+    };
+  }, [showChatbox]);
 
   // Handle proximity detection
   useEffect(() => {
@@ -222,6 +295,39 @@ const HelperCharacter = forwardRef(({ characterRef }, ref) => {
           ...prev,
           { sender: 'ai', text: aiResponse }
         ])
+        
+        // Start talking animation - but first check if we have animations
+        if (window.helperAnimations?.idle && window.helperAnimations?.talk) {
+          const { idle, talk } = window.helperAnimations;
+          
+          console.log("Starting AI response animation");
+          // Crossfade to talking animation
+          idle.fadeOut(0.3);
+          talk.reset();
+          talk.fadeIn(0.3);
+          talk.play();
+          
+          // Calculate duration based on message length
+          // For better timing, count words rather than characters
+          const wordCount = aiResponse.split(/\s+/).length;
+          // Average speaking rate - approximately 2-3 words per second
+          const speakingDuration = Math.max(2, Math.min(8, wordCount / 2.5));
+          
+          console.log(`AI response animation duration: ${speakingDuration}s (${wordCount} words)`);
+          
+          // After message "speaking" duration, transition back to idle
+          if (window.animationTransitionTimeout) {
+            clearTimeout(window.animationTransitionTimeout);
+          }
+          
+          window.animationTransitionTimeout = setTimeout(() => {
+            console.log("AI finished talking - returning to idle");
+            talk.fadeOut(0.3);
+            idle.reset();
+            idle.fadeIn(0.3);
+            idle.play();
+          }, speakingDuration * 1000);
+        }
       }, 500)
     }
   }
@@ -244,19 +350,27 @@ const HelperCharacter = forwardRef(({ characterRef }, ref) => {
       const originalTransitionSpeed = window.cameraConfig.helperFocus.transitionSpeed;
       const originalReturnSpeed = window.cameraConfig.returnSpeed;
       
-      // Temporarily boost transition speeds for immediate effect
-      window.cameraConfig.helperFocus.transitionSpeed = 10;
-      window.cameraConfig.returnSpeed = 0.5;
+      // Temporarily boost transition speeds for immediate effect - but not too fast
+      window.cameraConfig.helperFocus.transitionSpeed = 5; // Reduced from 10 for smoother transition
+      window.cameraConfig.returnSpeed = 0.25; // Reduced from 0.5 for smoother transition
       
-      // Temporarily increase distance for more zoom out
-      window.cameraConfig.distance = 12.0; // Extra zoom out
+      // Temporarily increase distance for more zoom out, but not excessively
+      window.cameraConfig.distance = 11.0; // Slightly less than before (was 12.0)
       
       // Restore original values after transition completes
       setTimeout(() => {
-        window.cameraConfig.helperFocus.transitionSpeed = originalTransitionSpeed;
-        window.cameraConfig.returnSpeed = originalReturnSpeed;
-        window.cameraConfig.distance = originalDistance;
-      }, 500); // Increased from 300ms to 500ms for a longer transition
+        // First step: reduce boosted values gradually
+        window.cameraConfig.helperFocus.transitionSpeed = originalTransitionSpeed * 1.5;
+        window.cameraConfig.returnSpeed = originalReturnSpeed * 1.5;
+        window.cameraConfig.distance = originalDistance * 1.1;
+        
+        // Final step: restore original values completely
+        setTimeout(() => {
+          window.cameraConfig.helperFocus.transitionSpeed = originalTransitionSpeed;
+          window.cameraConfig.returnSpeed = originalReturnSpeed;
+          window.cameraConfig.distance = originalDistance;
+        }, 500);
+      }, 500);
     }
   }
   
@@ -532,33 +646,156 @@ const HelperCharacter = forwardRef(({ characterRef }, ref) => {
           <meshBasicMaterial transparent opacity={0} />
         </mesh>
         
-        <group name="root">
-          <primitive object={nodes.rootx} />
+        <group name="James_SoftwareEngineer_rig">
+          <skinnedMesh
+            name="Headphones"
+            geometry={nodes.Headphones.geometry}
+            material={materials.MAT_Headphone}
+            skeleton={nodes.Headphones.skeleton}
+            castShadow
+            receiveShadow
+          />
+          <skinnedMesh
+            name="James_5FingerHandArms001"
+            geometry={nodes.James_5FingerHandArms001.geometry}
+            material={materials.skin_Baked}
+            skeleton={nodes.James_5FingerHandArms001.skeleton}
+            castShadow
+            receiveShadow
+          />
+          <skinnedMesh
+            name="james_body_geo002"
+            geometry={nodes.james_body_geo002.geometry}
+            material={materials.skin_Baked}
+            skeleton={nodes.james_body_geo002.skeleton}
+            castShadow
+            receiveShadow
+          />
+          <skinnedMesh
+            name="james_cap001"
+            geometry={nodes.james_cap001.geometry}
+            material={materials.james_cap_Baked}
+            skeleton={nodes.james_cap001.skeleton}
+            castShadow
+            receiveShadow
+            material-color={isNear ? window.helperUIConfig.badge.colors.near : window.helperUIConfig.badge.colors.default}
+          />
+          <skinnedMesh
+            name="james_facial_hair"
+            geometry={nodes.james_facial_hair.geometry}
+            material={materials['Facial hair']}
+            skeleton={nodes.james_facial_hair.skeleton}
+            castShadow
+            receiveShadow
+          />
+          <group name="james_hair_geo002">
+            <skinnedMesh
+              name="james_hair_geo002_1"
+              geometry={nodes.james_hair_geo002_1.geometry}
+              material={materials.James_hairbase}
+              skeleton={nodes.james_hair_geo002_1.skeleton}
+              castShadow
+              receiveShadow
+            />
+            <skinnedMesh
+              name="james_hair_geo002_2"
+              geometry={nodes.james_hair_geo002_2.geometry}
+              material={materials.Hair}
+              skeleton={nodes.james_hair_geo002_2.skeleton}
+              castShadow
+              receiveShadow
+            />
+          </group>
+          <skinnedMesh
+            name="james_lf_eye_geo001"
+            geometry={nodes.james_lf_eye_geo001.geometry}
+            material={materials['James_eyes.001']}
+            skeleton={nodes.james_lf_eye_geo001.skeleton}
+            castShadow
+            receiveShadow
+          />
+          <skinnedMesh
+            name="james_lowerteeth_geo001"
+            geometry={nodes.james_lowerteeth_geo001.geometry}
+            material={materials['James_Mouth.001']}
+            skeleton={nodes.james_lowerteeth_geo001.skeleton}
+            castShadow
+            receiveShadow
+          />
+          <skinnedMesh
+            name="james_pants_geo001"
+            geometry={nodes.james_pants_geo001.geometry}
+            material={materials['james_pants_geo.003_Baked']}
+            skeleton={nodes.james_pants_geo001.skeleton}
+            castShadow
+            receiveShadow
+          />
+          <skinnedMesh
+            name="james_rt_eyebrow_geo001"
+            geometry={nodes.james_rt_eyebrow_geo001.geometry}
+            material={materials.James_hairbase}
+            skeleton={nodes.james_rt_eyebrow_geo001.skeleton}
+            castShadow
+            receiveShadow
+          />
+          <skinnedMesh
+            name="james_shirt_geo"
+            geometry={nodes.james_shirt_geo.geometry}
+            material={materials['James_Shirt.001']}
+            skeleton={nodes.james_shirt_geo.skeleton}
+            castShadow
+            receiveShadow
+            material-color={isNear ? window.helperUIConfig.badge.colors.near : window.helperUIConfig.badge.colors.default}
+          />
+          <skinnedMesh
+            name="james_Tongue"
+            geometry={nodes.james_Tongue.geometry}
+            material={materials['James_Mouth.001']}
+            skeleton={nodes.james_Tongue.skeleton}
+            castShadow
+            receiveShadow
+          />
+          <skinnedMesh
+            name="james_upperteeth_geo"
+            geometry={nodes.james_upperteeth_geo.geometry}
+            material={materials['James_Mouth.001']}
+            skeleton={nodes.james_upperteeth_geo.skeleton}
+            castShadow
+            receiveShadow
+          />
+          <skinnedMesh
+            name="james_vans_geo001"
+            geometry={nodes.james_vans_geo001.geometry}
+            material={materials.james_vans_geo_Baked}
+            skeleton={nodes.james_vans_geo001.skeleton}
+            castShadow
+            receiveShadow
+          />
+          <primitive object={nodes.Bone} />
           <primitive object={nodes.HeadphoneRoot} />
           <primitive object={nodes.MacbookRoot} />
-          {Object.entries(nodes).map(([key, node]) => {
-            if (node.type === 'SkinnedMesh') {
-              return (
-                <skinnedMesh
-                  key={key}
-                  name={key}
-                  geometry={node.geometry}
-                  material={materials[node.material.name]}
-                  skeleton={node.skeleton}
-                  morphTargetDictionary={node.morphTargetDictionary}
-                  morphTargetInfluences={node.morphTargetInfluences}
-                  castShadow
-                  receiveShadow
-                  material-color={
-                    (key === 'james_shirt_geo' || key === 'james_cap') 
-                      ? isNear ? window.helperUIConfig.badge.colors.near : window.helperUIConfig.badge.colors.default
-                      : undefined
-                  }
-                />
-              )
-            }
-            return null
-          })}
+          <primitive object={nodes.rootx} />
+          <primitive object={nodes.footl} />
+          <primitive object={nodes.thigh_twistl} />
+          <primitive object={nodes.footr} />
+          <primitive object={nodes.thigh_twistr} />
+          <primitive object={nodes.spine_01x} />
+          <primitive object={nodes.spine_02x} />
+          <primitive object={nodes.neckx} />
+          <primitive object={nodes.shoulderr} />
+          <primitive object={nodes.c_arm_twist_offsetr} />
+          <primitive object={nodes.arm_stretchr} />
+          <primitive object={nodes.shoulderl} />
+          <primitive object={nodes.c_arm_twist_offsetl} />
+          <primitive object={nodes.arm_stretchl} />
+          <primitive object={nodes.spine_03x} />
+          <primitive object={nodes.headx} />
+          <primitive object={nodes.leg_stretchl} />
+          <primitive object={nodes.leg_stretchr} />
+          <primitive object={nodes.forearm_stretchl} />
+          <primitive object={nodes.forearm_stretchr} />
+          <primitive object={nodes.handl} />
+          <primitive object={nodes.handr} />
         </group>
       </group>
     </group>
@@ -567,4 +804,4 @@ const HelperCharacter = forwardRef(({ characterRef }, ref) => {
 
 export default HelperCharacter
 
-useGLTF.preload('/helperCharacter.glb')
+useGLTF.preload('/AI_HELPER.glb')

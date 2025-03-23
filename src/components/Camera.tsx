@@ -7,8 +7,10 @@ import * as THREE from "three";
 declare global {
   interface Window {
     chatboxOpen: boolean;
+    inChatTransition: boolean;
     cameraConfig: typeof cameraConfig;
     helperUIConfig: any;
+    isColorPickerDragging: boolean;
   }
 }
 
@@ -80,6 +82,9 @@ const ThirdPersonCamera = ({
   const shopSize = { width: 5, height: 3, depth: 5 };
   const shopVec = new THREE.Vector3(shopPosition[0], shopPosition[1], shopPosition[2]);
   
+  // Chat transition state - read from global window property
+  const inChatTransition = window.inChatTransition || false;
+  
   // Check for chatbox open status
   useEffect(() => {
     const checkChatboxStatus = () => {
@@ -98,8 +103,62 @@ const ThirdPersonCamera = ({
   
   // Set up mouse and wheel controls
   useEffect(() => {
+    // Track if we're interacting with a color picker
+    let isColorPickerActive = false;
+    
+    // Add a global tracking flag for color picker state
+    window.isColorPickerDragging = false;
+
+    // Function to check if an element is part of a color picker
+    const isColorPickerElement = (element) => {
+      return element.closest('.leva-c-iWIXMl') || // Leva color picker component
+             element.closest('.react-colorful') || // React Colorful component
+             element.closest('.react-colorful__saturation') || // Saturation area
+             element.closest('.react-colorful__hue') || // Hue slider
+             element.closest('.react-colorful__interactive') || // Interactive areas
+             element.closest('.react-colorful__pointer') || // Draggable handles
+             element.closest('HexColorPicker') || // Direct component
+             element.closest('HexColorInput') || // Hex input
+             element.closest('[class*="colorful"]'); // Any element with 'colorful' in class name
+    };
+
+    // Add extra global listeners for color picker
+    const onColorPickerDragStart = () => {
+      window.isColorPickerDragging = true;
+      isColorPickerActive = true;
+    };
+    
+    const onColorPickerDragEnd = () => {
+      window.isColorPickerDragging = false;
+      setTimeout(() => {
+        isColorPickerActive = false;
+      }, 50); // Short delay to prevent immediate camera rotation
+    };
+
+    // Event handler functions (stored as references for proper cleanup)
+    const globalMouseDown = (e) => {
+      if (customizingClothing && isColorPickerElement(e.target)) {
+        onColorPickerDragStart();
+      }
+    };
+    
+    const globalMouseUp = () => {
+      if (window.isColorPickerDragging) {
+        onColorPickerDragEnd();
+      }
+    };
+
+    // Add event listeners to catch react-colorful drag
+    document.addEventListener('mousedown', globalMouseDown, { capture: true });
+    document.addEventListener('mouseup', globalMouseUp, { capture: true });
+
     const handleMouseDown = (e) => {
-      // Prevent camera rotation when clicking on color picker or other UI elements
+      // If color picker is in dragging mode, never start camera rotation
+      if (window.isColorPickerDragging) {
+        return;
+      }
+
+      // Comprehensive check for color picker or other UI elements
       if (e.target.closest('.leva-c-iWIXMl') || // Color picker component
           e.target.closest('.leva-c-PJLV') ||    // General Leva UI components
           e.target.closest('.leva-panel') ||     // Entire Leva panel
@@ -107,12 +166,15 @@ const ThirdPersonCamera = ({
           e.target.closest('.subtoolbar') ||     // Our subtoolbar
           e.target.closest('.color-picker') ||   // Additional class for color picker
           e.target.closest('button') ||          // Any button element
-          e.target.closest('input')) {           // Any input element including hex color input
+          e.target.closest('input') ||           // Any input element including hex color input
+          isColorPickerElement(e.target)) {      // Check if it's a color picker element
+        
+        // Set color picker active state if it's a color picker
+        if (isColorPickerElement(e.target)) {
+          isColorPickerActive = true;
+        }
         return;
       }
-      
-      // Remove the blanket restriction that prevented all camera rotation during customization
-      // This allows rotation during customization as long as we're not interacting with UI elements
       
       if (e.button === 0) { // Left mouse button
         setIsDragging(true);
@@ -121,10 +183,18 @@ const ThirdPersonCamera = ({
     };
     
     const handleMouseUp = () => {
+      // Reset color picker state
+      isColorPickerActive = false;
       setIsDragging(false);
     };
     
     const handleMouseMove = (e) => {
+      // If color picker is active or global flag is set, never allow rotation
+      if (isColorPickerActive || window.isColorPickerDragging) {
+        setIsDragging(false);
+        return;
+      }
+
       // Additional check to prevent rotation when hovering over UI elements
       if (e.target.closest('.leva-c-iWIXMl') || 
           e.target.closest('.leva-c-PJLV') ||
@@ -134,6 +204,7 @@ const ThirdPersonCamera = ({
           e.target.closest('.color-picker') ||
           e.target.closest('button') ||
           e.target.closest('input') ||
+          isColorPickerElement(e.target) ||
           document.activeElement?.tagName === 'INPUT') {
         setIsDragging(false);
         return;
@@ -176,13 +247,32 @@ const ThirdPersonCamera = ({
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('wheel', handleWheel, { passive: false });
     
+    // Event handler cleanup
     return () => {
+      // Clean up window event listeners
       window.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('wheel', handleWheel);
+      
+      // Clean up color picker global listeners
+      document.removeEventListener('mousedown', globalMouseDown, { capture: true });
+      document.removeEventListener('mouseup', globalMouseUp, { capture: true });
+      
+      // Reset color picker state
+      window.isColorPickerDragging = false;
     };
-  }, [isDragging, dragStartPos]);
+  }, [
+    characterRef.current?.position, 
+    cameraDistance.current, 
+    cameraAngle.current, 
+    cameraPitch.current, 
+    isDragging, 
+    dragStartPos,
+    customizingClothing,
+    focusingHelper,
+    inChatTransition
+  ]);
 
   // Check if a line intersects with the shop
   const intersectsWithShop = (start: THREE.Vector3, end: THREE.Vector3): boolean => {
@@ -212,7 +302,8 @@ const ThirdPersonCamera = ({
     // Check if:
     // - Camera is on the same side of the character as the shop (dot product > 0)
     // - AND Camera is close enough to potentially see through the shop
-    return (dotProduct > 0 && camToShopDistance < shopRadius * 2);
+    // Reduced the collision radius by using 1.2 instead of 1.5 to make it even less aggressive
+    return (dotProduct > 0 && camToShopDistance < shopRadius * 1.2);
   };
 
   useFrame((state, delta) => {
@@ -335,18 +426,24 @@ const ThirdPersonCamera = ({
     );
     
     // Check if camera line of sight passes through the shop building
+    // Use variable collision strength based on context
+    const collisionStrength = focusingHelper ? 0.2 : // Very weak during conversation
+                             inChatTransition ? 0.4 : // Moderate during transition
+                             0.8; // Strong during normal gameplay
+                             
+    // Calculate collision effect with adjustable strength
     const viewLineIntersectsShop = intersectsWithShop(targetPos, desiredCameraPos);
     
-    // If view line intersects shop, adjust camera position
-    let finalCameraPos: THREE.Vector3 = desiredCameraPos;
+    // If view line intersects shop, adjust camera position with variable strength
+    let finalCameraPos: THREE.Vector3 = desiredCameraPos.clone();
     if (viewLineIntersectsShop && !customizingClothing) {
       // Find a better angle that doesn't intersect the shop
       let testAngle = cameraAngle.current;
       let validPosition: THREE.Vector3 | null = null;
       
       // Test multiple angles to find a valid position
-      for (let i = 0; i < 12; i++) {
-        testAngle += Math.PI / 6; // 30 degree increments
+      for (let i = 0; i < 8; i++) { // Reduced iterations from 12 to 8
+        testAngle += Math.PI / 4; // 45 degree increments instead of 30
         const testHorizontalDistance = distance * Math.cos(cameraPitch.current);
         const testOffsetX = Math.sin(testAngle) * testHorizontalDistance;
         const testOffsetZ = Math.cos(testAngle) * testHorizontalDistance;
@@ -359,15 +456,16 @@ const ThirdPersonCamera = ({
         
         if (!intersectsWithShop(targetPos, testPos)) {
           validPosition = testPos;
-          // Gradually transition camera angle toward this valid angle
-          cameraAngle.current += (testAngle - cameraAngle.current) * 0.1;
+          // Gradually transition camera angle toward this valid angle with reduced strength
+          cameraAngle.current += (testAngle - cameraAngle.current) * 0.05; // Reduced from 0.1
           break;
         }
       }
       
-      // Use the valid position or fall back to the original
+      // Use the valid position or fall back to the original, with variable blending
       if (validPosition) {
-        finalCameraPos = validPosition;
+        // Blend between desired and collision-free position based on context
+        finalCameraPos.lerp(validPosition, collisionStrength);
       }
     }
     
