@@ -54,6 +54,22 @@ export default function Character({ selected, colors, logo, characterRef }: Char
             
             // Log available animations once at startup only
             console.log("Available character animations:", Object.keys(actions));
+            
+            // Specifically check for our required animations
+            const hasCrossedArm = !!actions["CrossedArm"];
+            const hasWalking = !!actions["walking_loop"];
+            
+            console.log("Animation check:", {
+                CrossedArm: hasCrossedArm,
+                walking_loop: hasWalking
+            });
+            
+            if (!hasCrossedArm) {
+                console.warn("WARNING: CrossedArm animation missing!");
+            }
+            if (!hasWalking) {
+                console.warn("WARNING: walking_loop animation missing!");
+            }
         }
     }, [actions]);
 
@@ -85,7 +101,7 @@ export default function Character({ selected, colors, logo, characterRef }: Char
             const distance = currentPos.distanceTo(lastPosition.current);
             
             // If moved more than threshold, character is walking
-            const MOVEMENT_THRESHOLD = 0.01;
+            const MOVEMENT_THRESHOLD = 0.02; // Increase threshold to avoid false positives
             const nowWalking = distance > MOVEMENT_THRESHOLD;
             
             // Update walking state with debounce for stopping
@@ -104,7 +120,7 @@ export default function Character({ selected, colors, logo, characterRef }: Char
                     walkingStateTimeout.current = window.setTimeout(() => {
                         setIsWalking(false);
                         walkingStateTimeout.current = null;
-                    }, 300); // 300ms debounce before stopping
+                    }, 300); // Standard debounce timeout
                 }
             }
             
@@ -174,78 +190,130 @@ export default function Character({ selected, colors, logo, characterRef }: Char
     useEffect(() => {
         if (!actions) return;
         
-        // Start with a clean slate
-        resetAllAnimations();
-        
+        console.log("Initializing default animation");
+                
         const crossedArmAnimation = actions["CrossedArm"];
-        const standingAnimation = actions["Standing1"];
-        const defaultAnim = crossedArmAnimation || standingAnimation;
+        if (!crossedArmAnimation) {
+            console.warn("CrossedArm animation not found!");
+            return;
+        }
         
-        if (defaultAnim && !isWalking) {
-            // Stop all other animations completely first
+        // Only set initial animation if not walking
+        if (!isWalking) {
+            // Make sure CrossedArm is properly initialized
+            // Stop any other animations first
             Object.values(actions).forEach(action => {
-                if (action && action !== defaultAnim) {
+                if (action && action !== crossedArmAnimation && action.isRunning()) {
                     action.stop();
-                    action.reset();
-                    action.setEffectiveWeight(0);
                 }
             });
             
-            // Set default pose with full weight
-            defaultAnim.reset();
-            defaultAnim.setEffectiveTimeScale(1);
-            defaultAnim.setEffectiveWeight(1);
-            defaultAnim.play();
+            crossedArmAnimation.reset();
+            crossedArmAnimation.enabled = true;
+            crossedArmAnimation.setEffectiveTimeScale(1);
+            crossedArmAnimation.setEffectiveWeight(1);
+            crossedArmAnimation.play();
+            
+            console.log("CrossedArm animation started");
         }
-    }, [actions, isWalking]);
+    }, [actions]); // Only run once when actions are loaded, not when isWalking changes
     
-    // Handle movement animations separately from pose
+    // Handle walking animation transitions and pose selection
     useEffect(() => {
         if (!actions) return;
         
-        // Define our main animations
-        const walkingAnimation = actions["walking_loop"];
-        const standingAnimation = actions["Standing1"];
-        const crossedArmAnimation = actions["CrossedArm"];
-        const defaultAnim = crossedArmAnimation || standingAnimation; // Use CrossedArm as default
+        // Debug logging
+        console.log("Animation update triggered. isWalking:", isWalking, "selected.pose:", selected.pose);
         
-        // Helper function to ensure clean animation transitions
-        const transitionToAnimation = (targetAnim) => {
-            if (!targetAnim) return;
-            
-            // First completely reset all animations
-            resetAllAnimations();
-            
-            // Ensure target animation has full weight and is playing
-            targetAnim.reset();
-            targetAnim.enabled = true;
-            targetAnim.setEffectiveWeight(1);
-            targetAnim.play();
-        };
-        
-        // Determine which animation should be active
-        if (isWalking && walkingAnimation) {
-            transitionToAnimation(walkingAnimation);
-        } else if (!isWalking) {
-            // Determine which animation to use when not walking
-            let targetAnimation;
-            
-            if (selected.pose === "pose_character_stop") {
-                // Use CrossedArm for the default stance
-                targetAnimation = crossedArmAnimation || standingAnimation;
-            } else if (actions[pose]) {
-                // Use the specifically selected pose
-                targetAnimation = actions[pose];
-            } else {
-                // Fallback to crossed arms if pose not found
-                targetAnimation = crossedArmAnimation || standingAnimation;
+        // Always show walking animation when walking, CrossedArm when stopping
+        if (isWalking) {
+            const walkAnim = actions["walking_loop"];
+            if (walkAnim) {
+                Object.entries(actions).forEach(([name, action]) => {
+                    if (action && action !== walkAnim && action.isRunning()) {
+                        action.fadeOut(0.3);
+                    }
+                });
+                
+                if (!walkAnim.isRunning()) {
+                    walkAnim.reset();
+                    walkAnim.enabled = true;
+                    walkAnim.setEffectiveTimeScale(1);
+                    walkAnim.setEffectiveWeight(1);
+                    walkAnim.play();
+                    console.log("Started walking animation");
+                }
             }
+        } else {
+            // IMPORTANT: When stopping walking, ALWAYS switch to CrossedArm regardless of selected.pose
+            // This overrides the default "pose_standing1" set in App.tsx
+            const crossedArmAnim = actions["CrossedArm"];
             
-            if (targetAnimation) {
-                transitionToAnimation(targetAnimation);
+            if (crossedArmAnim) {
+                // Fade out all other animations
+                Object.entries(actions).forEach(([name, action]) => {
+                    if (action && action !== crossedArmAnim && action.isRunning()) {
+                        console.log("Fading out animation:", name);
+                        action.fadeOut(0.3);
+                    }
+                });
+                
+                if (!crossedArmAnim.isRunning()) {
+                    crossedArmAnim.reset();
+                    crossedArmAnim.enabled = true;
+                    crossedArmAnim.setEffectiveTimeScale(1);
+                    crossedArmAnim.setEffectiveWeight(1);
+                    crossedArmAnim.play();
+                    console.log("Started CrossedArm animation after walking stopped");
+                }
+            } else {
+                console.error("CrossedArm animation not found - this is a critical issue!");
             }
         }
-    }, [actions, isWalking, selected.pose, pose]);
+    }, [actions, isWalking]); // Remove selected.pose and pose dependencies to prevent pose changes affecting this
+    
+    // Handle specific pose selection (only when not walking)
+    useEffect(() => {
+        if (!actions || isWalking) return; // Skip if walking or no actions
+        
+        // Only handle pose selection when explicitly changed via UI and not walking
+        let targetAnim;
+        
+        // IMPORTANT: Always ignore pose_standing1 and treat it as CrossedArm
+        if (selected.pose === "pose_standing1") {
+            targetAnim = actions["CrossedArm"];
+            console.log("Ignoring Standing1 pose, using CrossedArm instead");
+        } else if (selected.pose !== "pose_character_stop" && 
+            selected.pose !== "pose_crossed_arm" && 
+            selected.pose !== "pose_crossed_arm_1" && 
+            pose in actions) {
+            // Use a specifically selected pose
+            targetAnim = actions[pose];
+            console.log("Using UI-selected pose:", pose);
+        } else {
+            // Default fallback is always CrossedArm
+            targetAnim = actions["CrossedArm"];
+            console.log("Using default CrossedArm pose from UI selection");
+        }
+        
+        if (targetAnim) {
+            // Fade out all other animations
+            Object.entries(actions).forEach(([name, action]) => {
+                if (action && action !== targetAnim && action.isRunning()) {
+                    action.fadeOut(0.3);
+                }
+            });
+            
+            if (!targetAnim.isRunning()) {
+                targetAnim.reset();
+                targetAnim.enabled = true;
+                targetAnim.setEffectiveTimeScale(1);
+                targetAnim.setEffectiveWeight(1);
+                targetAnim.play();
+                console.log("Started pose animation from UI selection:", targetAnim._clip.name);
+            }
+        }
+    }, [actions, selected.pose, pose, isWalking]);
 
     const Face = () => {
         // Safely modify morphTargetInfluences if they exist
@@ -679,11 +747,12 @@ export default function Character({ selected, colors, logo, characterRef }: Char
         return (
             <mesh 
                 rotation={[-Math.PI / 2, 0, 0]} 
-                position={[0, 0.01, 0]} 
+                position={[0, 0.01, 0.18]} 
                 receiveShadow={false}
             >
-                <circleGeometry args={[1, 32]} />
-                <meshBasicMaterial 
+                <circleGeometry args={[0.6, 32]} />
+                
+                    <meshBasicMaterial 
                     color="#000000"
                     transparent={true}
                     opacity={0.3}

@@ -26,6 +26,13 @@ import * as THREE from 'three'
  * @property {number} chatbox.scale - Size scale
  * @property {number} chatbox.width - Width in pixels
  * @property {number} chatbox.height - Height in pixels
+ * @property {Object} shadow - Shadow configuration
+ * @property {Object} shadow.colors - Shadow color configuration
+ * @property {string} shadow.colors.default - Default shadow color
+ * @property {string} shadow.colors.near - Shadow color when near
+ * @property {Object} shadow.opacity - Shadow opacity configuration
+ * @property {number} shadow.opacity.default - Default opacity
+ * @property {number} shadow.opacity.near - Opacity when near
  */
 
 // Add global styles to ensure HTML overlays work properly
@@ -76,6 +83,16 @@ window.helperUIConfig = {
     scale: 1.0,  // Size scale
     width: 390,  // Width in pixels
     height: 510  // Height in pixels
+  },
+  shadow: {
+    colors: {
+      default: '#000000',   // Default shadow color
+      near: '#1E6E46'       // Darker green when near (can be changed via console)
+    },
+    opacity: {
+      default: 0.3,         // Default opacity
+      near: 1             // Opacity when near
+    }
   }
 }
 
@@ -87,6 +104,9 @@ console.log("Example: window.helperUIConfig.badge.position.y -= 1");
 console.log("Example: window.helperUIConfig.badge.scale = 1.2");
 console.log("Example: window.helperUIConfig.badge.colors.active = '#ff0000'");
 console.log("");
+console.log("Shadow Color: window.helperUIConfig.shadow.colors");
+console.log("Example: window.helperUIConfig.shadow.colors.near = '#005500'");
+console.log("");
 console.log("Chatbox Position: window.helperUIConfig.chatbox.position");
 console.log("Example: window.helperUIConfig.chatbox.position.y += 1");
 console.log("");
@@ -96,7 +116,7 @@ console.log("Example: window.cameraConfig.helperFocus.offset.angle += 0.1");
 console.log("Example: window.cameraConfig.helperFocus.distance = 3.0");
 console.log("================================");
 
-const HelperCharacter = forwardRef(({ characterRef }, ref) => {
+const HelperCharacter = forwardRef((props, ref) => {
   const group = React.useRef()
   const [isNear, setIsNear] = useState(false)
   const [showChatbox, setShowChatbox] = useState(false)
@@ -107,16 +127,149 @@ const HelperCharacter = forwardRef(({ characterRef }, ref) => {
   const clone = React.useMemo(() => SkeletonUtils.clone(scene), [scene])
   const { nodes, materials } = useGraph(clone)
   const { actions } = useAnimations(animations, group)
-  
+  const { camera } = useThree() // Access the camera
+
+  // Define a character shadow component
+  const CharacterShadow = () => {
+    return (
+      <mesh 
+        rotation={[-Math.PI / 2, 0, 0]} 
+        position={[0, 0.01, 1]} 
+        receiveShadow={false}
+      >
+        <circleGeometry args={[5, 64]} />
+        <meshBasicMaterial 
+          color={isNear ? window.helperUIConfig.shadow.colors.near : window.helperUIConfig.shadow.colors.default}
+          transparent={true}
+          opacity={isNear ? window.helperUIConfig.shadow.opacity.near : window.helperUIConfig.shadow.opacity.default}
+          depthWrite={false}
+        />
+      </mesh>
+    );
+  };
+
   // Connect the forwarded ref to our group
   React.useImperativeHandle(ref, () => group.current)
 
   // Set up a state to track post-chat transition
   const [inPostChatTransition, setInPostChatTransition] = useState(false);
 
+  // Store original rotation to return to after conversation ends
+  const originalRotation = useRef([0, Math.PI / 4, 0]);
+  
+  // Create a ref for target rotation - moved outside useEffect
+  const targetRotation = useRef(0);
+
+  // Rotate helper to face camera when chatbox is opened
+  useEffect(() => {
+    if (!group.current) return;
+    
+    if (showChatbox) {
+      // Save original rotation if not already saved
+      if (!originalRotation.current) {
+        originalRotation.current = [
+          group.current.rotation.x,
+          group.current.rotation.y,
+          group.current.rotation.z
+        ];
+      }
+
+      // Function to update target rotation based on camera position
+      const updateTargetRotation = () => {
+        if (!group.current || !camera) return;
+        
+        // Get positions
+        const helperPos = new THREE.Vector3();
+        group.current.getWorldPosition(helperPos);
+        
+        // Get camera position
+        const cameraPos = new THREE.Vector3();
+        camera.getWorldPosition(cameraPos);
+        
+        // Direction from helper to camera (only consider XZ plane)
+        const direction = new THREE.Vector2(
+          cameraPos.x - helperPos.x,
+          cameraPos.z - helperPos.z
+        );
+        
+        // Calculate target angle
+        targetRotation.current = Math.atan2(direction.x, direction.y);
+      };
+      
+      // Animation loop for smooth rotation
+      const animateRotation = () => {
+        if (!group.current) return;
+        
+        // Get current rotation and calculate the difference
+        const currentRotation = group.current.rotation.y;
+        let rotationDifference = targetRotation.current - currentRotation;
+        
+        // Handle rotation wrap-around (e.g., from 359° to 1°)
+        if (rotationDifference > Math.PI) {
+          rotationDifference -= Math.PI * 2;
+        } else if (rotationDifference < -Math.PI) {
+          rotationDifference += Math.PI * 2;
+        }
+        
+        // Smoothly interpolate rotation
+        if (Math.abs(rotationDifference) > 0.01) {
+          group.current.rotation.y += rotationDifference * 0.1;
+        }
+      };
+      
+      // Update target rotation immediately and every 100ms
+      updateTargetRotation();
+      const targetUpdateInterval = setInterval(updateTargetRotation, 100);
+      
+      // Start animation loop using requestAnimationFrame for smooth rotation
+      let animationFrameId;
+      const animate = () => {
+        animateRotation();
+        animationFrameId = requestAnimationFrame(animate);
+      };
+      animate();
+      
+      // Clean up both the interval and animation frame
+      return () => {
+        clearInterval(targetUpdateInterval);
+        cancelAnimationFrame(animationFrameId);
+      };
+    } else if (originalRotation.current) {
+      // Smoothly return to original rotation when chat is closed
+      const returnToOriginal = () => {
+        if (!group.current) return;
+        
+        // Calculate difference between current and original rotation
+        const currentRotation = group.current.rotation.y;
+        const originalY = originalRotation.current[1];
+        let rotationDifference = originalY - currentRotation;
+        
+        // Handle rotation wrap-around
+        if (rotationDifference > Math.PI) {
+          rotationDifference -= Math.PI * 2;
+        } else if (rotationDifference < -Math.PI) {
+          rotationDifference += Math.PI * 2;
+        }
+        
+        // Smoothly transition back to original rotation
+        if (Math.abs(rotationDifference) > 0.01) {
+          group.current.rotation.y += rotationDifference * 0.1;
+          requestAnimationFrame(returnToOriginal);
+        } else {
+          // Once we're close enough, set exact values
+          group.current.rotation.x = originalRotation.current[0];
+          group.current.rotation.y = originalRotation.current[1];
+          group.current.rotation.z = originalRotation.current[2];
+        }
+      };
+      
+      // Start the return animation
+      returnToOriginal();
+    }
+  }, [showChatbox, camera]);
+
   // Set global flag when chatbox state changes
   useEffect(() => {
-    console.log("Chatbox state changed:", showChatbox);
     window.chatboxOpen = showChatbox;
     
     // If transitioning from open to closed, start transition period
@@ -128,22 +281,15 @@ const HelperCharacter = forwardRef(({ characterRef }, ref) => {
       }, 1500); // 1.5 second transition time (increased from 1 second)
     }
     
-    if (showChatbox) {
-      console.log("Global chatboxOpen flag set to TRUE");
-    } else {
-      console.log("Global chatboxOpen flag set to FALSE");
-    }
     
     return () => {
       window.chatboxOpen = false;
-      console.log("Component unmounted: Global chatboxOpen flag set to FALSE");
     }
   }, [showChatbox, inPostChatTransition]);
   
   // Make the post-chat transition state available globally
   useEffect(() => {
     window.inChatTransition = inPostChatTransition;
-    console.log("In post-chat transition:", inPostChatTransition);
   }, [inPostChatTransition]);
 
   // Set up the initial pose (Animation4) and animations
@@ -159,7 +305,6 @@ const HelperCharacter = forwardRef(({ characterRef }, ref) => {
     
     // Set up animations with appropriate settings
     if (idleAnimation) {
-      console.log("Setting up idle animation");
       idleAnimation.reset();
       idleAnimation.setEffectiveTimeScale(1);
       idleAnimation.setLoop(THREE.LoopRepeat, Infinity);
@@ -168,7 +313,6 @@ const HelperCharacter = forwardRef(({ characterRef }, ref) => {
     }
     
     if (talkAnimation) {
-      console.log("Setting up talk animation");
       talkAnimation.reset();
       talkAnimation.setEffectiveTimeScale(1);
       talkAnimation.setLoop(THREE.LoopRepeat, Infinity);
@@ -195,7 +339,6 @@ const HelperCharacter = forwardRef(({ characterRef }, ref) => {
     // (The reply-based animation is now handled in handleSubmit)
     if (!showChatbox) {
       // When chatbox is closed, ensure we're in idle state
-      console.log("Chatbox closed - returning to idle animation");
       
       // Stop any running animation transition
       if (window.animationTransitionTimeout) {
@@ -217,27 +360,39 @@ const HelperCharacter = forwardRef(({ characterRef }, ref) => {
     };
   }, [showChatbox]);
 
-  // Handle proximity detection
+  // Simplified proximity detection without characterRef
   useEffect(() => {
-    if (!characterRef?.current || !group.current) return;
+    // Set a static value for isNear instead of checking proximity
+    setIsNear(true);
     
-    const checkProximity = () => {
-      const distance = characterRef.current.position.distanceTo(group.current.position)
-      const newIsNear = distance < 5
-      setIsNear(newIsNear)
+    // For demonstration purposes, check if camera is near the helper
+    if (camera) {
+      const checkProximity = () => {
+        if (!group.current) return;
+        
+        const helperPos = new THREE.Vector3();
+        group.current.getWorldPosition(helperPos);
+        
+        const cameraPos = new THREE.Vector3();
+        camera.getWorldPosition(cameraPos);
+        
+        const distance = cameraPos.distanceTo(helperPos);
+        const newIsNear = distance < 15; // Larger radius for detection
+        setIsNear(newIsNear);
+        
+        // If user walks away while chatbox is open, close it
+        if (showChatbox && !newIsNear) {
+          setShowChatbox(false);
+          setMessage('');
+          setReply([]);
+        }
+      };
       
-      // If user walks away while chatbox is open, close it
-      if (showChatbox && !newIsNear) {
-        setShowChatbox(false)
-        setMessage('')
-        setReply([])
-      }
+      // Check proximity every 100ms
+      const interval = setInterval(checkProximity, 100);
+      return () => clearInterval(interval);
     }
-    
-    // Check proximity every 100ms
-    const interval = setInterval(checkProximity, 100)
-    return () => clearInterval(interval)
-  }, [characterRef, showChatbox])
+  }, [camera, showChatbox]);
   
   // Set initial welcome message when chatbox opens
   useEffect(() => {
@@ -390,15 +545,18 @@ const HelperCharacter = forwardRef(({ characterRef }, ref) => {
       position={[-5.6, 0, 15]} 
       rotation={[0, Math.PI / 4, 0]}
     >
+      {/* Character shadow */}
+      <CharacterShadow />
+      
       {/* Badge above character - only show when not in chat mode */}
       {!showChatbox && (
-        <Html
+      <Html
           position={[
             window.helperUIConfig.badge.position.x,
             window.helperUIConfig.badge.position.y,
             window.helperUIConfig.badge.position.z
           ]}
-          center
+        center
           wrapperClass="helper-badge-wrapper"
           distanceFactor={15}
           onClick={(e) => {
@@ -422,27 +580,27 @@ const HelperCharacter = forwardRef(({ characterRef }, ref) => {
                 openChatbox();
               }
             }}
-            style={{
+        style={{
               background: isNear ? window.helperUIConfig.badge.colors.near : window.helperUIConfig.badge.colors.default,
               padding: '7px 12px',
-              borderRadius: '10px',
-              color: 'white',
+          borderRadius: '10px',
+          color: 'white',
               fontSize: '11px',
-              fontWeight: '600',
-              whiteSpace: 'nowrap',
-              userSelect: 'none',
-              fontFamily: 'system-ui, -apple-system, sans-serif',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              transition: 'all 0.3s ease',
+          fontWeight: '600',
+          whiteSpace: 'nowrap',
+          userSelect: 'none',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          transition: 'all 0.3s ease',
               transform: isNear ? `scale(${window.helperUIConfig.badge.scale})` : 'scale(1)',
-              cursor: isNear ? 'pointer' : 'default',
-              pointerEvents: 'auto',
+          cursor: isNear ? 'pointer' : 'default',
+          pointerEvents: 'auto',
               zIndex: 1000,
               border: 'none',
               outline: 'none',
-            }}
-          >
-            {isNear ? "Click me to talk" : "AI Helper"}
+        }}
+      >
+        {isNear ? "Click me to talk" : "AI Helper"}
           </button>
         </Html>
       )}
@@ -617,7 +775,7 @@ const HelperCharacter = forwardRef(({ characterRef }, ref) => {
               </button>
             </form>
           </div>
-        </Html>
+      </Html>
       )}
       
       {/* Character model */}

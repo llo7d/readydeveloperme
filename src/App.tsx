@@ -318,7 +318,7 @@ export default function App() {
       }
 
       if (tool.id === "pose") {
-        newSelected[tool.id] = "pose_standing1" // Use a standing pose for movement
+        newSelected[tool.id] = "pose_crossed_arm" // Use CrossedArm pose instead of standing1
         continue
       }
 
@@ -400,141 +400,166 @@ export default function App() {
   }
   
   return (
-    <div
-      className={classNames("w-full h-screen relative", {
-        "bg-white": theme === "light",
-        "bg-neutral-100": theme === "dark",
-      })}
-    >
-      <Analytics mode="production" debug={true} />
-      <Loader />
+    <div className="relative w-full h-screen">
+      {/* Vibe Jam 2025 link - always visible in corner */}
+      <a 
+        target="_blank" 
+        href="https://jam.pieter.com" 
+        style={{
+          fontFamily: 'system-ui, sans-serif',
+          position: 'fixed',
+          bottom: '-1px',
+          right: '-1px',
+          padding: '7px',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          background: '#fff',
+          color: '#000',
+          textDecoration: 'none',
+          zIndex: 10000,
+          borderTopLeftRadius: '12px',
+          border: '1px solid #fff'
+        }}
+      >
+        🕹️ Vibe Jam 2025
+      </a>
 
-      <div className="w-full h-screen">
-        <Canvas gl={{ preserveDrawingBuffer: true, antialias: true }} shadows camera={{ fov: 30 }} linear={false} dpr={1.5}>
-          <fog attach="fog" args={[theme === "light" ? '#1C1D22' : '#1C1D22', 17, 42.5]} />
-          <Ground theme={theme} visible={visible} />
-          <Character colors={subToolColors} selected={selected} logo={logo} characterRef={characterRef} />
-          {inClothingShop && (
-            <ClothingShop 
-              position={clothingShopPosition} 
-              onChangeClothing={toggleClothingCustomization}
-              canChangeClothing={nearShop && !isCharacterMoving}
-            />
-          )}
-          <ThirdPersonCamera 
-            characterRef={characterRef} 
-            customizingClothing={customizingClothing} 
-            shopPosition={clothingShopPosition} 
-            helperCharacterRef={helperCharacterRef}
-          />
-          <CharacterControls characterRef={characterRef} />
-          {inClothingShop && (
-            <SceneManager 
+      <div
+        className={classNames("w-full h-screen relative", {
+          "bg-white": theme === "light",
+          "bg-neutral-100": theme === "dark",
+        })}
+      >
+        <Analytics mode="production" debug={true} />
+        <Loader />
+
+        <div className="w-full h-screen">
+          <Canvas gl={{ preserveDrawingBuffer: true, antialias: true }} shadows camera={{ fov: 30 }} linear={false} dpr={1.5}>
+            <fog attach="fog" args={[theme === "light" ? '#1C1D22' : '#1C1D22', 17, 42.5]} />
+            <Ground theme={theme} visible={visible} />
+            <Character colors={subToolColors} selected={selected} logo={logo} characterRef={characterRef} />
+            {inClothingShop && (
+              <ClothingShop 
+                position={clothingShopPosition} 
+                onChangeClothing={toggleClothingCustomization}
+                canChangeClothing={nearShop && !isCharacterMoving}
+              />
+            )}
+            <ThirdPersonCamera 
               characterRef={characterRef} 
+              customizingClothing={customizingClothing} 
               shopPosition={clothingShopPosition} 
-              onNearShop={handleNearShop}
-              onCharacterMovementChange={handleCharacterMovementChange}
+              helperCharacterRef={helperCharacterRef}
             />
-          )}
-          <HelperCharacter characterRef={characterRef} ref={helperCharacterRef} />
-          <ContactShadows opacity={opacity} scale={scale} blur={blur} far={far} />
-          <Lights selected={selected} />
-        </Canvas>
-      </div>
-
-      <div className="absolute top-8 left-8">
-        <Logo className="w-44" fill={theme === "light" ? "#121F3E" : "white"} />
-      </div>
-
-      <div className="flex items-center absolute top-8 right-8">
-        <div className="text-sm text-white font-medium h-11 px-4 bg-primary rounded-full flex items-center">
-          Controls: W=back, S=forward, A=right, D=left, SHIFT=run
+            <CharacterControls characterRef={characterRef} />
+            {inClothingShop && (
+              <SceneManager 
+                characterRef={characterRef} 
+                shopPosition={clothingShopPosition} 
+                onNearShop={handleNearShop}
+                onCharacterMovementChange={handleCharacterMovementChange}
+              />
+            )}
+            <HelperCharacter ref={helperCharacterRef} />
+            <ContactShadows opacity={opacity} scale={scale * 0.5} blur={blur} far={far} />
+            <Lights selected={selected} />
+          </Canvas>
         </div>
-        <button
-          className="text-sm text-white font-medium h-11 px-4 bg-primary rounded-full ml-4"
-          type="button"
-          onClick={() => {
-            DownloadPose();
-          }}
-        >
-          Export
-        </button>
-        <button
-          className="text-sm text-white w-11 h-11 flex items-center justify-center bg-neutral-20 rounded-full ml-4"
-          type="button"
-          onClick={() => setIsManualOpen(true)}
-        >
-          <IconMenu className="w-5 h-5" fill="#4B50EC" />
-        </button>
-      </div>
 
-      <div className="flex items-center mr-auto absolute bottom-8 left-8">
-        <ThemeToggle />
-        <button className="text-[#8D98AF] text-xs font-medium ml-5">
-          {
-            debuggerVisible ? (
-              <span onClick={() => setDebuggerVisible(!debuggerVisible)}>Show Debugger</span>
-            ) : (
-              <span onClick={() => setDebuggerVisible(!debuggerVisible)}>Hide Debugger</span>
-            )
-          }
-        </button>
-        <p className="text-[#8D98AF] text-xs font-medium ml-5" >
-          © 2025,
-          <a href="https://github.com/llo7d" target="_blank">
-            {" "}by llo7d
-          </a>
-        </p>
-      </div>
+        <div className="absolute top-8 left-8">
+          <Logo className="w-44" fill={theme === "light" ? "#121F3E" : "white"} />
+        </div>
 
-      {/* Only show toolbar when customizing clothing */}
-      {customizingClothing && (
-        <div className="fixed bottom-1/2 right-56 transform translate-y-1/2 z-30">
-          <SubToolbar
-            subToolId={selected[tool.id]}
-            tool={tool}
-            colors={subToolColors}
-            onClickItem={(item) => {
-              setSelected({
-                ...selected,
-                [tool.id]: item.id
-              })
-
-              if (item.id === 'logo_upload') {
-                refLogoInput.current?.click();
-              }
+        <div className="flex items-center absolute top-8 right-8">
+          <div className="text-sm text-white font-medium h-11 px-4 bg-primary rounded-full flex items-center">
+            Controls: W=back, S=forward, A=right, D=left, SHIFT=run
+          </div>
+          <button
+            className="text-sm text-white font-medium h-11 px-4 bg-primary rounded-full ml-4"
+            type="button"
+            onClick={() => {
+              DownloadPose();
             }}
-            onChangeColor={(subToolColor) => {
-              const newSubToolColors = subToolColors.map((color) => {
-                if (color.subToolId === selected[tool.id]) {
-                  return {
-                    ...color,
-                    color: subToolColor.color,
-                  };
+          >
+            Export
+          </button>
+          <button
+            className="text-sm text-white w-11 h-11 flex items-center justify-center bg-neutral-20 rounded-full ml-4"
+            type="button"
+            onClick={() => setIsManualOpen(true)}
+          >
+            <IconMenu className="w-5 h-5" fill="#4B50EC" />
+          </button>
+        </div>
+
+        <div className="flex items-center mr-auto absolute bottom-8 left-8">
+          <ThemeToggle />
+          <button className="text-[#8D98AF] text-xs font-medium ml-5">
+            {
+              debuggerVisible ? (
+                <span onClick={() => setDebuggerVisible(!debuggerVisible)}>Show Debugger</span>
+              ) : (
+                <span onClick={() => setDebuggerVisible(!debuggerVisible)}>Hide Debugger</span>
+              )
+            }
+          </button>
+          <p className="text-[#8D98AF] text-xs font-medium ml-5" >
+            © 2025,
+            <a href="https://github.com/llo7d" target="_blank">
+              {" "}by llo7d
+            </a>
+          </p>
+        </div>
+
+        {/* Only show toolbar when customizing clothing */}
+        {customizingClothing && (
+          <div className="fixed bottom-1/2 right-56 transform translate-y-1/2 z-30">
+            <SubToolbar
+              subToolId={selected[tool.id]}
+              tool={tool}
+              colors={subToolColors}
+              onClickItem={(item) => {
+                setSelected({
+                  ...selected,
+                  [tool.id]: item.id
+                })
+
+                if (item.id === 'logo_upload') {
+                  refLogoInput.current?.click();
                 }
+              }}
+              onChangeColor={(subToolColor) => {
+                const newSubToolColors = subToolColors.map((color) => {
+                  if (color.subToolId === selected[tool.id]) {
+                    return {
+                      ...color,
+                      color: subToolColor.color,
+                    };
+                  }
 
-                return color;
-              });
+                  return color;
+                });
 
-              setSubToolColors(newSubToolColors);
-            }}
-          />
-          <input
-            ref={refLogoInput}
-            className="hidden"
-            type="file"
-            accept="image/png"
-            onChange={handlePickedLogo}
-          />
-        </div>
-      )}
+                setSubToolColors(newSubToolColors);
+              }}
+            />
+            <input
+              ref={refLogoInput}
+              className="hidden"
+              type="file"
+              accept="image/png"
+              onChange={handlePickedLogo}
+            />
+          </div>
+        )}
 
-      <ManualPopup
-        isOpen={isManualOpen}
-        onClickClose={() => setIsManualOpen(false)}
-      />
+        <ManualPopup
+          isOpen={isManualOpen}
+          onClickClose={() => setIsManualOpen(false)}
+        />
 
-      <Leva hidden={debuggerVisible} />
+        <Leva hidden={debuggerVisible} />
+      </div>
     </div>
   );
 }
