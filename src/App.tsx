@@ -2,7 +2,7 @@ import React, { ChangeEvent, Suspense, useEffect, useMemo, useRef, useState } fr
 import { motion, AnimatePresence } from "framer-motion";
 import { useMediaQuery } from "react-responsive";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { ContactShadows } from "@react-three/drei";
+import { ContactShadows, OrbitControls, Environment } from "@react-three/drei";
 import * as THREE from 'three'
 
 import ThemeToggle from "./components/ThemeToggle";
@@ -27,6 +27,7 @@ import Lights from "./components/Lights";
 import { Analytics } from "@vercel/analytics/react";
 import { Leva } from 'leva'
 import HelperCharacter from "./components/HelperCharacter";
+import Portal from "./components/Portal";
 
 // This component handles all scene-specific behaviors that need to use hooks like useFrame
 const SceneManager = ({ 
@@ -461,6 +462,7 @@ export default function App() {
               />
             )}
             <HelperCharacter ref={helperCharacterRef} />
+            <Portal />
             <ContactShadows opacity={opacity} scale={scale * 0.5} blur={blur} far={far} />
             <Lights selected={selected} />
           </Canvas>
