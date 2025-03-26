@@ -1,11 +1,15 @@
+import React from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useRef, useState, useEffect, MutableRefObject } from 'react';
 import * as THREE from 'three';
+// Remove the import as we're not using it directly here
+// import MobileControls from './MobileControls';
 
 // Add TypeScript declaration for the global window property
 declare global {
   interface Window {
     chatboxOpen: boolean;
+    setCharacterMovement?: React.Dispatch<React.SetStateAction<MovementState>>;
   }
 }
 
@@ -82,13 +86,23 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
           break;
       }
     };
-
+    
+    // Add event listeners to global window object for keydown/keyup events
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+    
+    // Expose movement setter for external control (mobile)
+    if (typeof window !== 'undefined') {
+      window.setCharacterMovement = setMovement;
+    }
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      if (typeof window !== 'undefined' && 'setCharacterMovement' in window) {
+        // @ts-ignore: Safely remove the property
+        window.setCharacterMovement = null;
+      }
     };
   }, []);
 
@@ -162,7 +176,8 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
     // Store the current position for next frame
     lastPosition.current.copy(characterRef.current.position);
   });
-
+  
+  // Return null here as this component just adds behavior, not visuals
   return null;
 };
 

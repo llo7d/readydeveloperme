@@ -1,6 +1,17 @@
-import React, { useRef, useState } from 'react';
-import { Text, Html, Shadow } from '@react-three/drei';
+import React, { useRef, useState, useEffect } from 'react';
+import { useGLTF, Shadow, Html } from '@react-three/drei';
 import * as THREE from 'three';
+import { GLTF } from 'three-stdlib';
+
+// Define the type for the GLTF result
+type GLTFResult = GLTF & {
+  nodes: {
+    geometry_0: THREE.Mesh
+  }
+  materials: {
+    [key: string]: THREE.Material
+  }
+}
 
 interface ClothingShopProps {
   position?: [number, number, number];
@@ -10,151 +21,131 @@ interface ClothingShopProps {
 
 const ClothingShop = ({ position = [0, 0, 0], onChangeClothing, canChangeClothing = true }: ClothingShopProps) => {
   const groupRef = useRef<THREE.Group>(null);
-  const [buttonHovered, setButtonHovered] = useState(false);
+  const [badgeHovered, setBadgeHovered] = useState(false);
   
-  // Convert position array to THREE.Vector3
-  const positionVector = new THREE.Vector3(position[0], position[1], position[2]);
-
-  // Materials
-  const wallMaterial = new THREE.MeshStandardMaterial({ 
-    color: '#ffffff',
-    roughness: 0.2,
-  });
-
-  const roofMaterial = new THREE.MeshStandardMaterial({ 
-    color: '#bbbbbb',
-    roughness: 0.4,
-  });
-
-  const doorMaterial = new THREE.MeshStandardMaterial({ 
-    color: '#8a5a44', 
-    roughness: 0.3,
-  });
-
-  const tshirtMaterial = new THREE.MeshStandardMaterial({ 
-    color: '#4169e1', 
-    roughness: 0.2,
-  });
+  // Load the house model
+  const { nodes, materials } = useGLTF('/house.glb') as GLTFResult;
   
-  // Button material changes on hover with brighter color
-  const buttonMaterial = new THREE.MeshStandardMaterial({ 
-    color: canChangeClothing 
-      ? (buttonHovered ? '#44ff44' : '#33cc33') // Green when nearby and can change clothing
-      : (buttonHovered ? '#ff3333' : '#ee5555'), // Red when too far
-    roughness: 0.3,
-    emissive: canChangeClothing 
-      ? (buttonHovered ? '#44ff44' : '#229922') 
-      : (buttonHovered ? '#ff3333' : '#cc0000'),
-    emissiveIntensity: buttonHovered ? 0.8 : 0.5,
-  });
+  // House-specific configuration - modify these values to adjust the house only
+  const houseScale = [5, 5, 5] as [number, number, number]; // Scale the house
+  const houseRotation = [0, -Math.PI / 9, 0] as [number, number, number]; // Rotate house 20 degrees to the left
+  const houseOffset = [0, 2.5, 0] as [number, number, number]; // Additional offset for the house within the group
 
-  // Handle button click
-  const handleButtonClick = (e) => {
+  // Original ClothingShop colors
+  const nearColor = '#22aa22';  // Bright green when near
+  const normalColor = '#ff4444'; // Red when not near
+  const nearOpacity = 0.5;      // Opacity when near
+  const normalOpacity = 0.7;    // Opacity when not near
+
+  // Handle badge click
+  const handleBadgeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (canChangeClothing && onChangeClothing) {
       onChangeClothing();
     }
   };
 
-  // Determine button text based on proximity
-  const buttonText = canChangeClothing ? "CLICK ME" : "CHANGE CLOTHING HERE";
+  // Pulse animation for the badge
+  const [badgeScale, setBadgeScale] = useState(1);
+  useEffect(() => {
+    if (!canChangeClothing) return;
+    
+    let animationFrameId: number;
+    let time = 0;
+    
+    const animate = () => {
+      time += 0.03;
+      // Pulse between 1 and 1.1 when player is nearby
+      if (canChangeClothing) {
+        setBadgeScale(1 + Math.sin(time) * 0.05);
+      }
+      animationFrameId = requestAnimationFrame(animate);
+    };
+    
+    animate();
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [canChangeClothing]);
 
   return (
-    <group ref={groupRef} position={positionVector}>
-      {/* House base */}
-      <mesh material={wallMaterial} position={[0, 1.5, 0]} castShadow>
-        <boxGeometry args={[5, 3, 5]} />
-      </mesh>
-      
-      {/* Roof */}
-      <mesh material={roofMaterial} position={[0, 3.5, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
-        <coneGeometry args={[4, 2, 4]} />
-      </mesh>
-      
-      {/* Door */}
-      <mesh material={doorMaterial} position={[0, 1, 2.51]} castShadow>
-        <boxGeometry args={[1, 2, 0.1]} />
-      </mesh>
-      
-      {/* Windows */}
-      <mesh material={doorMaterial} position={[1.5, 1.7, 2.51]} castShadow>
-        <boxGeometry args={[0.8, 0.8, 0.05]} />
-      </mesh>
-      
-      <mesh material={doorMaterial} position={[-1.5, 1.7, 2.51]} castShadow>
-        <boxGeometry args={[0.8, 0.8, 0.05]} />
-      </mesh>
-      
-      {/* T-Shirt Sign */}
-      <group position={[0, 3, 2.6]}>
-        {/* T-shirt base */}
-        <mesh material={tshirtMaterial} position={[0, 0, 0]} castShadow>
-          <boxGeometry args={[1.5, 1, 0.1]} />
-        </mesh>
-        
-        {/* T-shirt sleeves */}
-        <mesh material={tshirtMaterial} position={[-0.8, 0.2, 0]} castShadow>
-          <boxGeometry args={[0.4, 0.4, 0.1]} />
-        </mesh>
-        
-        <mesh material={tshirtMaterial} position={[0.8, 0.2, 0]} castShadow>
-          <boxGeometry args={[0.4, 0.4, 0.1]} />
-        </mesh>
-      </group>
-      
-      {/* 3D Button for changing clothes - moved above the door */}
-      <group position={[0, 2.2, 2.6]}>
+    <group ref={groupRef} position={new THREE.Vector3(position[0], position[1], position[2])}>
+      {/* The house model with its own positioning, rotation and scale */}
+      <group 
+        position={new THREE.Vector3(houseOffset[0], houseOffset[1], houseOffset[2])}
+        rotation={houseRotation}
+        scale={houseScale}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (canChangeClothing && onChangeClothing) {
+            onChangeClothing();
+          }
+        }}
+        onPointerOver={() => {
+          document.body.style.cursor = canChangeClothing ? 'pointer' : 'default';
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = 'auto';
+        }}
+      >
         <mesh
-          material={buttonMaterial}
-          position={[0, 0, 0]}
-          onClick={handleButtonClick}
-          onPointerOver={() => setButtonHovered(true)}
-          onPointerOut={() => setButtonHovered(false)}
           castShadow
-        >
-          <boxGeometry args={[3, 0.5, 0.1]} />
-        </mesh>
-        
-        <Text
-          position={[0, 0, 0.06]}
-          fontSize={0.25}
-          color="black"
-          anchorX="center"
-          anchorY="middle"
-          strokeWidth={0.01}
-          strokeColor="#ffffff"
-        >
-          {buttonText}
-        </Text>
-      </group>
-
-      {/* 
-        Custom shadow under the house
-        To adjust shadow intensity manually:
-        - Increase opacity (0.0-1.0) for stronger shadow
-        - Decrease colorStop (0.0-1.0) for a more concentrated shadow
-        - Increase scale values for a larger shadow area
-      */}
-      <Shadow 
-        color="black" 
-        colorStop={0.50}
-        opacity={0.7}
-        position={[0, 0.01, 0]} 
-        scale={[10, 10, 10]}
-      />
-
-      {/* Additional green shadow when user is close enough to change clothing */}
-      {canChangeClothing && (
-        <Shadow 
-          color="#22aa22" 
-          colorStop={0.6}
-          opacity={0.4}
-          position={[0, 0.02, 0]} 
-          scale={[12, 12, 12]}
+          receiveShadow
+          geometry={nodes.geometry_0.geometry}
+          material={nodes.geometry_0.material}
         />
-      )}
+      </group>
+      
+      {/* 2D Badge above the house */}
+      <Html
+        position={[-0.9, 3.7, 1.1]}
+        center
+        distanceFactor={10}
+        occlude={[]}
+        style={{
+          pointerEvents: 'auto',
+          transition: 'all 0.3s ease',
+          transform: `scale(${badgeScale * 1.5})`,
+          zIndex: 100, // Ensure badge is on top
+        }}
+      >
+        <button
+          onClick={handleBadgeClick}
+          onMouseEnter={() => setBadgeHovered(true)}
+          onMouseLeave={() => setBadgeHovered(false)}
+          style={{
+            background: canChangeClothing ? nearColor : normalColor,
+            padding: '10px 16px',
+            borderRadius: '10px',
+            color: 'white',
+            fontSize: '16px',
+            fontWeight: '600',
+            whiteSpace: 'nowrap',
+            userSelect: 'none',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            boxShadow: '0 3px 6px rgba(0,0,0,0.3)',
+            border: '2px solid white',
+            transition: 'all 0.3s ease',
+            cursor: canChangeClothing ? 'pointer' : 'default',
+            opacity: badgeHovered ? 1 : 0.9,
+            pointerEvents: 'auto'
+          }}
+        >
+          {canChangeClothing ? "Change Clothing" : "Change Clothing Here"}
+        </button>
+      </Html>
+      
+      {/* Custom shadow under the house */}
+      <Shadow 
+        color={canChangeClothing ? nearColor : normalColor}
+        colorStop={0.5}
+        opacity={canChangeClothing ? nearOpacity : normalOpacity}
+        position={[0, 0.01, 0]} 
+        scale={[10, 7, 7]}
+      />
     </group>
   );
 };
+
+// Preload the model to avoid flickering
+useGLTF.preload('/house.glb');
 
 export default ClothingShop; 

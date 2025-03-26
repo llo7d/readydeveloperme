@@ -28,6 +28,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { Leva } from 'leva'
 import HelperCharacter from "./components/HelperCharacter";
 import Portal from "./components/Portal";
+import MobileControlsProvider from "./components/MobileControlsProvider";
 
 // This component handles all scene-specific behaviors that need to use hooks like useFrame
 const SceneManager = ({ 
@@ -384,22 +385,11 @@ export default function App() {
   
   // Handle character movement state changes
   const handleCharacterMovementChange = (moving) => {
-    setIsCharacterMoving(moving);
-    
-    // If character starts moving while customizing, exit customization mode
     if (moving && customizingClothing) {
       setCustomizingClothing(false);
     }
   };
 
-  if (!isDesktop) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center">
-        <p className="text-3xl font-medium">Mobile support coming soon</p>
-      </div>
-    );
-  }
-  
   return (
     <div className="relative w-full h-screen">
       {/* Vibe Jam 2025 link - always visible in corner */}
@@ -468,53 +458,79 @@ export default function App() {
           </Canvas>
         </div>
 
-        <div className="absolute top-8 left-8">
-          <Logo className="w-44" fill={theme === "light" ? "#121F3E" : "white"} />
-        </div>
+        {/* Mobile controls - outside of Canvas */}
+        <MobileControlsProvider />
 
-        <div className="flex items-center absolute top-8 right-8">
-          <div className="text-sm text-white font-medium h-11 px-4 bg-primary rounded-full flex items-center">
-            Controls: W=back, S=forward, A=right, D=left, SHIFT=run
-          </div>
-          <button
-            className="text-sm text-white font-medium h-11 px-4 bg-primary rounded-full ml-4"
-            type="button"
-            onClick={() => {
-              DownloadPose();
-            }}
-          >
-            Export
-          </button>
-          <button
-            className="text-sm text-white w-11 h-11 flex items-center justify-center bg-neutral-20 rounded-full ml-4"
-            type="button"
-            onClick={() => setIsManualOpen(true)}
-          >
-            <IconMenu className="w-5 h-5" fill="#4B50EC" />
-          </button>
-        </div>
+        {/* Only show minimal UI on mobile */}
+        {!isDesktop && (
+          <>
+            <div className="absolute top-6 left-6 z-20">
+              <Logo className="w-32" fill={theme === "light" ? "#121F3E" : "white"} />
+            </div>
+            <div className="absolute top-6 right-6 z-20">
+              <button
+                className="text-sm text-white w-11 h-11 flex items-center justify-center bg-neutral-20 rounded-full"
+                type="button"
+                onClick={() => setIsManualOpen(true)}
+              >
+                <IconMenu className="w-5 h-5" fill="#4B50EC" />
+              </button>
+            </div>
+          </>
+        )}
 
-        <div className="flex items-center mr-auto absolute bottom-8 left-8">
-          <ThemeToggle />
-          <button className="text-[#8D98AF] text-xs font-medium ml-5">
-            {
-              debuggerVisible ? (
-                <span onClick={() => setDebuggerVisible(!debuggerVisible)}>Show Debugger</span>
-              ) : (
-                <span onClick={() => setDebuggerVisible(!debuggerVisible)}>Hide Debugger</span>
-              )
-            }
-          </button>
-          <p className="text-[#8D98AF] text-xs font-medium ml-5" >
-            © 2025,
-            <a href="https://github.com/llo7d" target="_blank">
-              {" "}by llo7d
-            </a>
-          </p>
-        </div>
+        {/* Full UI only on desktop */}
+        {isDesktop && (
+          <>
+            <div className="absolute top-8 left-8">
+              <Logo className="w-44" fill={theme === "light" ? "#121F3E" : "white"} />
+            </div>
 
-        {/* Only show toolbar when customizing clothing */}
-        {customizingClothing && (
+            <div className="flex items-center absolute top-8 right-8">
+              <div className="text-sm text-white font-medium h-11 px-4 bg-primary rounded-full flex items-center">
+                Controls: W=forward, A=turn left, D=turn right, SHIFT=run
+              </div>
+              <button
+                className="text-sm text-white font-medium h-11 px-4 bg-primary rounded-full ml-4"
+                type="button"
+                onClick={() => {
+                  DownloadPose();
+                }}
+              >
+                Export
+              </button>
+              <button
+                className="text-sm text-white w-11 h-11 flex items-center justify-center bg-neutral-20 rounded-full ml-4"
+                type="button"
+                onClick={() => setIsManualOpen(true)}
+              >
+                <IconMenu className="w-5 h-5" fill="#4B50EC" />
+              </button>
+            </div>
+
+            <div className="flex items-center mr-auto absolute bottom-8 left-8">
+              <ThemeToggle />
+              <button className="text-[#8D98AF] text-xs font-medium ml-5">
+                {
+                  debuggerVisible ? (
+                    <span onClick={() => setDebuggerVisible(!debuggerVisible)}>Show Debugger</span>
+                  ) : (
+                    <span onClick={() => setDebuggerVisible(!debuggerVisible)}>Hide Debugger</span>
+                  )
+                }
+              </button>
+              <p className="text-[#8D98AF] text-xs font-medium ml-5" >
+                © 2025,
+                <a href="https://github.com/llo7d" target="_blank">
+                  {" "}by llo7d
+                </a>
+              </p>
+            </div>
+          </>
+        )}
+
+        {/* Only show toolbar when customizing clothing and on desktop */}
+        {customizingClothing && isDesktop && (
           <div className="fixed bottom-1/2 right-56 transform translate-y-1/2 z-30">
             <SubToolbar
               subToolId={selected[tool.id]}

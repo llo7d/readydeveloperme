@@ -176,10 +176,12 @@ const ThirdPersonCamera = ({
         return;
       }
       
+      /* CAMERA ROTATION WITH LEFT CLICK TEMPORARILY DISABLED
       if (e.button === 0) { // Left mouse button
         setIsDragging(true);
         setDragStartPos({ x: e.clientX, y: e.clientY });
       }
+      */
     };
     
     const handleMouseUp = () => {
@@ -210,6 +212,7 @@ const ThirdPersonCamera = ({
         return;
       }
       
+      /* CAMERA ROTATION WITH LEFT CLICK TEMPORARILY DISABLED
       if (isDragging) {
         // Horizontal rotation (around Y axis)
         const deltaX = e.clientX - dragStartPos.x;
@@ -228,6 +231,7 @@ const ThirdPersonCamera = ({
         // Update drag start position
         setDragStartPos({ x: e.clientX, y: e.clientY });
       }
+      */
     };
     
     const handleWheel = (e) => {
