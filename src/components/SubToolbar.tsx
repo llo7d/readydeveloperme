@@ -60,14 +60,6 @@ const SubToolbar: React.FC<Props> = ({
     return height
   })();
 
-  // Moving camera section. 
-  // Maybe making custom camera positions for each tool would be good?
-  const prevToolId = useRef(tool.id)
-  useEffect(() => {
-    // Store the current tool id for reference
-    prevToolId.current = tool.id
-  }, [tool.id]);
-
   // Handle color item click
   const handleColorItemClick = (item: SubTool) => {
     onClickItem(item);

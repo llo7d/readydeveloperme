@@ -101,8 +101,8 @@ const helperUIConfig = {
   },
   // Shadow configuration
   shadow: {
-    normalColor: '#ff4444',
-    nearColor: '#22aa22',
+    normalColor: '#2a2a2a',  // Dark color when not near
+    nearColor: '#22aa22',    // Green when near (matching ClothingShop)
     normalOpacity: 0.7,
     nearOpacity: 0.5
   }
@@ -645,7 +645,7 @@ const HelperCharacter = forwardRef((props, ref) => {
               opacity: 0.9,
             }}
       >
-        {isNear ? "Click me to talk" : "AI Helper"}
+        {isNear ? "Talk with me" : "AI Helper"}
           </button>
         </Html>
       )}

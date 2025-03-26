@@ -26,7 +26,14 @@ const cameraConfig = {
   maxZoom: 20,
   returnSpeed: 0.15, // Speed at which camera returns to behind character - increased from 0.1 to 0.15
   followSpeed: 3, // How quickly camera follows character rotation when moving
-  customizationDistance: 6, // Distance when customizing clothes - in front but not too close
+  customizationDistance: 6.5, // Increased distance when customizing clothes for better view
+  customizationHeight: 1.0, // Very low height to look straight at the character
+  customizationPitch: -0.05, // Very slight downward pitch for direct view
+  customizationPosition: {
+    x: 0, // No horizontal offset
+    y: 0, // No vertical offset
+    z: 0  // No forward/back offset
+  },
   verticalLimits: {
     min: -Math.PI / 6, // Minimum vertical angle (looking down but not below ground)
     max: Math.PI / 3    // Maximum vertical angle (looking up)
@@ -70,6 +77,7 @@ const ThirdPersonCamera = ({
   const cameraDistance = useRef(cameraConfig.distance);
   const cameraAngle = useRef(0); // Horizontal angle (around Y axis)
   const cameraPitch = useRef(0); // Vertical angle (looking up/down)
+  const cameraHeight = useRef(cameraConfig.height); // Track camera height separately
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
   
@@ -334,11 +342,19 @@ const ThirdPersonCamera = ({
         helperCharacterPos.current.y + cameraConfig.helperFocus.height + cameraConfig.helperFocus.offset.y,
         helperCharacterPos.current.z + cameraConfig.helperFocus.offset.z
       );
+    } else if (customizingClothing) {
+      // When customizing clothing, always position the camera directly in front of the character
+      // regardless of how the player approached the clothing shop
+      targetPos = new THREE.Vector3(
+        characterPos.x,
+        characterPos.y + 1.5, // Target the mid-section of the character (roughly chest height)
+        characterPos.z
+      );
     } else {
       // Focus on main character
       targetPos = new THREE.Vector3(
         characterPos.x,
-        characterPos.y + cameraConfig.height * 0.5,
+        characterPos.y + cameraHeight.current * 0.5,
         characterPos.z
       );
     }
@@ -347,12 +363,19 @@ const ThirdPersonCamera = ({
     if (!isDragging) {
       let targetAngle;
       let targetDistance = cameraDistance.current;
+      let targetPitch = cameraPitch.current;
+      let targetHeight = cameraConfig.height;
       
       if (customizingClothing) {
-        // When customizing clothing, we still use the current camera angle
-        // rather than forcing a specific view, allowing free rotation
-        targetAngle = cameraAngle.current;
+        // When customizing clothing, always position the camera directly in front of the character
+        // regardless of how the player approached the clothing shop
+        targetAngle = Math.PI; // 180 degrees - directly in front (character facing camera)
         targetDistance = cameraConfig.customizationDistance;
+        targetPitch = cameraConfig.customizationPitch; // Slight downward pitch for better view
+        targetHeight = cameraConfig.customizationHeight; // Lower height for better view
+        
+        // Force immediate transition to the target angle when entering customization mode
+        cameraAngle.current = targetAngle;
       } else if (helperCharacterRef?.current && focusingHelper) {
         // When focusing on helper, determine angle to look at helper's face
         const direction = new THREE.Vector2(
@@ -401,6 +424,14 @@ const ThirdPersonCamera = ({
         }
       }
       
+      // Smoothly transition to target pitch (vertical angle)
+      const pitchDiff = targetPitch - cameraPitch.current;
+      cameraPitch.current += pitchDiff * cameraConfig.returnSpeed * 2; // Faster pitch transition
+      
+      // Smoothly transition to target height
+      const heightDiff = targetHeight - cameraHeight.current;
+      cameraHeight.current += heightDiff * cameraConfig.returnSpeed;
+      
       // Smoothly adjust distance with appropriate speed based on focus state
       const distanceSpeed = focusingHelper ? 0.2 : 0.1;
       cameraDistance.current += (targetDistance - cameraDistance.current) * distanceSpeed;
@@ -421,7 +452,7 @@ const ThirdPersonCamera = ({
     const focusPos = focusingHelper ? helperCharacterPos.current : characterPos;
     const verticalBaseOffset = focusingHelper 
       ? cameraConfig.helperFocus.height 
-      : cameraConfig.height;
+      : cameraHeight.current;
     
     const desiredCameraPos = new THREE.Vector3(
       focusPos.x - offsetX,
@@ -483,8 +514,25 @@ const ThirdPersonCamera = ({
         ? cameraConfig.helperFocus.transitionSpeed 
         : cameraConfig.followSpeed;
       
-      // Smooth positioning when not dragging
-      camera.position.lerp(finalCameraPos, followSpeedFactor * delta);
+      // If already in customization mode, use instant positioning for any updates
+      // to prevent unwanted animations when interacting with the UI
+      if (customizingClothing) {
+        // For customization mode, maintain a stable camera position and view
+        camera.position.copy(finalCameraPos);
+        
+        // Get the exact position we want to look at (character's center)
+        const lookTarget = new THREE.Vector3(
+          characterPos.x,
+          characterPos.y + 1.5, // Look at chest height
+          characterPos.z
+        );
+        
+        // Make camera look directly at the character (overriding any calculated angles)
+        camera.lookAt(lookTarget);
+      } else {
+        // Regular smooth positioning when not in customization mode
+        camera.position.lerp(finalCameraPos, followSpeedFactor * delta);
+      }
     }
     
     // Always update orbit controls target to target position
@@ -497,7 +545,7 @@ const ThirdPersonCamera = ({
       <PerspectiveCamera 
         makeDefault 
         fov={30} 
-        position={[0, cameraConfig.height, cameraConfig.distance]} 
+        position={[0, cameraHeight.current, cameraConfig.distance]} 
         near={0.1}
         far={1000}
       />

@@ -50,12 +50,12 @@ const SceneManager = ({
   const isMoving = useRef(false);
   const movementCheckInterval = useRef(0);
   
-  // Initialize character rotation to face away from the shop (180 degrees around Y axis)
+  // Initialize character rotation to face the shop
   useEffect(() => {
     if (characterRef.current) {
       // Position character further away from the shop initially
       characterRef.current.position.set(0, 0, 30); // Start much further away from the shop
-      characterRef.current.rotation.y = Math.PI; // 180 degrees, facing the shop
+      characterRef.current.rotation.y = Math.PI; // 180 degrees, facing toward the shop
       lastPosition.current.copy(characterRef.current.position);
     }
   }, [characterRef]);
@@ -342,10 +342,13 @@ export default function App() {
       // Entering customization mode
       setCustomizingClothing(true);
       
-      // Rotate character to face away from the house (away from door/shop) for better camera view
+      // Set global flag to disable movement
+      window.isCustomizingClothing = true;
+      
+      // Rotate character to face the camera
       if (characterRef.current) {
-        // Face character away from the shop (door is at z+ direction of shop)
-        characterRef.current.rotation.y = 0; // This makes character face along z+ direction, away from shop door
+        // Face character toward the camera (character shows front to camera)
+        characterRef.current.rotation.y = 0; // This makes the front of the character face the camera
       }
       
       // Force select the color tool
@@ -353,6 +356,15 @@ export default function App() {
     } else {
       // Exiting customization mode
       setCustomizingClothing(false);
+      
+      // Remove global flag to re-enable movement
+      window.isCustomizingClothing = false;
+      
+      // Return character to original rotation if needed
+      if (characterRef.current) {
+        // Reset character rotation to default (facing the shop)
+        characterRef.current.rotation.y = Math.PI;
+      }
     }
   };
 
@@ -434,6 +446,7 @@ export default function App() {
                 position={clothingShopPosition} 
                 onChangeClothing={toggleClothingCustomization}
                 canChangeClothing={nearShop && !isCharacterMoving}
+                isCustomizing={customizingClothing}
               />
             )}
             <ThirdPersonCamera 
@@ -529,7 +542,35 @@ export default function App() {
           </>
         )}
 
-        {/* Only show toolbar when customizing clothing and on desktop */}
+        {/* Fixed position close button for clothing customization */}
+        {customizingClothing && (
+          <div className="fixed top-8 right-8 z-50">
+            <button
+              className="text-2xl w-16 h-16 flex items-center justify-center bg-red-500 rounded-full shadow-lg border-2 border-white"
+              type="button"
+              onClick={() => toggleClothingCustomization()}
+              style={{
+                color: 'white',
+                fontSize: '28px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.1)';
+                e.currentTarget.style.backgroundColor = '#e74c3c';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.backgroundColor = '#ef4444';
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Customization UI */}
         {customizingClothing && isDesktop && (
           <div className="fixed bottom-1/2 right-56 transform translate-y-1/2 z-30">
             <SubToolbar
@@ -568,6 +609,30 @@ export default function App() {
               accept="image/png"
               onChange={handlePickedLogo}
             />
+            
+            {/* Exit button positioned right under the customization UI */}
+            <div className="mt-4 flex justify-center">
+              <button
+                className="text-white font-bold px-6 py-3 bg-red-500 rounded-full shadow-lg border-2 border-white"
+                type="button"
+                onClick={() => toggleClothingCustomization()}
+                style={{
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                  e.currentTarget.style.backgroundColor = '#e74c3c';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.backgroundColor = '#ef4444';
+                }}
+              >
+                Exit Clothing Customization
+              </button>
+            </div>
           </div>
         )}
 

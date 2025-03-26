@@ -9,6 +9,7 @@ import * as THREE from 'three';
 declare global {
   interface Window {
     chatboxOpen: boolean;
+    isCustomizingClothing?: boolean; // Add global flag for clothing customization
     setCharacterMovement?: React.Dispatch<React.SetStateAction<MovementState>>;
   }
 }
@@ -34,7 +35,7 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
   });
   
   // Character physics
-  const characterRotation = useRef(0);
+  const characterRotation = useRef(Math.PI);
   const currentVelocity = useRef(new THREE.Vector3(0, 0, 0));
   const isMoving = useRef(false);
   const lastPosition = useRef(new THREE.Vector3());
@@ -48,8 +49,8 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
   
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Skip movement if chatbox is open
-      if (window.chatboxOpen) return;
+      // Skip movement if chatbox is open or customizing clothing
+      if (window.chatboxOpen || window.isCustomizingClothing) return;
       
       switch (e.key.toLowerCase()) {
         case 'w':
@@ -68,8 +69,8 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
     };
 
     const handleKeyUp = (e) => {
-      // Skip movement if chatbox is open
-      if (window.chatboxOpen) return;
+      // Skip movement if chatbox is open or customizing clothing
+      if (window.chatboxOpen || window.isCustomizingClothing) return;
       
       switch (e.key.toLowerCase()) {
         case 'w':
@@ -110,8 +111,8 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
     // Check if characterRef exists and is valid
     if (!characterRef?.current) return;
     
-    // If chatbox is open, stop all movement
-    if (window.chatboxOpen) {
+    // If chatbox is open or customizing clothing, stop all movement
+    if (window.chatboxOpen || window.isCustomizingClothing) {
       // Reset movement state to prevent character movement
       if (isMoving.current) {
         currentVelocity.current.set(0, 0, 0);

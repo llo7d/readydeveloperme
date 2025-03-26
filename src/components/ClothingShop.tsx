@@ -17,9 +17,15 @@ interface ClothingShopProps {
   position?: [number, number, number];
   onChangeClothing?: () => void;
   canChangeClothing?: boolean;
+  isCustomizing?: boolean; // New prop to track if we're currently customizing
 }
 
-const ClothingShop = ({ position = [0, 0, 0], onChangeClothing, canChangeClothing = true }: ClothingShopProps) => {
+const ClothingShop = ({ 
+  position = [0, 0, 0], 
+  onChangeClothing, 
+  canChangeClothing = true,
+  isCustomizing = false // Add default value
+}: ClothingShopProps) => {
   const groupRef = useRef<THREE.Group>(null);
   const [badgeHovered, setBadgeHovered] = useState(false);
   
@@ -33,7 +39,7 @@ const ClothingShop = ({ position = [0, 0, 0], onChangeClothing, canChangeClothin
 
   // Original ClothingShop colors
   const nearColor = '#22aa22';  // Bright green when near
-  const normalColor = '#ff4444'; // Red when not near
+  const normalColor = '#3a4673'; // Dark greyish blue when not near (was #ff4444 red)
   const nearOpacity = 0.5;      // Opacity when near
   const normalOpacity = 0.7;    // Opacity when not near
 
@@ -65,6 +71,15 @@ const ClothingShop = ({ position = [0, 0, 0], onChangeClothing, canChangeClothin
     animate();
     return () => cancelAnimationFrame(animationFrameId);
   }, [canChangeClothing]);
+
+  // Get badge text based on customization state
+  const getBadgeText = () => {
+    if (canChangeClothing) {
+      return "Change Clothing";
+    } else {
+      return "Change Clothing Here";
+    }
+  };
 
   return (
     <group ref={groupRef} position={new THREE.Vector3(position[0], position[1], position[2])}>
@@ -112,7 +127,7 @@ const ClothingShop = ({ position = [0, 0, 0], onChangeClothing, canChangeClothin
           onMouseEnter={() => setBadgeHovered(true)}
           onMouseLeave={() => setBadgeHovered(false)}
           style={{
-            background: canChangeClothing ? nearColor : normalColor,
+            background: isCustomizing ? '#e74c3c' : (canChangeClothing ? nearColor : normalColor),
             padding: '10px 16px',
             borderRadius: '10px',
             color: 'white',
@@ -129,13 +144,13 @@ const ClothingShop = ({ position = [0, 0, 0], onChangeClothing, canChangeClothin
             pointerEvents: 'auto'
           }}
         >
-          {canChangeClothing ? "Change Clothing" : "Change Clothing Here"}
+          {getBadgeText()}
         </button>
       </Html>
       
       {/* Custom shadow under the house */}
       <Shadow 
-        color={canChangeClothing ? nearColor : normalColor}
+        color={isCustomizing ? '#e74c3c' : (canChangeClothing ? nearColor : normalColor)}
         colorStop={0.5}
         opacity={canChangeClothing ? nearOpacity : normalOpacity}
         position={[0, 0.01, 0]} 
