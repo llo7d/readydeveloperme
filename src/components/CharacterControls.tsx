@@ -11,9 +11,8 @@ declare global {
 
 interface MovementState {
   forward: boolean;
-  backward: boolean;
-  left: boolean;
-  right: boolean;
+  turnLeft: boolean;
+  turnRight: boolean;
   running: boolean;
 }
 
@@ -25,28 +24,23 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
   // Movement state
   const [movement, setMovement] = useState<MovementState>({
     forward: false,
-    backward: false,
-    left: false,
-    right: false,
+    turnLeft: false,
+    turnRight: false,
     running: false
   });
   
   // Character physics
   const characterRotation = useRef(0);
   const currentVelocity = useRef(new THREE.Vector3(0, 0, 0));
-  const targetVelocity = useRef(new THREE.Vector3(0, 0, 0));
   const isMoving = useRef(false);
   const lastPosition = useRef(new THREE.Vector3());
-  const lastMovementDirection = useRef(new THREE.Vector2(0, -1)); // Initial direction facing forward (z-)
   
   // Movement configuration
-  const walkSpeed = 0.042;
-  const runSpeed = 0.084;
-  const acceleration = 0.015; // Improved responsiveness
-  const rotationSpeed = 0.12; // How quickly character rotates to face movement direction
-  const friction = 0.82; // More friction to prevent sliding
-  const startupAcceleration = 0.4; // Initial acceleration boost
-  const stoppingDeceleration = 0.6; // Quick stop
+  const walkSpeed = 0.04;
+  const runSpeed = 0.08;
+  const turnSpeed = 0.04; // How quickly character rotates when A/D are pressed
+  const acceleration = 0.15; // Acceleration for forward movement
+  const friction = 0.85; // Friction when slowing down
   
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -55,16 +49,13 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
       
       switch (e.key.toLowerCase()) {
         case 'w':
-          setMovement(prev => ({ ...prev, backward: true }));
-          break;
-        case 's':
           setMovement(prev => ({ ...prev, forward: true }));
           break;
         case 'a':
-          setMovement(prev => ({ ...prev, right: true }));
+          setMovement(prev => ({ ...prev, turnLeft: true }));
           break;
         case 'd':
-          setMovement(prev => ({ ...prev, left: true }));
+          setMovement(prev => ({ ...prev, turnRight: true }));
           break;
         case 'shift':
           setMovement(prev => ({ ...prev, running: true }));
@@ -78,16 +69,13 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
       
       switch (e.key.toLowerCase()) {
         case 'w':
-          setMovement(prev => ({ ...prev, backward: false }));
-          break;
-        case 's':
           setMovement(prev => ({ ...prev, forward: false }));
           break;
         case 'a':
-          setMovement(prev => ({ ...prev, right: false }));
+          setMovement(prev => ({ ...prev, turnLeft: false }));
           break;
         case 'd':
-          setMovement(prev => ({ ...prev, left: false }));
+          setMovement(prev => ({ ...prev, turnRight: false }));
           break;
         case 'shift':
           setMovement(prev => ({ ...prev, running: false }));
@@ -123,79 +111,49 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
       lastPosition.current.copy(characterRef.current.position);
     }
     
-    // Get movement direction based on keys pressed
-    const moveZ = Number(movement.forward) - Number(movement.backward);
-    const moveX = Number(movement.right) - Number(movement.left);
-    
     // Track if we were moving previously
     const wasMoving = isMoving.current;
     
-    // Determine if we're currently moving
-    isMoving.current = moveX !== 0 || moveZ !== 0;
-    
-    // Check if movement direction changed
-    if (isMoving.current) {
-      const newDirection = new THREE.Vector2(moveX, -moveZ).normalize();
-      
-      // If direction changed significantly, store it
-      if (newDirection.distanceTo(lastMovementDirection.current) > 0.1) {
-        lastMovementDirection.current.copy(newDirection);
-      }
+    // First handle rotation (A/D keys)
+    if (movement.turnLeft) {
+      characterRotation.current += turnSpeed;
+      characterRef.current.rotation.y = characterRotation.current;
+    }
+    if (movement.turnRight) {
+      characterRotation.current -= turnSpeed;
+      characterRef.current.rotation.y = characterRotation.current;
     }
     
-    // No movement - apply higher friction to come to a stop
+    // Then handle forward movement (W key)
+    const isForwardMoving = movement.forward;
+    isMoving.current = isForwardMoving;
+    
     if (!isMoving.current) {
-      // Apply extra deceleration when user releases keys (for more responsive stopping)
-      const stopFriction = wasMoving ? friction * stoppingDeceleration : friction;
-      currentVelocity.current.multiplyScalar(stopFriction);
+      // Apply friction when not moving
+      currentVelocity.current.multiplyScalar(friction);
       
       // Apply a small velocity threshold to fully stop
       if (currentVelocity.current.length() < 0.001) {
         currentVelocity.current.set(0, 0, 0);
       }
+    } else {
+      // Calculate speed based on movement state
+      const currentSpeed = movement.running ? runSpeed : walkSpeed;
       
-      // Update character position
-      characterRef.current.position.x += currentVelocity.current.x;
-      characterRef.current.position.z += currentVelocity.current.z;
-      return;
+      // Calculate movement direction based on character's rotation
+      const moveDirection = new THREE.Vector3(
+        Math.sin(characterRotation.current),
+        0,
+        Math.cos(characterRotation.current)
+      );
+      
+      // Set target velocity based on direction and speed
+      const targetVelocity = moveDirection.multiplyScalar(currentSpeed);
+      
+      // Smoothly accelerate toward target velocity
+      currentVelocity.current.x += (targetVelocity.x - currentVelocity.current.x) * acceleration;
+      currentVelocity.current.z += (targetVelocity.z - currentVelocity.current.z) * acceleration;
     }
-    
-    // Calculate movement direction angle
-    const moveAngle = Math.atan2(moveX, -moveZ);
-    
-    // Smoothly rotate character to face movement direction
-    if (isMoving.current) {
-      const targetRotation = moveAngle;
-      const rotationDiff = targetRotation - characterRotation.current;
-      
-      // Handle angle wrapping
-      let rotDiff = ((rotationDiff + Math.PI) % (Math.PI * 2)) - Math.PI;
-      if (rotDiff < -Math.PI) rotDiff += Math.PI * 2;
-      
-      // Apply smooth rotation
-      characterRotation.current += rotDiff * rotationSpeed;
-      
-      // Apply rotation to character mesh
-      characterRef.current.rotation.y = characterRotation.current;
-    }
-    
-    // Calculate speed based on movement state
-    const currentSpeed = movement.running ? runSpeed : walkSpeed;
-    
-    // Calculate target velocity
-    const length = Math.min(1, Math.sqrt(moveX * moveX + moveZ * moveZ)); // Normalize for diagonal movement
-    targetVelocity.current.set(
-      Math.sin(characterRotation.current) * length * currentSpeed,
-      0,
-      Math.cos(characterRotation.current) * length * currentSpeed
-    );
-    
-    // Add an acceleration boost when starting movement
-    const accelMultiplier = !wasMoving && isMoving.current ? startupAcceleration : 1.0;
-    
-    // Smoothly accelerate toward target velocity
-    currentVelocity.current.x += (targetVelocity.current.x - currentVelocity.current.x) * acceleration * accelMultiplier;
-    currentVelocity.current.z += (targetVelocity.current.z - currentVelocity.current.z) * acceleration * accelMultiplier;
     
     // Update character position
     characterRef.current.position.x += currentVelocity.current.x;

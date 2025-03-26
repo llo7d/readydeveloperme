@@ -49,8 +49,7 @@ const Portal = () => {
     floatSpeed,
     floatHeight,
     waveSpeed,
-    waveAmplitude,
-    triggerDistance
+    waveAmplitude
   } = useControls('Portal Settings', {
     height: { value: 1.7, min: 0, max: 5, step: 0.1 },
     rotationSpeed: { value: 0.05, min: 0.01, max: 0.2, step: 0.01 },
@@ -70,8 +69,7 @@ const Portal = () => {
     floatSpeed: { value: 0.5, min: 0.1, max: 2, step: 0.1 },
     floatHeight: { value: 0.3, min: 0, max: 1, step: 0.1 },
     waveSpeed: { value: 0.5, min: 0.1, max: 2, step: 0.1 },
-    waveAmplitude: { value: 0.1, min: 0, max: 0.5, step: 0.01 },
-    triggerDistance: { value: 2, min: 0, max: 5, step: 0.1 }
+    waveAmplitude: { value: 0.1, min: 0, max: 0.5, step: 0.01 }
   });
 
   const targetRotation = useRef(0);
@@ -165,14 +163,12 @@ const Portal = () => {
     transparent: true
   };
 
-  // Store last position to detect movement
+  // Store last position for movement detection
   const lastPosition = useRef(new THREE.Vector3());
-  // Flag to prevent multiple redirects
-  const isRedirecting = useRef(false);
 
   // Animation frame updates
   useFrame((state) => {
-    if (!portalRef.current || isRedirecting.current) return;
+    if (!portalRef.current) return;
 
     let newRotation;
 
@@ -182,7 +178,7 @@ const Portal = () => {
       camera.getWorldPosition(cameraPosition);
       
       // Calculate angle between portal and camera
-      const portalPosition = new THREE.Vector3(15, 0, 15); // Portal's fixed position
+      const portalPosition = new THREE.Vector3(25, 0, 25); // Portal's fixed position - moved further away
       const directionToCamera = new THREE.Vector2(
         cameraPosition.x - portalPosition.x,
         cameraPosition.z - portalPosition.z
@@ -256,53 +252,6 @@ const Portal = () => {
     if (loadingMesh?.material && 'uniforms' in (loadingMesh.material as THREE.ShaderMaterial)) {
       (loadingMesh.material as THREE.ShaderMaterial).uniforms.time.value = state.clock.getElapsedTime();
     }
-
-    // PORTAL TRIGGER SYSTEM - WITH XZ PLANE DISTANCE
-    const portalPos = new THREE.Vector3();
-    portalRef.current.getWorldPosition(portalPos);
-    
-    const playerPos = new THREE.Vector3();
-    camera.getWorldPosition(playerPos);
-
-    // Calculate direct distance ignoring height (XZ plane only)
-    const xzDistance = Math.sqrt(
-      Math.pow(playerPos.x - portalPos.x, 2) + 
-      Math.pow(playerPos.z - portalPos.z, 2)
-    );
-    
-    // Height difference check
-    const heightDiff = Math.abs(playerPos.y - portalPos.y);
-    
-    // Full 3D distance for logging
-    const fullDistance = playerPos.distanceTo(portalPos);
-    
-    // Log position data periodically using clock
-    if (Math.floor(state.clock.getElapsedTime()) % 2 === 0 && Math.floor(state.clock.getElapsedTime() * 10) % 10 === 0) {
-      console.log(`Player position: x=${playerPos.x.toFixed(2)}, y=${playerPos.y.toFixed(2)}, z=${playerPos.z.toFixed(2)}`);
-      console.log(`Portal position: x=${portalPos.x.toFixed(2)}, y=${portalPos.y.toFixed(2)}, z=${portalPos.z.toFixed(2)}`);
-      console.log(`XZ plane distance: ${xzDistance.toFixed(2)} units`);
-      console.log(`Height difference: ${heightDiff.toFixed(2)} units`);
-      console.log(`Full 3D distance: ${fullDistance.toFixed(2)} units`);
-      console.log(`Trigger thresholds: XZ range 9.0-12.1, Height < 3.0, isRedirecting: ${isRedirecting.current}`);
-    }
-    
-    // ADJUSTED TRIGGER CONDITION: Increased range by 15% and ignoring camera rotation
-    // 10.5 * 1.15 = 12.075 (rounded to 12.1)
-    if (xzDistance > 9.0 && xzDistance < 12.1 && heightDiff < 3.0) {
-      console.log("PORTAL TRIGGER ATTEMPT! XZ distance:", xzDistance.toFixed(2), "Height diff:", heightDiff.toFixed(2));
-      
-      if (!isRedirecting.current) {
-        console.log("PORTAL REDIRECT TRIGGERED!");
-        isRedirecting.current = true;
-        
-        // Use the correct format for the portal URL with ref parameter
-        const portalURL = "http://portal.pieter.com/?ref=readydeveloper.me";
-        console.log("Redirecting to:", portalURL);
-        
-        // Use vanilla JavaScript to ensure redirect works
-        window.location.href = portalURL;
-      }
-    }
   });
 
   // Log configuration instructions
@@ -325,7 +274,7 @@ const Portal = () => {
   return (
     <group 
       ref={portalRef} 
-      position={[15, height, 15]} 
+      position={[25, height, 25]} 
       rotation={[xRotation, 0, 0]}
     >
       {/* Vibe Portal Badge - moved higher above the portal */}
