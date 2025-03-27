@@ -9,7 +9,8 @@ import * as THREE from 'three';
 declare global {
   interface Window {
     chatboxOpen: boolean;
-    isCustomizingClothing?: boolean; // Add global flag for clothing customization
+    isCustomizingClothing?: boolean;
+    chatboxFocused: boolean;
     setCharacterMovement?: React.Dispatch<React.SetStateAction<MovementState>>;
   }
 }
@@ -48,9 +49,9 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
   const friction = 0.85; // Friction when slowing down
   
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Skip movement if chatbox is open or customizing clothing
-      if (window.chatboxOpen || window.isCustomizingClothing) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle movement if chatbox is open or focused
+      if (window.chatboxOpen || window.chatboxFocused || window.isCustomizingClothing) return;
       
       switch (e.key.toLowerCase()) {
         case 'w':
@@ -68,9 +69,9 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
       }
     };
 
-    const handleKeyUp = (e) => {
-      // Skip movement if chatbox is open or customizing clothing
-      if (window.chatboxOpen || window.isCustomizingClothing) return;
+    const handleKeyUp = (e: KeyboardEvent) => {
+      // Don't handle movement if chatbox is open or focused
+      if (window.chatboxOpen || window.chatboxFocused || window.isCustomizingClothing) return;
       
       switch (e.key.toLowerCase()) {
         case 'w':

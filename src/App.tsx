@@ -29,6 +29,9 @@ import { Leva } from 'leva'
 import HelperCharacter from "./components/HelperCharacter";
 import Portal from "./components/Portal";
 import MobileControlsProvider from "./components/MobileControlsProvider";
+import BarberShop from "./components/BarberShop";
+import Chatbox from "./components/Chatbox";
+import CharacterMessage from "./components/CharacterMessage";
 
 // This component handles all scene-specific behaviors that need to use hooks like useFrame
 const SceneManager = ({ 
@@ -124,6 +127,18 @@ export default function App() {
   
   // Update the clothing shop position to be further away
   const clothingShopPosition: [number, number, number] = [0, 0, 5.25]; // Moved 45% closer to spawn
+
+  // Add state to track if we're in the barber shop mode
+  const [inBarberShop, setInBarberShop] = useState(false);
+  
+  // Add state to track if hair customization is active
+  const [customizingHair, setCustomizingHair] = useState(false);
+
+  // Add state to track proximity to the barber shop
+  const [nearBarberShop, setNearBarberShop] = useState(false);
+  
+  // Update the barber shop position to be next to the clothing shop
+  const barberShopPosition: [number, number, number] = [8, 0, 5.25]; // Positioned to the right of the clothing shop
 
   // Change to "false" if you want hide/reveal version of the toolbar.
   const [isToolbarOpen, setIsToolbarOpen] = useState(true);
@@ -329,8 +344,9 @@ export default function App() {
 
     setSelected(newSelected)
     
-    // Set the clothing shop mode to true by default
+    // Set both shop modes to true by default
     setInClothingShop(true);
+    setInBarberShop(true);
   }, [])
   
   // Toggle clothing customization mode
@@ -368,6 +384,39 @@ export default function App() {
     }
   };
 
+  // Toggle hair customization mode
+  const toggleHairCustomization = () => {
+    // Only allow toggling if the character is not moving
+    if (isCharacterMoving) return;
+    
+    if (!customizingHair) {
+      // Entering customization mode
+      setCustomizingHair(true);
+      
+      // Set global flag to disable movement
+      window.isCustomizingClothing = true;
+      
+      // Rotate character to face the camera
+      if (characterRef.current) {
+        characterRef.current.rotation.y = 0;
+      }
+      
+      // Force select the hair tool
+      setTool(tools.find(t => t.id === "hair") || tools[0]);
+    } else {
+      // Exiting customization mode
+      setCustomizingHair(false);
+      
+      // Remove global flag to re-enable movement
+      window.isCustomizingClothing = false;
+      
+      // Return character to original rotation if needed
+      if (characterRef.current) {
+        characterRef.current.rotation.y = Math.PI;
+      }
+    }
+  };
+
   // Download pose as png
   const DownloadPose = () => {
     setVisible(false)
@@ -394,6 +443,11 @@ export default function App() {
   const handleNearShop = (isNear) => {
     setNearShop(isNear);
   };
+
+  // Handle barber shop proximity changes
+  const handleNearBarberShop = (isNear) => {
+    setNearBarberShop(isNear);
+  };
   
   // Handle character movement state changes
   const handleCharacterMovementChange = (moving) => {
@@ -402,17 +456,74 @@ export default function App() {
     }
   };
 
+  // Handle character pose changes
+  useEffect(() => {
+    window.setCharacterPose = (pose: string) => {
+      // Convert camelCase to snake_case properly
+      // First handle explicit mappings for poses we know
+      let formattedPose;
+      
+      // Map specific IDs to their correct format
+      switch (pose) {
+        case "CrossedArm":
+          formattedPose = "pose_crossed_arm";
+          break;
+        case "JumpHappy":
+          formattedPose = "pose_jump_happy";
+          break;
+        case "PointingDown":
+          formattedPose = "pose_pointing_down";
+          break;
+        case "PointingLeft":
+          formattedPose = "pose_pointing_left";
+          break;
+        case "PointingRight":
+          formattedPose = "pose_pointing_right";
+          break;
+        case "PointingUp":
+          formattedPose = "pose_pointing_up";
+          break;
+        case "SittingHappy":
+          formattedPose = "pose_sitting_happy";
+          break;
+        case "SittingSad":
+          formattedPose = "pose_sitting_sad";
+          break;
+        case "Standing1":
+          formattedPose = "pose_standing1";
+          break;
+        case "StandingSad":
+          formattedPose = "pose_standing_sad";
+          break;
+        default:
+          // For simple cases like "Confident", just lowercase
+          formattedPose = `pose_${pose.toLowerCase()}`;
+      }
+      
+      setSelected(prev => ({
+        ...prev,
+        pose: formattedPose
+      }));
+    };
+
+    return () => {
+      window.setCharacterPose = undefined;
+    };
+  }, []);
+
   return (
     <div className="relative w-full h-screen">
-      {/* Vibe Jam 2025 link - always visible in corner */}
+      {/* Vibe Jam 2025 link - positioned in top left on mobile */}
       <a 
         target="_blank" 
         href="https://jam.pieter.com" 
         style={{
           fontFamily: 'system-ui, sans-serif',
           position: 'fixed',
-          bottom: '-1px',
-          right: '-1px',
+          ...(window.innerWidth <= 768 
+            ? { top: '0px', left: '0px', borderBottomRightRadius: '12px', borderTopLeftRadius: '0px' }
+            : { bottom: '-1px', right: '-1px', borderTopLeftRadius: '12px', borderBottomRightRadius: '0px' }
+          ),
           padding: '7px',
           fontSize: '14px',
           fontWeight: 'bold',
@@ -420,7 +531,6 @@ export default function App() {
           color: '#000',
           textDecoration: 'none',
           zIndex: 10000,
-          borderTopLeftRadius: '12px',
           border: '1px solid #fff'
         }}
       >
@@ -441,6 +551,7 @@ export default function App() {
             <fog attach="fog" args={[theme === "light" ? '#1C1D22' : '#1C1D22', 17, 42.5]} />
             <Ground theme={theme} visible={visible} />
             <Character colors={subToolColors} selected={selected} logo={logo} characterRef={characterRef} />
+            <CharacterMessage characterRef={characterRef} />
             {inClothingShop && (
               <ClothingShop 
                 position={clothingShopPosition} 
@@ -449,9 +560,17 @@ export default function App() {
                 isCustomizing={customizingClothing}
               />
             )}
+            {inBarberShop && (
+              <BarberShop 
+                position={barberShopPosition} 
+                onChangeHair={toggleHairCustomization}
+                canChangeHair={nearBarberShop && !isCharacterMoving}
+                isCustomizing={customizingHair}
+              />
+            )}
             <ThirdPersonCamera 
               characterRef={characterRef} 
-              customizingClothing={customizingClothing} 
+              customizingClothing={customizingClothing || customizingHair} 
               shopPosition={clothingShopPosition} 
               helperCharacterRef={helperCharacterRef}
             />
@@ -464,6 +583,14 @@ export default function App() {
                 onCharacterMovementChange={handleCharacterMovementChange}
               />
             )}
+            {inBarberShop && (
+              <SceneManager 
+                characterRef={characterRef} 
+                shopPosition={barberShopPosition} 
+                onNearShop={handleNearBarberShop}
+                onCharacterMovementChange={handleCharacterMovementChange}
+              />
+            )}
             <HelperCharacter ref={helperCharacterRef} />
             <Portal />
             <ContactShadows opacity={opacity} scale={scale * 0.5} blur={blur} far={far} />
@@ -473,6 +600,9 @@ export default function App() {
 
         {/* Mobile controls - outside of Canvas */}
         <MobileControlsProvider />
+
+        {/* Chatbox */}
+        <Chatbox />
 
         {/* Only show minimal UI on mobile */}
         {!isDesktop && (
