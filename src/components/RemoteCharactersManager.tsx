@@ -22,6 +22,7 @@ const RemoteCharactersManager: React.FC = () => {
         <RemoteCharacter
           key={id}
           id={id}
+          username={player.username}
           position={player.position}
           rotation={player.rotation}
           moving={player.moving}

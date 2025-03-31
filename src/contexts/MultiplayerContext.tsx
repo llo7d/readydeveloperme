@@ -5,6 +5,7 @@ import * as THREE from 'three';
 // Define the shape of a remote player
 interface RemotePlayer {
   id: string;
+  username: string;
   position: THREE.Vector3;
   rotation: number;
   moving?: boolean;
@@ -16,6 +17,7 @@ interface RemotePlayer {
 interface MultiplayerContextType {
   socket: Socket | null;
   isConnected: boolean;
+  localUsername: string | null;
   remotePlayersMap: Map<string, RemotePlayer>;
   playerCount: number;
   // Debug flags to verify phase 1 completion
@@ -32,6 +34,7 @@ interface MultiplayerContextType {
 const MultiplayerContext = createContext<MultiplayerContextType>({
   socket: null,
   isConnected: false,
+  localUsername: null,
   remotePlayersMap: new Map(),
   playerCount: 0,
   connectionStatus: 'disconnected',
@@ -78,6 +81,7 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [positionUpdateCount, setPositionUpdateCount] = useState(0);
   // Appearance update counter for Phase 2
   const [appearanceUpdateCount, setAppearanceUpdateCount] = useState(0);
+  const [localUsername, setLocalUsername] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('Multiplayer: Initializing Socket.IO connection...');
@@ -123,40 +127,43 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     });
 
     // Remote player events (to be fully implemented in Phase 3)
-    newSocket.on('existingUsers', (users) => {
+    newSocket.on('existingUsers', (users: any[]) => {
       console.log('Multiplayer: Received existing users:', users);
       setLastConnectionEvent(`Received info about ${users.length} existing players`);
-      setPlayerCount(users.length + 1); // +1 for local player
       
-      // Store existing players
       const newRemotePlayers = new Map<string, RemotePlayer>();
       users.forEach(user => {
-        newRemotePlayers.set(user.id, {
-          id: user.id,
-          position: new THREE.Vector3(
-            user.position?.x || 0,
-            user.position?.y || 0,
-            user.position?.z || 0
-          ),
-          rotation: user.rotation || 0,
-          moving: user.moving || false,
-          colors: user.colors || undefined,
-          selected: user.selected || undefined
-        });
+        if (user.id !== newSocket.id) { // Don't add self to remote players
+            newRemotePlayers.set(user.id, {
+              id: user.id,
+              username: user.username || `Player_${user.id.slice(0,4)}`,
+              position: new THREE.Vector3(
+                user.position?.x || 0,
+                user.position?.y || 0,
+                user.position?.z || 0
+              ),
+              rotation: user.rotation || 0,
+              moving: user.moving || false,
+              colors: user.colors || DEFAULT_COLORS,
+              selected: user.selected || DEFAULT_SELECTED
+            });
+        }
       });
       setRemotePlayersMap(newRemotePlayers);
+      setPlayerCount(newRemotePlayers.size + 1); // Update count based on map size + self
     });
 
     newSocket.on('userJoined', (user) => {
-      console.log('Multiplayer: User joined:', user);
-      setLastConnectionEvent(`Player joined: ${user.id}`);
-      setPlayerCount(prev => prev + 1);
+      if (user.id === newSocket.id) return; // Ignore self join event
+      console.log('Multiplayer: User joined:', user.username, user.id);
+      setLastConnectionEvent(`Player joined: ${user.username || user.id}`);
       
       // Add the new player to our map
       setRemotePlayersMap(prevMap => {
         const newMap = new Map(prevMap);
         newMap.set(user.id, {
           id: user.id,
+          username: user.username || `Player_${user.id.slice(0,4)}`,
           position: new THREE.Vector3(
             user.position?.x || 0,
             user.position?.y || 0,
@@ -164,11 +171,29 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
           ),
           rotation: user.rotation || 0,
           moving: user.moving || false,
-          colors: user.colors || undefined,
-          selected: user.selected || undefined
+          colors: user.colors || DEFAULT_COLORS,
+          selected: user.selected || DEFAULT_SELECTED
         });
+        setPlayerCount(newMap.size + 1); // Update count based on new map size + self
         return newMap;
       });
+    });
+
+    // Listener for username changes (if using setUsername event)
+    newSocket.on('usernameUpdated', (data: { id: string, username: string }) => {
+        console.log(`Multiplayer: Username updated for ${data.id}: ${data.username}`);
+        setRemotePlayersMap(prevMap => {
+            const newMap = new Map(prevMap);
+            const player = newMap.get(data.id);
+            if (player) {
+                newMap.set(data.id, { ...player, username: data.username });
+            }
+            return newMap;
+        });
+        // Also update local username if it's our own ID
+        if (data.id === newSocket.id) {
+            setLocalUsername(data.username);
+        }
     });
 
     // Phase 2: Handle position updates
@@ -200,13 +225,16 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
           // Create new player if doesn't exist
           newMap.set(positionData.id, {
             id: positionData.id,
+            username: `Player_${positionData.id.slice(0,4)}`,
             position: new THREE.Vector3(
               positionData.position.x,
               positionData.position.y,
               positionData.position.z
             ),
             rotation: positionData.rotation,
-            moving: positionData.moving
+            moving: positionData.moving,
+            colors: DEFAULT_COLORS,
+            selected: DEFAULT_SELECTED
           });
         }
         
@@ -237,8 +265,10 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
           // Create new player if doesn't exist
           newMap.set(appearanceData.id, {
             id: appearanceData.id,
+            username: `Player_${appearanceData.id.slice(0,4)}`,
             position: new THREE.Vector3(0, 0, 0),
             rotation: 0,
+            moving: false,
             colors: appearanceData.colors,
             selected: appearanceData.selected
           });
@@ -259,7 +289,10 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
       // Remove the player from our map
       setRemotePlayersMap(prevMap => {
         const newMap = new Map(prevMap);
-        newMap.delete(userId);
+        const deleted = newMap.delete(userId);
+        if (deleted) {
+            setPlayerCount(newMap.size + 1); // Update count after deletion
+        }
         return newMap;
       });
     });
@@ -269,6 +302,7 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     // Cleanup on unmount
     return () => {
       console.log('Multiplayer: Disconnecting socket');
+      newSocket.off('usernameUpdated');
       newSocket.disconnect();
     };
   }, []);
@@ -287,13 +321,14 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const contextValue = {
     socket,
     isConnected,
+    localUsername,
     remotePlayersMap,
     playerCount,
     connectionStatus,
     lastConnectionEvent,
     positionUpdateCount,
     appearanceUpdateCount,
-    sendAppearanceUpdate // Expose the function
+    sendAppearanceUpdate
   };
 
   return (

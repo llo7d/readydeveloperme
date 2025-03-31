@@ -7,6 +7,7 @@ import { SkeletonUtils } from 'three-stdlib';
 
 interface RemoteCharacterProps {
     id: string;
+    username: string;
     position: THREE.Vector3;
     rotation: number;
     colors?: any[];
@@ -83,7 +84,7 @@ const getColorHelper = (colors: any[] | undefined, subToolId: string): string =>
     return colorEntry ? colorEntry.color : "#141414";
 };
 
-export default function RemoteCharacter({ id, position, rotation, colors, selected, moving }: RemoteCharacterProps) {
+export default function RemoteCharacter({ id, username, position, rotation, colors, selected, moving }: RemoteCharacterProps) {
     const groupRef = useRef<THREE.Group>(null);
     const [clonedScene, setClonedScene] = useState<THREE.Object3D | null>(null);
     const [isReady, setIsReady] = useState(false);
@@ -530,7 +531,7 @@ export default function RemoteCharacter({ id, position, rotation, colors, select
             </mesh>
             <Html position={[0, 0, 0]} center className="pointer-events-none" distanceFactor={10} zIndexRange={[16777271, 16777272]} occlude={false}>
                 <div style={{ color: 'white', fontSize: '12px', fontWeight: 'bold', fontFamily: 'Arial, sans-serif', padding: '2px 6px', whiteSpace: 'nowrap', userSelect: 'none', textShadow: '1px 1px 1px rgba(0,0,0,0.5)' }}>
-                    {id.slice(0, 6)}
+                    {username || `Player_${id.slice(0, 6)}`}
                 </div>
             </Html>
         </group>

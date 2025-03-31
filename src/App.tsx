@@ -1,4 +1,4 @@
-import React, { ChangeEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import React, { ChangeEvent, Suspense, useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMediaQuery } from "react-responsive";
 import { Canvas, useFrame } from "@react-three/fiber";
@@ -35,6 +35,7 @@ import CharacterMessage from "./components/CharacterMessage";
 import { MultiplayerProvider, useMultiplayer } from './contexts/MultiplayerContext';
 import MultiplayerManager from './components/MultiplayerManager';
 import RemoteCharactersManager from "./components/RemoteCharactersManager";
+import UsernamePrompt from "./components/UsernamePrompt";
 
 // This component handles all scene-specific behaviors that need to use hooks like useFrame
 const SceneManager = ({ 
@@ -137,7 +138,7 @@ const SceneManager = ({
 };
 
 // Create a wrapper component that uses the multiplayer hooks
-const AppContent = () => {
+const AppContent = ({ initialUsername }: { initialUsername: string }) => {
   // Character reference for controlling movement
   const characterRef = useRef<THREE.Group>(null);
   // Helper character reference for camera focus
@@ -195,7 +196,7 @@ const AppContent = () => {
   const { socket, isConnected, sendAppearanceUpdate } = useMultiplayer();
   
   // Track last sent appearance
-  const lastSentAppearance = useRef({ colors: null, selected: null });
+  const lastSentAppearance = useRef<{colors: any[] | null, selected: any | null}>({ colors: null, selected: null });
 
   // Load saved appearance from localStorage if it exists
   const loadSavedAppearance = () => {
@@ -650,6 +651,24 @@ const AppContent = () => {
     }
   }, [subToolColors, selected, customizingClothing, customizingHair]);
 
+  // Effect to join room *after* connection and *after* username is provided
+  useEffect(() => {
+    if (isConnected && socket && initialUsername) {
+      // Join with username and current appearance state
+      console.log(`Joining room with username: ${initialUsername}`);
+      socket.emit('join', {
+          username: initialUsername,
+          position: { x: 0, y: 0, z: 30 }, // Use initial position
+          rotation: Math.PI, // Use initial rotation
+          colors: subToolColors, // Send current colors
+          selected: selected // Send current selections
+      });
+      
+      // Also send initial appearance explicitly if needed (might be redundant depending on server's 'join' handling)
+      // sendAppearanceUpdate(subToolColors, selected);
+    }
+  }, [isConnected, socket, initialUsername, subToolColors, selected]); // Add dependencies
+
   return (
     <div className="relative w-full h-screen">
       {/* Vibe Jam 2025 link - positioned in top left on mobile */}
@@ -683,7 +702,6 @@ const AppContent = () => {
         })}
       >
         <Analytics mode="production" debug={true} />
-        <Loader />
 
         <div className="w-full h-screen">
           <Canvas gl={{ preserveDrawingBuffer: true, antialias: true }} shadows camera={{ fov: 30 }} linear={false} dpr={1.5}>
@@ -924,9 +942,23 @@ const AppContent = () => {
 
 // Main App component
 export default function App() {
+  // State to track if the username has been submitted via the loader
+  const [usernameSubmitted, setUsernameSubmitted] = useState<string | null>(null);
+
+  // Callback for when username is submitted FROM THE LOADER
+  const handleLoaderSubmit = useCallback((username: string) => {
+    console.log("Username submitted via Loader:", username);
+    setUsernameSubmitted(username);
+    // The Loader component will handle its own fade-out
+  }, []);
+
   return (
     <MultiplayerProvider>
-      <AppContent />
+      {/* Display Loader until username is submitted */}
+      {!usernameSubmitted && <Loader onLoadedSubmit={handleLoaderSubmit} />}
+      
+      {/* Render main content only AFTER username is submitted */}
+      {usernameSubmitted && <AppContent initialUsername={usernameSubmitted} />}
     </MultiplayerProvider>
   );
 }
