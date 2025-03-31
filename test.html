@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>WebSocket Test</h1>
+    <div id="status">Connecting...</div>
+    <div>
+        <input type="text" id="message" placeholder="Type a message">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+    <div id="response"></div>
+    
+    <script>
+        // Important: Use the domain name and set rejectUnauthorized to false
+        const socket = io('https://ws.readydeveloper.me', {
+            transports: ['polling', 'websocket'],
+            rejectUnauthorized: false
+        });
+        
+        socket.on('connect', () => {
+            document.getElementById('status').textContent = 'Connected!';
+            console.log('Connected to server with transport:', socket.io.engine.transport.name);
+        });
+
+        socket.on('connect_error', (error) => {
+            document.getElementById('status').textContent = 'Error: ' + error.message;
+            console.error('Connection Error:', error);
+        });
+
+        socket.on('message', (data) => {
+            document.getElementById('response').textContent = data;
+            console.log('Received:', data);
+        });
+
+        function sendMessage() {
+            const message = document.getElementById('message').value;
+            socket.emit('message', message);
+            console.log('Sent:', message);
+        }
+    </script>
+</body>
+</html>

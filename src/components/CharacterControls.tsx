@@ -2,6 +2,8 @@ import React from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useRef, useState, useEffect, MutableRefObject } from 'react';
 import * as THREE from 'three';
+// Add import for useMultiplayer hook
+import { useMultiplayer } from '../contexts/MultiplayerContext';
 // Remove the import as we're not using it directly here
 // import MobileControls from './MobileControls';
 
@@ -27,6 +29,9 @@ interface CharacterControlsProps {
 }
 
 const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
+  // Get socket from multiplayer context
+  const { socket, isConnected } = useMultiplayer();
+  
   // Movement state
   const [movement, setMovement] = useState<MovementState>({
     forward: false,
@@ -40,6 +45,12 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
   const currentVelocity = useRef(new THREE.Vector3(0, 0, 0));
   const isMoving = useRef(false);
   const lastPosition = useRef(new THREE.Vector3());
+  const lastSentPosition = useRef(new THREE.Vector3());
+  const lastSentRotation = useRef(0);
+  
+  // Throttling
+  const lastUpdateTime = useRef(0);
+  const UPDATE_INTERVAL = 1000 / 15; // 15 updates per second max
   
   // Movement configuration
   const walkSpeed = 0.04;
@@ -107,6 +118,46 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
       }
     };
   }, []);
+
+  // Function to send position updates to server
+  const sendPositionUpdate = (force = false) => {
+    if (!isConnected || !socket || !characterRef.current) return;
+    
+    const now = Date.now();
+    const position = characterRef.current.position;
+    const rotation = characterRotation.current;
+    
+    // Check if we need to send an update (throttling)
+    const timeSinceLastUpdate = now - lastUpdateTime.current;
+    const positionChanged = lastSentPosition.current.distanceToSquared(position) > 0.01;
+    const rotationChanged = Math.abs(lastSentRotation.current - rotation) > 0.05;
+    
+    // Only send updates if there's a significant change or if forced
+    if (force || ((positionChanged || rotationChanged) && timeSinceLastUpdate > UPDATE_INTERVAL)) {
+      // Send position and rotation to server
+      socket.emit('updatePosition', {
+        position: {
+          x: position.x,
+          y: position.y,
+          z: position.z
+        },
+        rotation: rotation,
+        moving: isMoving.current
+      });
+      
+      // Update last sent values
+      lastSentPosition.current.copy(position);
+      lastSentRotation.current = rotation;
+      lastUpdateTime.current = now;
+      
+      // Log (for testing Phase 2)
+      console.log('Multiplayer: Sent position update', { 
+        x: parseFloat(position.x.toFixed(2)), 
+        z: parseFloat(position.z.toFixed(2)), 
+        r: parseFloat(rotation.toFixed(2))
+      });
+    }
+  };
 
   useFrame((state, delta) => {
     // Check if characterRef exists and is valid
@@ -177,6 +228,14 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
     
     // Store the current position for next frame
     lastPosition.current.copy(characterRef.current.position);
+    
+    // Check if we need to send position update
+    // Always send when movement state changes (started/stopped moving)
+    if (wasMoving !== isMoving.current) {
+      sendPositionUpdate(true);
+    } else {
+      sendPositionUpdate();
+    }
   });
   
   // Return null here as this component just adds behavior, not visuals

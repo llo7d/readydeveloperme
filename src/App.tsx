@@ -32,6 +32,9 @@ import MobileControlsProvider from "./components/MobileControlsProvider";
 import BarberShop from "./components/BarberShop";
 import Chatbox from "./components/Chatbox";
 import CharacterMessage from "./components/CharacterMessage";
+import { MultiplayerProvider, useMultiplayer } from './contexts/MultiplayerContext';
+import MultiplayerManager from './components/MultiplayerManager';
+import RemoteCharactersManager from "./components/RemoteCharactersManager";
 
 // This component handles all scene-specific behaviors that need to use hooks like useFrame
 const SceneManager = ({ 
@@ -52,6 +55,13 @@ const SceneManager = ({
   const lastPosition = useRef(new THREE.Vector3());
   const isMoving = useRef(false);
   const movementCheckInterval = useRef(0);
+  
+  // Get socket for position updates
+  const { socket, isConnected } = useMultiplayer();
+  
+  // Throttle position updates
+  const lastPositionUpdateTime = useRef(0);
+  const POSITION_UPDATE_INTERVAL = 100; // 100ms = 10 updates per second
   
   // Initialize character rotation to face the shop
   useEffect(() => {
@@ -86,6 +96,25 @@ const SceneManager = ({
     if (wasMoving !== isMoving.current) {
       onCharacterMovementChange(isMoving.current);
     }
+    
+    // Send position update to server
+    if (isConnected && socket) {
+      const now = performance.now();
+      if (now - lastPositionUpdateTime.current > POSITION_UPDATE_INTERVAL) {
+        lastPositionUpdateTime.current = now;
+        
+        // Send position, rotation, and moving state
+        socket.emit('updatePosition', {
+          position: {
+            x: position.x,
+            y: position.y,
+            z: position.z
+          },
+          rotation: characterRef.current.rotation.y,
+          moving: isMoving.current
+        });
+      }
+    }
   });
   
   return (
@@ -107,7 +136,8 @@ const SceneManager = ({
   );
 };
 
-export default function App() {
+// Create a wrapper component that uses the multiplayer hooks
+const AppContent = () => {
   // Character reference for controlling movement
   const characterRef = useRef<THREE.Group>(null);
   // Helper character reference for camera focus
@@ -151,22 +181,49 @@ export default function App() {
   const [visible, setVisible] = useState(true);
   const tools = getToolbarData();
   const [tool, setTool] = useState(tools[0]);
-
+  
+  // Ground shadow controls
   const { opacity, blur, scale, far } =
     useControls('Ground Shadows', {
       opacity: { value: 0.7, step: 0.05 },
       scale: { value: 2, step: 0.05 },
       blur: { value: 3.5, step: 0.05 },
       far: { value: 1.2, step: 0.05 },
-    })
+    });
+  
+  // Get socket from multiplayer context
+  const { socket, isConnected, sendAppearanceUpdate } = useMultiplayer();
+  
+  // Track last sent appearance
+  const lastSentAppearance = useRef({ colors: null, selected: null });
+
+  // Load saved appearance from localStorage if it exists
+  const loadSavedAppearance = () => {
+    try {
+      const savedAppearance = localStorage.getItem('playerAppearance');
+      if (savedAppearance) {
+        const { colors, selected } = JSON.parse(savedAppearance);
+        if (colors && selected) {
+          console.log('Loaded saved appearance from localStorage');
+          return { colors, selected };
+        }
+      }
+    } catch (error) {
+      console.error('Error loading saved appearance:', error);
+    }
+    return null;
+  };
+
+  // Try to load saved appearance, then fall back to defaults
+  const savedAppearance = loadSavedAppearance();
 
   // It has this format (you can see data.ts):
   // tool.id: tool.items.id
-  const [selected, setSelected] = useState<Record<string, string>>({})
+  const [selected, setSelected] = useState<Record<string, string>>(savedAppearance?.selected || {})
 
   // Tool 2 subtool colors. Set default color state here.
   const [subToolColors, setSubToolColors] = useState(
-    tools[1].items.map((item) => {
+    savedAppearance?.colors || tools[1].items.map((item) => {
       if (item.id === "tool_2_item_1") {
         return {
           subToolId: item.id,
@@ -381,6 +438,13 @@ export default function App() {
         // Reset character rotation to default (facing the shop)
         characterRef.current.rotation.y = Math.PI;
       }
+      
+      // Send appearance update when exiting customization mode
+      if (isConnected) {
+        // Use the function from context instead of direct socket.emit
+        sendAppearanceUpdate(subToolColors, selected);
+        console.log('Multiplayer: Sent appearance update on customization exit');
+      }
     }
   };
 
@@ -413,6 +477,13 @@ export default function App() {
       // Return character to original rotation if needed
       if (characterRef.current) {
         characterRef.current.rotation.y = Math.PI;
+      }
+      
+      // Send appearance update when exiting customization mode
+      if (isConnected) {
+        // Use the function from context instead of direct socket.emit
+        sendAppearanceUpdate(subToolColors, selected);
+        console.log('Multiplayer: Sent appearance update on hair customization exit');
       }
     }
   };
@@ -511,6 +582,74 @@ export default function App() {
     };
   }, []);
 
+  // Send appearance data when it changes
+  useEffect(() => {
+    if (!isConnected) return;
+    
+    // Don't send updates during customization - will send on exit instead
+    if (customizingClothing || customizingHair) return;
+    
+    // Check if appearance has actually changed
+    const colorsStr = JSON.stringify(subToolColors);
+    const selectedStr = JSON.stringify(selected);
+    const lastColorsStr = JSON.stringify(lastSentAppearance.current.colors);
+    const lastSelectedStr = JSON.stringify(lastSentAppearance.current.selected);
+    
+    // Only send if something changed
+    if (colorsStr !== lastColorsStr || selectedStr !== lastSelectedStr) {
+      // Use the function from context instead of direct socket.emit
+      sendAppearanceUpdate(subToolColors, selected);
+      
+      // Update last sent appearance
+      lastSentAppearance.current = {
+        colors: JSON.parse(colorsStr),
+        selected: JSON.parse(selectedStr)
+      };
+      
+      console.log('Multiplayer: Sent appearance update', {
+        changed: {
+          colors: colorsStr !== lastColorsStr,
+          selected: selectedStr !== lastSelectedStr
+        }
+      });
+    }
+  }, [subToolColors, selected, isConnected, customizingClothing, customizingHair, sendAppearanceUpdate]);
+
+  // Send initial appearance data when first connected
+  useEffect(() => {
+    if (isConnected && subToolColors && selected) {
+      // Small delay to ensure connection is fully established
+      const timer = setTimeout(() => {
+        // Use the function from context instead of direct socket.emit
+        sendAppearanceUpdate(subToolColors, selected);
+        
+        console.log('Multiplayer: Sent initial appearance data');
+        
+        // Store as last sent appearance
+        lastSentAppearance.current = {
+          colors: JSON.parse(JSON.stringify(subToolColors)),
+          selected: JSON.parse(JSON.stringify(selected))
+        };
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isConnected, subToolColors, selected, sendAppearanceUpdate]);
+
+  // Save appearance to localStorage whenever it changes
+  useEffect(() => {
+    // Don't save during customization - wait till complete
+    if (customizingClothing || customizingHair) return;
+    
+    try {
+      const appearanceToSave = { colors: subToolColors, selected };
+      localStorage.setItem('playerAppearance', JSON.stringify(appearanceToSave));
+      console.log('Saved appearance to localStorage');
+    } catch (error) {
+      console.error('Error saving appearance to localStorage:', error);
+    }
+  }, [subToolColors, selected, customizingClothing, customizingHair]);
+
   return (
     <div className="relative w-full h-screen">
       {/* Vibe Jam 2025 link - positioned in top left on mobile */}
@@ -552,6 +691,7 @@ export default function App() {
             <Ground theme={theme} visible={visible} />
             <Character colors={subToolColors} selected={selected} logo={logo} characterRef={characterRef} />
             <CharacterMessage characterRef={characterRef} />
+            <RemoteCharactersManager />
             {inClothingShop && (
               <ClothingShop 
                 position={clothingShopPosition} 
@@ -603,6 +743,9 @@ export default function App() {
 
         {/* Chatbox */}
         <Chatbox />
+
+        {/* Add MultiplayerManager component for connection status display */}
+        <MultiplayerManager visible={true} />
 
         {/* Only show minimal UI on mobile */}
         {!isDesktop && (
@@ -708,6 +851,7 @@ export default function App() {
               tool={tool}
               colors={subToolColors}
               onClickItem={(item) => {
+                console.log('Multiplayer: Changing item', { toolId: tool.id, itemId: item.id });
                 setSelected({
                   ...selected,
                   [tool.id]: item.id
@@ -718,6 +862,7 @@ export default function App() {
                 }
               }}
               onChangeColor={(subToolColor) => {
+                console.log('Multiplayer: Changing color', { subToolId: selected[tool.id], color: subToolColor.color });
                 const newSubToolColors = subToolColors.map((color) => {
                   if (color.subToolId === selected[tool.id]) {
                     return {
@@ -774,6 +919,15 @@ export default function App() {
         <Leva hidden={debuggerVisible} />
       </div>
     </div>
+  );
+};
+
+// Main App component
+export default function App() {
+  return (
+    <MultiplayerProvider>
+      <AppContent />
+    </MultiplayerProvider>
   );
 }
 

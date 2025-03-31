@@ -62,6 +62,16 @@ const SubToolbar: React.FC<Props> = ({
 
   // Handle color item click
   const handleColorItemClick = (item: SubTool) => {
+    if (item.id.includes("logo_")) {
+      // Remove current color picker after 200ms
+      setTimeout(() => {
+        setActiveColorItem(null);
+      }, 200);
+    }
+    
+    // Dispatch custom event for item changes
+    window.dispatchEvent(new CustomEvent('mp:itemChange'));
+    
     onClickItem(item);
     if (hasColorPalette) {
       setActiveColorItem(item.id);
@@ -71,6 +81,18 @@ const SubToolbar: React.FC<Props> = ({
 
   // Center color picker positioning
   const isCenterColorPickerVisible = hasColorPalette && isColorPaletteShow && activeColorItem;
+
+  const handleColorChange = (color: string) => {
+    // Dispatch custom event for color changes
+    window.dispatchEvent(new CustomEvent('mp:colorChange'));
+    
+    if (activeColorItem) {
+      onChangeColor?.({
+        subToolId: activeColorItem,
+        color,
+      });
+    }
+  };
 
   return (
     <div className="flex flex-col items-center">
@@ -195,12 +217,7 @@ const SubToolbar: React.FC<Props> = ({
                 <HexColorPicker
                   color={colors.find(c => c.subToolId === activeColorItem)?.color || "#4B50EC"}
                   onChange={(color) => {
-                    if (activeColorItem) {
-                      onChangeColor?.({
-                        subToolId: activeColorItem,
-                        color,
-                      });
-                    }
+                    handleColorChange(color);
                   }}
                 />
                 <div className="flex items-center justify-between w-full px-2 pt-4">
@@ -219,12 +236,7 @@ const SubToolbar: React.FC<Props> = ({
                     })}
                     color={colors.find(c => c.subToolId === activeColorItem)?.color || "#4B50EC"}
                     onChange={(color) => {
-                      if (activeColorItem) {
-                        onChangeColor?.({
-                          subToolId: activeColorItem,
-                          color,
-                        });
-                      }
+                      handleColorChange(color);
                     }}
                   />
                 </div>
