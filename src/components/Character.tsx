@@ -73,6 +73,13 @@ const ChatBubble = ({ message, position }: { message: { text: string; timestamp:
     );
 };
 
+// Get color helper (similar to RemoteCharacter)
+const getColorHelper = (colors: any[] | undefined, subToolId: string): string => {
+    if (!colors) return "#000000"; // Default to black if colors array is missing
+    const colorEntry = colors.find(c => c.subToolId === subToolId);
+    return colorEntry ? colorEntry.color : "#000000"; // Default to black if specific subToolId not found
+};
+
 export default function Character({ selected, colors, logo, characterRef, message }: CharacterProps) {
     // Create an internal ref if no external ref is provided
     const internalRef = useRef<THREE.Group>(null);
@@ -413,13 +420,16 @@ export default function Character({ selected, colors, logo, characterRef, messag
     }
 
     const Hair = () => {
+        // Get hair color using helper
+        const hairColor = getColorHelper(colors, "tool_2_item_4");
+
         const GEO_Hair_01 =
             <skinnedMesh
                 name="GEO_Hair_01"
                 geometry={nodes.GEO_Hair_01.geometry}
                 material={materials.MAT_Hair}
                 skeleton={nodes.GEO_Hair_01.skeleton}
-                material-color={colors[0].color}
+                material-color={hairColor}
                 material-roughness={0.5}
             />
 
@@ -428,7 +438,7 @@ export default function Character({ selected, colors, logo, characterRef, messag
             geometry={nodes.GEO_Hair_02.geometry}
             material={materials.MAT_Hair}
             skeleton={nodes.GEO_Hair_02.skeleton}
-            material-color={colors[0].color}
+            material-color={hairColor}
         />
 
         const GEO_Hair_03 = <skinnedMesh
@@ -436,7 +446,7 @@ export default function Character({ selected, colors, logo, characterRef, messag
             geometry={nodes.GEO_Hair_03.geometry}
             material={materials.MAT_Hair}
             skeleton={nodes.GEO_Hair_03.skeleton}
-            material-color={colors[0].color}
+            material-color={hairColor}
         />
 
         const GEO_Hair_04 = <skinnedMesh
@@ -444,7 +454,7 @@ export default function Character({ selected, colors, logo, characterRef, messag
             geometry={nodes.GEO_Hair_04.geometry}
             material={materials.MAT_Hair}
             skeleton={nodes.GEO_Hair_04.skeleton}
-            material-color={colors[0].color}
+            material-color={hairColor}
         />
 
         return (
@@ -459,8 +469,7 @@ export default function Character({ selected, colors, logo, characterRef, messag
 
     const Beard = () => {
         // Find the beard color by subToolId instead of using a fixed index
-        const beardColorItem = colors.find(color => color.subToolId === "tool_2_item_2");
-        const beardColor = beardColorItem ? beardColorItem.color : "#131313"; // Fallback color
+        const beardColor = getColorHelper(colors, "tool_2_item_2");
         
         const GEO_Beard_01 = <skinnedMesh
             name="GEO_Beard_01"
@@ -532,6 +541,11 @@ export default function Character({ selected, colors, logo, characterRef, messag
     }
 
     const Shoes = () => {
+        // Get shoe colors using helper
+        const soleColor = getColorHelper(colors, "tool_2_item_9");
+        const main2Color = getColorHelper(colors, "tool_2_item_10");
+        const main1Color = getColorHelper(colors, "tool_2_item_11");
+
         return (
             <group name="GEO_CC_Shoes">
                 <skinnedMesh
@@ -539,21 +553,21 @@ export default function Character({ selected, colors, logo, characterRef, messag
                     geometry={nodes.main_clothes002.geometry}
                     material={materials.shoes_main_sole}
                     skeleton={nodes.main_clothes002.skeleton}
-                    material-color={colors[7].color}
+                    material-color={soleColor}
                 />
                 <skinnedMesh
                     name="main_clothes002_1"
                     geometry={nodes.main_clothes002_1.geometry}
                     material={materials.shoes_main_2}
                     skeleton={nodes.main_clothes002_1.skeleton}
-                    material-color={colors[8].color}
+                    material-color={main2Color}
                 />
                 <skinnedMesh
                     name="main_clothes002_2"
                     geometry={nodes.main_clothes002_2.geometry}
                     material={materials.shoes_main_1}
                     skeleton={nodes.main_clothes002_2.skeleton}
-                    material-color={colors[9].color}
+                    material-color={main1Color}
                 />
                 <skinnedMesh
                     name="main_clothes002_3"
@@ -678,6 +692,10 @@ export default function Character({ selected, colors, logo, characterRef, messag
     const Tshirt = () => {
         materials.logo.map = logo
         materials.logo.map.flipY = false
+        
+        // Get T-shirt colors using helper
+        const mainColor = getColorHelper(colors, "tool_2_item_5");
+        const cuffsColor = getColorHelper(colors, "tool_2_item_3");
 
         const Logo = () => {
             if (selected.logo === "logo_1") {
@@ -713,7 +731,7 @@ export default function Character({ selected, colors, logo, characterRef, messag
                     geometry={nodes.t_shirt.geometry}
                     material={materials.Shirt_main}
                     skeleton={nodes.t_shirt.skeleton}
-                    material-color={colors[3].color}
+                    material-color={mainColor}
                 />
                 <Logo />
                 <skinnedMesh
@@ -721,20 +739,23 @@ export default function Character({ selected, colors, logo, characterRef, messag
                     geometry={nodes.t_shirt_2.geometry}
                     material={materials.Shirt_main_cuffs}
                     skeleton={nodes.t_shirt_2.skeleton}
-                    material-color={colors[2].color}
+                    material-color={cuffsColor}
                 />
             </group>
         )
     }
 
     const Watch = () => {
+        // Get watch color using helper
+        const beltColor = getColorHelper(colors, "tool_2_item_12");
+
         return <group name="GEO_Watch">
             <skinnedMesh
                 name="body001"
                 geometry={nodes.body001.geometry}
                 material={materials.MAT_Watch_Belt}
                 skeleton={nodes.body001.skeleton}
-                material-color={colors[10].color}
+                material-color={beltColor}
             />
             <skinnedMesh
                 name="body001_1"
@@ -754,6 +775,11 @@ export default function Character({ selected, colors, logo, characterRef, messag
     }
 
     const Pants = () => {
+        // Get pants colors using helper
+        const mainColor = getColorHelper(colors, "tool_2_item_1");
+        const bottomColor = getColorHelper(colors, "tool_2_item_1"); // Same as main
+        const beltColor = getColorHelper(colors, "tool_2_item_8");
+
         return (
             <group name="GEO_CC_Pants">
                 <skinnedMesh
@@ -761,14 +787,14 @@ export default function Character({ selected, colors, logo, characterRef, messag
                     geometry={nodes.pants002.geometry}
                     material={materials.Pants_main}
                     skeleton={nodes.pants002.skeleton}
-                    material-color={colors[4].color}
+                    material-color={mainColor}
                 />
                 <skinnedMesh
                     name="pants002_1"
                     geometry={nodes.pants002_1.geometry}
                     material={materials.Pants_belt}
                     skeleton={nodes.pants002_1.skeleton}
-                    material-color={colors[6].color}
+                    material-color={beltColor}
                 />
                 <skinnedMesh
                     name="pants002_2"
@@ -781,13 +807,16 @@ export default function Character({ selected, colors, logo, characterRef, messag
                     geometry={nodes.pants002_3.geometry}
                     material={materials.Pants_bottom}
                     skeleton={nodes.pants002_3.skeleton}
-                    material-color={colors[5].color}
+                    material-color={bottomColor}
                 />
             </group>
         )
     }
 
     const Hat = () => {
+        // Get hat color using helper
+        const hatColor = getColorHelper(colors, "tool_2_item_11");
+
         if (selected.hats === "hat_1") {
             return (
                 <skinnedMesh
@@ -795,7 +824,7 @@ export default function Character({ selected, colors, logo, characterRef, messag
                     geometry={nodes.GEO_Hat.geometry}
                     material={materials.MAT_Cap}
                     skeleton={nodes.GEO_Hat.skeleton}
-                    material-color={colors[11].color}
+                    material-color={hatColor}
                 />
             )
         }

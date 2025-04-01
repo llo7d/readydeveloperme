@@ -83,9 +83,9 @@ const getAnimationNameFromPose = (poseId?: string): string => {
 
 // Get color helper
 const getColorHelper = (colors: any[] | undefined, subToolId: string): string => {
-    if (!colors) return "#141414";
+    if (!colors) return "#000000"; // Default to black if colors array is missing
     const colorEntry = colors.find(c => c.subToolId === subToolId);
-    return colorEntry ? colorEntry.color : "#141414";
+    return colorEntry ? colorEntry.color : "#000000"; // Default to black if specific subToolId not found
 };
 
 // Extract pose from message text if present
@@ -99,6 +99,23 @@ const extractPoseFromMessage = (messageText: string): { pose: string | null, cle
     }
     
     return { pose: null, cleanText: messageText };
+};
+
+// Helper to format mesh names correctly (e.g., hair_1 -> GEO_Hair_01)
+const getFormattedMeshName = (prefix: string, type: string | undefined): string | null => {
+  if (!type) return null;
+  const parts = type.split('_');
+  if (parts.length >= 2) {
+    const num = parseInt(parts[parts.length - 1], 10);
+    if (!isNaN(num)) {
+      const formattedNum = num.toString().padStart(2, '0');
+      // Reconstruct prefix (e.g., GEO_Hair)
+      const namePrefix = prefix + '_' + parts.slice(0, -1).join('_'); 
+      return `${prefix}_${formattedNum}`;
+    }
+  }
+  // Fallback if format is unexpected or no number found
+  return `${prefix}_${type}`;
 };
 
 // ChatBubble component to display messages above character
@@ -249,88 +266,105 @@ export default function RemoteCharacter({ id, username, position, rotation, colo
 
                     // Apply colors/visibility based on mesh names - Match exactly with Character.tsx
                     
-                    // T-shirt parts - use actual tool_2_item mappings from Character.tsx
+                    // *** ADD EYEBROW COLOR SETTING HERE ***
+                    if (mesh.name === 'Brows') {
+                        (currentMaterial as THREE.MeshStandardMaterial).color.set("#000000");
+                        console.log(` -> [${id.slice(0,6)}] Applied default black color to ${mesh.name}`);
+                    } 
+                    
+                    // T-shirt parts - Apply correct subToolIds
                     if (mesh.name === 't_shirt') { 
-                        // Main shirt body - tool_2_item_5
-                        (currentMaterial as THREE.MeshStandardMaterial).color.set(getColor("tool_2_item_5"));
-                        console.log(` -> [${id.slice(0,6)}] Applied shirt main color ${getColor("tool_2_item_5")} to ${mesh.name}`);
+                        // Main shirt body -> tool_2_item_5
+                        const shirtColor = getColor("tool_2_item_5");
+                        (currentMaterial as THREE.MeshStandardMaterial).color.set(shirtColor);
+                        console.log(` -> [${id.slice(0,6)}] Applied shirt main color ${shirtColor} (subToolId: tool_2_item_5) to ${mesh.name}`);
                     } else if (mesh.name === 't_shirt_2') { 
-                        // Shirt cuffs - tool_2_item_3 (not 2)
-                        (currentMaterial as THREE.MeshStandardMaterial).color.set(getColor("tool_2_item_2"));
-                        console.log(` -> [${id.slice(0,6)}] Applied shirt cuffs color ${getColor("tool_2_item_2")} to ${mesh.name}`);
+                        // Shirt cuffs -> tool_2_item_3 
+                        const cuffsColor = getColor("tool_2_item_3");
+                        (currentMaterial as THREE.MeshStandardMaterial).color.set(cuffsColor);
+                        console.log(` -> [${id.slice(0,6)}] Applied shirt cuffs color ${cuffsColor} (subToolId: tool_2_item_3) to ${mesh.name}`);
                     } else if (mesh.name === 't_shirt_1') {
                         // Logo area - visibility based on selected.logo
                         mesh.visible = selected?.logo === "logo_1";
                         console.log(` -> [${id.slice(0,6)}] Set logo visibility to ${mesh.visible}`);
                     } 
                     
-                    // Pants parts
+                    // Pants parts - Apply correct subToolIds
                     else if (mesh.name === 'pants002') { 
-                        // Main pants - tool_2_item_1
-                        (currentMaterial as THREE.MeshStandardMaterial).color.set(getColor("tool_2_item_1"));
-                        console.log(` -> [${id.slice(0,6)}] Applied pants main color ${getColor("tool_2_item_1")} to ${mesh.name}`);
+                        // Main pants -> tool_2_item_1
+                        const pantsColor = getColor("tool_2_item_1");
+                        (currentMaterial as THREE.MeshStandardMaterial).color.set(pantsColor);
+                        console.log(` -> [${id.slice(0,6)}] Applied pants main color ${pantsColor} (subToolId: tool_2_item_1) to ${mesh.name}`);
                     } else if (mesh.name === 'pants002_1') { 
-                        // Pants belt - tool_2_item_6
-                        (currentMaterial as THREE.MeshStandardMaterial).color.set(getColor("tool_2_item_6")); 
-                        console.log(` -> [${id.slice(0,6)}] Applied pants belt color ${getColor("tool_2_item_6")} to ${mesh.name}`);
+                        // Pants belt -> tool_2_item_8 
+                        const beltColor = getColor("tool_2_item_8");
+                        (currentMaterial as THREE.MeshStandardMaterial).color.set(beltColor); 
+                        console.log(` -> [${id.slice(0,6)}] Applied pants belt color ${beltColor} (subToolId: tool_2_item_8) to ${mesh.name}`);
                     } else if (mesh.name === 'pants002_3') {
-                        // Pants bottom - tool_2_item_5
-                        (currentMaterial as THREE.MeshStandardMaterial).color.set(getColor("tool_2_item_5"));
-                        console.log(` -> [${id.slice(0,6)}] Applied pants bottom color ${getColor("tool_2_item_5")} to ${mesh.name}`);
+                        // Pants bottom -> tool_2_item_1 (Matches Main Pants)
+                        const pantsBottomColor = getColor("tool_2_item_1");
+                        (currentMaterial as THREE.MeshStandardMaterial).color.set(pantsBottomColor);
+                        console.log(` -> [${id.slice(0,6)}] Applied pants bottom color ${pantsBottomColor} (subToolId: tool_2_item_1) to ${mesh.name}`);
                     }
                     
-                    // Hat - Only show if selected.hats is "hat_1"
+                    // Hat - Apply correct subToolId
                     else if (mesh.name === 'GEO_Hat') {
                         mesh.visible = selected?.hats === "hat_1";
                         if (mesh.visible) {
-                            // Hat color - tool_2_item_11
-                            (currentMaterial as THREE.MeshStandardMaterial).color.set(getColor("tool_2_item_11"));
-                            console.log(` -> [${id.slice(0,6)}] Set hat visible and applied color ${getColor("tool_2_item_11")}`);
+                            // Hat color -> tool_2_item_11
+                            const hatColor = getColor("tool_2_item_11");
+                            (currentMaterial as THREE.MeshStandardMaterial).color.set(hatColor);
+                            console.log(` -> [${id.slice(0,6)}] Set hat visible and applied color ${hatColor} (subToolId: tool_2_item_11)`);
                         } else {
                             console.log(` -> [${id.slice(0,6)}] Set hat invisible`);
                         }
                     } 
                     
-                    // Shoes parts
+                    // Shoes parts - Apply correct subToolIds
                     else if (mesh.name === 'main_clothes002') {
-                        // Shoes sole - tool_2_item_7
-                        (currentMaterial as THREE.MeshStandardMaterial).color.set(getColor("tool_2_item_7"));
-                        console.log(` -> [${id.slice(0,6)}] Applied shoes sole color ${getColor("tool_2_item_7")} to ${mesh.name}`);
+                        // Shoes sole -> tool_2_item_9
+                        const soleColor = getColor("tool_2_item_9");
+                        (currentMaterial as THREE.MeshStandardMaterial).color.set(soleColor);
+                        console.log(` -> [${id.slice(0,6)}] Applied shoes sole color ${soleColor} (subToolId: tool_2_item_9) to ${mesh.name}`);
                     } else if (mesh.name === 'main_clothes002_1') {
-                        // Shoes main 2 - tool_2_item_8
-                        (currentMaterial as THREE.MeshStandardMaterial).color.set(getColor("tool_2_item_8"));
-                        console.log(` -> [${id.slice(0,6)}] Applied shoes main 2 color ${getColor("tool_2_item_8")} to ${mesh.name}`);
+                        // Shoes main 2 -> tool_2_item_10
+                        const shoeMain2Color = getColor("tool_2_item_10");
+                        (currentMaterial as THREE.MeshStandardMaterial).color.set(shoeMain2Color);
+                        console.log(` -> [${id.slice(0,6)}] Applied shoes main 2 color ${shoeMain2Color} (subToolId: tool_2_item_10) to ${mesh.name}`);
                     } else if (mesh.name === 'main_clothes002_2') { 
-                        // Shoes main 1 - tool_2_item_9
-                        (currentMaterial as THREE.MeshStandardMaterial).color.set(getColor("tool_2_item_9"));
-                        console.log(` -> [${id.slice(0,6)}] Applied shoes main 1 color ${getColor("tool_2_item_9")} to ${mesh.name}`);
+                        // Shoes main 1 -> tool_2_item_11
+                        const shoeMain1Color = getColor("tool_2_item_11");
+                        (currentMaterial as THREE.MeshStandardMaterial).color.set(shoeMain1Color);
+                        console.log(` -> [${id.slice(0,6)}] Applied shoes main 1 color ${shoeMain1Color} (subToolId: tool_2_item_11) to ${mesh.name}`);
                     }
                     
-                    // Hair - Set visibility based on selection
+                    // Hair - Apply correct subToolId
                     else if (mesh.name.startsWith('GEO_Hair_')) {
-                        const targetHairName = `GEO_${hairType}`;
-                        mesh.visible = mesh.name === targetHairName; 
+                        const targetHairName = getFormattedMeshName('GEO_Hair', hairType);
+                        mesh.visible = mesh.name === targetHairName;
                         console.log(` -> [${id.slice(0,6)}] Setting ${mesh.name} visibility to ${mesh.visible} (Target: ${targetHairName})`);
                         if(mesh.visible) {
-                            // Hair color - tool_2_item_4
-                            (currentMaterial as THREE.MeshStandardMaterial).color.set(getColor("tool_2_item_4"));
-                            console.log(` -> [${id.slice(0,6)}] Applied hair color ${getColor("tool_2_item_4")} to ${mesh.name}`);
+                            // Hair color -> tool_2_item_4 
+                            const hairColor = getColor("tool_2_item_4");
+                            (currentMaterial as THREE.MeshStandardMaterial).color.set(hairColor);
+                            console.log(` -> [${id.slice(0,6)}] Applied hair color ${hairColor} (subToolId: tool_2_item_4) to ${mesh.name}`);
                         }
                     } 
                     
-                    // Beard - Set visibility based on selection
+                    // Beard - Apply correct subToolId
                     else if (mesh.name.startsWith('GEO_Beard_')) {
-                        const targetBeardName = `GEO_${beardType}`;
+                        const targetBeardName = getFormattedMeshName('GEO_Beard', beardType);
                         mesh.visible = mesh.name === targetBeardName;
                         console.log(` -> [${id.slice(0,6)}] Setting ${mesh.name} visibility to ${mesh.visible} (Target: ${targetBeardName})`);
                         if(mesh.visible) {
-                            // Beard color - tool_2_item_2
-                            (currentMaterial as THREE.MeshStandardMaterial).color.set(getColor("tool_2_item_2"));
-                            console.log(` -> [${id.slice(0,6)}] Applied beard color ${getColor("tool_2_item_2")} to ${mesh.name}`);
+                            // Beard color -> tool_2_item_2
+                            const beardColor = getColor("tool_2_item_2");
+                            (currentMaterial as THREE.MeshStandardMaterial).color.set(beardColor);
+                            console.log(` -> [${id.slice(0,6)}] Applied beard color ${beardColor} (subToolId: tool_2_item_2) to ${mesh.name}`);
                         }
                     } 
                     
-                    // Glasses - Set visibility based on selection
+                    // Glasses - Apply correct subToolId
                     else if (mesh.name.startsWith('GEO_Glassess_') || 
                              mesh.name === 'Plane003' || 
                              mesh.name === 'Plane003_1' ||
@@ -359,23 +393,27 @@ export default function RemoteCharacter({ id, username, position, rotation, colo
                             if(Array.isArray(mesh.material)) {
                                 mesh.material.forEach(mat => { 
                                     if(mat.name.includes('plastic')) {
-                                        // Glasses color - tool_2_item_12
-                                        (mat as THREE.MeshStandardMaterial).color.set(getColor("tool_2_item_12"));
-                                        console.log(` -> [${id.slice(0,6)}] Applied glasses plastic color ${getColor("tool_2_item_12")} to ${mesh.name}`);
+                                        // Glasses color -> tool_2_item_12
+                                        const glassesPlasticColor = getColor("tool_2_item_12");
+                                        (mat as THREE.MeshStandardMaterial).color.set(glassesPlasticColor);
+                                        console.log(` -> [${id.slice(0,6)}] Applied glasses plastic color ${glassesPlasticColor} (subToolId: tool_2_item_12) to ${mesh.name}`);
                                     }
                                 });
                             } else if (currentMaterial) {
-                                (currentMaterial as THREE.MeshStandardMaterial).color.set(getColor("tool_2_item_12"));
-                                console.log(` -> [${id.slice(0,6)}] Applied glasses color ${getColor("tool_2_item_12")} to ${mesh.name}`);
+                                // Glasses color -> tool_2_item_12
+                                const glassesColor = getColor("tool_2_item_12");
+                                (currentMaterial as THREE.MeshStandardMaterial).color.set(glassesColor);
+                                console.log(` -> [${id.slice(0,6)}] Applied glasses color ${glassesColor} (subToolId: tool_2_item_12) to ${mesh.name}`);
                             }
                         }
                     }
                     
-                    // Watch elements
+                    // Watch elements - Apply correct subToolId
                     else if (mesh.name === 'body001') {
-                        // Watch belt - tool_2_item_10
-                        (currentMaterial as THREE.MeshStandardMaterial).color.set(getColor("tool_2_item_10"));
-                        console.log(` -> [${id.slice(0,6)}] Applied watch belt color ${getColor("tool_2_item_10")} to ${mesh.name}`);
+                        // Watch belt -> tool_2_item_12 (Seems watch uses glasses color based on Character.tsx indices/DEFAULT_COLORS)
+                        const watchBeltColor = getColor("tool_2_item_12");
+                        (currentMaterial as THREE.MeshStandardMaterial).color.set(watchBeltColor);
+                        console.log(` -> [${id.slice(0,6)}] Applied watch belt color ${watchBeltColor} (subToolId: tool_2_item_12) to ${mesh.name}`);
                     }
                 }
             });
@@ -612,8 +650,8 @@ export default function RemoteCharacter({ id, username, position, rotation, colo
 
     // --- Sub-components ---
     const CharacterShadow = () => (
-        <mesh rotation-x={-Math.PI / 2} position-y={0.001} receiveShadow={false}>
-            <circleGeometry args={[0.4, 32]} />
+        <mesh rotation-x={-Math.PI / 2} position-y={0.001} receiveShadow={false} position-z={0.2}>
+            <circleGeometry args={[0.6, 32]} />
             <meshBasicMaterial color="#000000" transparent opacity={0.2} />
         </mesh>
     );

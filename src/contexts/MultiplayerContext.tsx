@@ -64,19 +64,20 @@ const MultiplayerContext = createContext<MultiplayerContextType>({
 // Socket.io server URL
 const SOCKET_SERVER_URL = 'https://ws.readydeveloper.me';
 
-// Default values for appearance
-const DEFAULT_COLORS = [
-  { subToolId: "tool_2_item_1", color: "#131313" }, // Pants main
-  { subToolId: "tool_2_item_2", color: "#131313" }, // Beard
-  { subToolId: "tool_2_item_3", color: "#d8d8d8" }, // Hat
-  { subToolId: "tool_2_item_4", color: "#ffffff" }, // Hair
-  { subToolId: "tool_2_item_5", color: "#aabef9" }, // Shirt
-  { subToolId: "tool_2_item_6", color: "#768bca" }, // Shoes
-  { subToolId: "tool_2_item_8", color: "#ffffff" }, 
-  { subToolId: "tool_2_item_9", color: "#4e5a87" },
-  { subToolId: "tool_2_item_10", color: "#3a4673" },
-  { subToolId: "tool_2_item_11", color: "#ffffff" },
-  { subToolId: "tool_2_item_12", color: "#3a4673" }
+// Default values for appearance - ensuring 12 items for indices 0-11
+export const DEFAULT_COLORS = [
+  { subToolId: "tool_2_item_4", color: "#ffffff" },   // Index 0: Hair (Based on Character.tsx Hair() using colors[0])
+  { subToolId: "tool_2_item_2", color: "#131313" },   // Index 1: Beard (Based on Character.tsx Beard() using lookup)
+  { subToolId: "tool_2_item_3", color: "#d8d8d8" },   // Index 2: Shirt Cuffs (Based on Character.tsx Tshirt() using colors[2])
+  { subToolId: "tool_2_item_5", color: "#aabef9" },   // Index 3: Shirt Main (Based on Character.tsx Tshirt() using colors[3])
+  { subToolId: "tool_2_item_1", color: "#131313" },   // Index 4: Pants Main (Based on Character.tsx Pants() using colors[4])
+  { subToolId: "tool_2_item_6", color: "#768bca" },   // Index 5: Pants Bottom (Based on Character.tsx Pants() using colors[5])
+  { subToolId: "tool_2_item_8", color: "#ffffff" },   // Index 6: Pants Belt (Based on Character.tsx Pants() using colors[6])
+  { subToolId: "tool_2_item_7", color: "#ffffff" },   // Index 7: Shoes Sole (Based on Character.tsx Shoes() using colors[7]) - Added white default
+  { subToolId: "tool_2_item_10", color: "#3a4673" },  // Index 8: Shoes Main 2 (Based on Character.tsx Shoes() using colors[8])
+  { subToolId: "tool_2_item_9", color: "#4e5a87" },  // Index 9: Shoes Main 1 (Based on Character.tsx Shoes() using colors[9])
+  { subToolId: "tool_2_item_12", color: "#3a4673" }, // Index 10: Watch Belt (Based on Character.tsx Watch() using colors[10])
+  { subToolId: "tool_2_item_11", color: "#ffffff" }  // Index 11: Hat (Based on Character.tsx Hat() using colors[11])
 ];
 
 const DEFAULT_SELECTED = {
