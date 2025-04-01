@@ -169,6 +169,9 @@ const ChatBubble = ({ message, position }: { message: { text: string; timestamp:
 };
 
 export default function RemoteCharacter({ id, username, position, rotation, colors, selected, moving, message }: RemoteCharacterProps) {
+    // Log the username prop received by the component
+    console.log(`[RemoteCharacter ${id.slice(0,6)}] Received username prop: "${username}"`);
+    
     const groupRef = useRef<THREE.Group>(null);
     const [clonedScene, setClonedScene] = useState<THREE.Object3D | null>(null);
     const [isReady, setIsReady] = useState(false);
@@ -616,8 +619,11 @@ export default function RemoteCharacter({ id, username, position, rotation, colo
     );
 
     const Nametag = () => {
-        // Create a separate username component to avoid re-renders tied to the character's movement
-        const [usernameToShow] = useState(username || `Player_${id.slice(0, 6)}`);
+        // Remove useState - directly use the username prop
+        // const [usernameToShow] = useState(username || `Player_${id.slice(0, 6)}`);
+        const usernameToShow = username || `Player_${id.slice(0, 6)}`;
+        // Log the final username being used in the Nametag
+        console.log(`[RemoteCharacter ${id.slice(0,6)}] Nametag rendering username: "${usernameToShow}"`);
         
         return (
             <group position={[0, 2.3, 0]}>

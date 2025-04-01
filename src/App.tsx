@@ -401,15 +401,18 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       // Remove global flag to re-enable movement
       window.isCustomizingClothing = false;
       
-      // Rotate character 180 degrees to face the shop again
+      // Rotate character 180 degrees to face the shop again AND
+      // Move them a few units back from the house to prevent clipping
       if (characterRef.current) {
         characterRef.current.rotation.y = Math.PI; // Face back toward the shop
+        // Move character further away from the house (increase z distance)
+        characterRef.current.position.z = 14.5; // Further back than the original 11.36
         
         // Update position in multiplayer if connected
         if (isConnected && sendPositionUpdate) {
           const x = characterRef.current.position.x;
           const z = characterRef.current.position.z;
-          console.log('Multiplayer: Rotating character to face shop', {x, z, r: Math.PI});
+          console.log('Multiplayer: Positioning character further from shop', {x, z, r: Math.PI});
           sendPositionUpdate({x, z, r: Math.PI});
         }
       }
@@ -439,15 +442,18 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       // Remove global flag to re-enable movement
       window.isCustomizingClothing = false;
       
-      // Rotate character 180 degrees to face the shop again
+      // Rotate character 180 degrees to face the shop again AND
+      // Move them a few units back from the house to prevent clipping
       if (characterRef.current) {
         characterRef.current.rotation.y = Math.PI; // Face back toward the shop
+        // Move character further away from the house (increase z distance)
+        characterRef.current.position.z = 14.5; // Further back than the original 11.36
         
         // Update position in multiplayer if connected
         if (isConnected && sendPositionUpdate) {
           const x = characterRef.current.position.x;
           const z = characterRef.current.position.z;
-          console.log('Multiplayer: Rotating character to face shop', {x, z, r: Math.PI});
+          console.log('Multiplayer: Positioning character further from barber shop', {x, z, r: Math.PI});
           sendPositionUpdate({x, z, r: Math.PI});
         }
       }
@@ -502,26 +508,30 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
         window.startClothingShopInteraction();
       }
     } else {
-      // Exiting customization mode
+      // Exiting customization mode - we'll let the useEffect update the position
       // Remove global flag to re-enable movement
       window.isCustomizingClothing = false;
-      
-      // Rotate character 180 degrees to face the shop again
-      if (characterRef.current) {
-        characterRef.current.rotation.y = Math.PI; // Face back toward the shop
-        
-        // Update position in multiplayer if connected
-        if (isConnected && sendPositionUpdate) {
-          const x = characterRef.current.position.x;
-          const z = characterRef.current.position.z;
-          console.log('Multiplayer: Rotating character to face shop', {x, z, r: Math.PI});
-          sendPositionUpdate({x, z, r: Math.PI});
-        }
-      }
       
       // Send appearance update when exiting customization mode
       if (isConnected) {
         sendAppearanceUpdate(subToolColors, selected);
+      }
+      
+      // Rotate character and move it further from the house to prevent clipping
+      // Only do this directly, we don't need multiple rotation handlers
+      if (characterRef.current) {
+        // Ensure the rotation is set just once
+        characterRef.current.rotation.y = Math.PI;
+        characterRef.current.position.z = 14.5;
+        
+        // Update position in multiplayer if connected
+        if (isConnected && sendPositionUpdate) {
+          sendPositionUpdate({
+            x: characterRef.current.position.x,
+            z: characterRef.current.position.z,
+            r: Math.PI
+          });
+        }
       }
       
       // Restore chat when done customizing
@@ -546,6 +556,9 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       
       // Position character at the optimal viewing position, facing AWAY from shop
       if (characterRef.current) {
+        // Set to ideal position in front of the shop
+        characterRef.current.position.x = 0;
+        characterRef.current.position.z = 11.36;
         characterRef.current.rotation.y = 0;
         
         // If we have position update capability, also set proper position
@@ -563,26 +576,30 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
         window.startBarberShopInteraction();
       }
     } else {
-      // Exiting customization mode
+      // Exiting customization mode - we'll let the useEffect update the position
       // Remove global flag to re-enable movement
       window.isCustomizingClothing = false;
-      
-      // Rotate character 180 degrees to face the shop again
-      if (characterRef.current) {
-        characterRef.current.rotation.y = Math.PI; // Face back toward the shop
-        
-        // Update position in multiplayer if connected
-        if (isConnected && sendPositionUpdate) {
-          const x = characterRef.current.position.x;
-          const z = characterRef.current.position.z;
-          console.log('Multiplayer: Rotating character to face shop', {x, z, r: Math.PI});
-          sendPositionUpdate({x, z, r: Math.PI});
-        }
-      }
       
       // Send appearance update when exiting customization mode
       if (isConnected) {
         sendAppearanceUpdate(subToolColors, selected);
+      }
+      
+      // Rotate character and move it further from the shop to prevent clipping
+      // Only do this directly, we don't need multiple rotation handlers
+      if (characterRef.current) {
+        // Ensure the rotation is set just once
+        characterRef.current.rotation.y = Math.PI;
+        characterRef.current.position.z = 14.5;
+        
+        // Update position in multiplayer if connected
+        if (isConnected && sendPositionUpdate) {
+          sendPositionUpdate({
+            x: characterRef.current.position.x,
+            z: characterRef.current.position.z,
+            r: Math.PI
+          });
+        }
       }
       
       // Restore chat when done customizing
@@ -1074,7 +1091,7 @@ export default function App() {
   }, []);
 
   return (
-    <MultiplayerProvider>
+    <MultiplayerProvider initialUsername={usernameSubmitted || 'Player'}>
       {/* Display Loader until username is submitted */}
       {!usernameSubmitted && <Loader onLoadedSubmit={handleLoaderSubmit} />}
       

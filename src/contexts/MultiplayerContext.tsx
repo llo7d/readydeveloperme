@@ -39,6 +39,12 @@ interface MultiplayerContextType {
   sendPositionUpdate: (position: {x: number, z: number, r: number}) => void;
 }
 
+// Define props for the Provider, including initialUsername
+interface MultiplayerProviderProps {
+  children: React.ReactNode;
+  initialUsername: string; // Add prop for initial username
+}
+
 // Create the context with default values
 const MultiplayerContext = createContext<MultiplayerContextType>({
   socket: null,
@@ -81,7 +87,7 @@ const DEFAULT_SELECTED = {
   pose: "pose_character_stop"
 };
 
-export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const MultiplayerProvider: React.FC<MultiplayerProviderProps> = ({ children, initialUsername }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [remotePlayersMap, setRemotePlayersMap] = useState<Map<string, RemotePlayer>>(new Map());
@@ -113,6 +119,12 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setConnectionStatus('connected');
       setLastConnectionEvent('Connected to server');
       
+      // Set the local username state from the prop ON INITIAL CONNECT
+      setLocalUsername(initialUsername);
+      // Emit the username to the server ON INITIAL CONNECT
+      newSocket.emit('setUsername', initialUsername);
+      console.log(`Multiplayer: Set initial local username to "${initialUsername}" and emitted to server.`);
+
       // Send initial player data when joining
       const initialPosition = new THREE.Vector3(0, 0, 30); // Default starting position
       newSocket.emit('join', {
@@ -144,9 +156,12 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
       
       const newRemotePlayers = new Map<string, RemotePlayer>();
       users.forEach(user => {
+        // Log the username received for each existing user
+        console.log(` -> Existing user: ${user.id.slice(0,6)}, Received username: ${user.username}`);
         if (user.id !== newSocket.id) { // Don't add self to remote players
             newRemotePlayers.set(user.id, {
               id: user.id,
+              // Use fallback if username is missing
               username: user.username || `Player_${user.id.slice(0,4)}`,
               position: new THREE.Vector3(
                 user.position?.x || 0,
@@ -166,7 +181,8 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     newSocket.on('userJoined', (user) => {
       if (user.id === newSocket.id) return; // Ignore self join event
-      console.log('Multiplayer: User joined:', user.username, user.id);
+      // Log the username received for a joining user
+      console.log(`Multiplayer: User joined: ID=${user.id.slice(0,6)}, Received username: ${user.username}`);
       setLastConnectionEvent(`Player joined: ${user.username || user.id}`);
       
       // Add the new player to our map
@@ -192,7 +208,8 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     // Listener for username changes (if using setUsername event)
     newSocket.on('usernameUpdated', (data: { id: string, username: string }) => {
-        console.log(`Multiplayer: Username updated for ${data.id}: ${data.username}`);
+        // Log the username update received from the server
+        console.log(`Multiplayer: Received username update for ${data.id.slice(0,6)}: New username="${data.username}"`);
         setRemotePlayersMap(prevMap => {
             const newMap = new Map(prevMap);
             const player = newMap.get(data.id);
@@ -392,6 +409,16 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
       newSocket.disconnect();
     };
   }, []);
+
+  // NEW useEffect: Specifically handle updates to initialUsername *after* connection
+  useEffect(() => {
+    if (socket && isConnected && initialUsername && initialUsername !== localUsername) {
+      console.log(`Multiplayer: initialUsername prop changed to "${initialUsername}" after connection. Updating server.`);
+      setLocalUsername(initialUsername);
+      socket.emit('setUsername', initialUsername);
+    }
+    // This effect runs when initialUsername changes *after* the socket is connected
+  }, [initialUsername, socket, isConnected, localUsername]);
 
   // Function to send appearance updates to the server
   const sendAppearanceUpdate = useCallback((colors: any[], selected: Record<string, string>) => {

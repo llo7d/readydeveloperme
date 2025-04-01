@@ -219,28 +219,21 @@ const ClothingShop = ({
           style={isMobile ? {
             // Mobile: Position icon row at bottom center
             position: 'fixed',
-            bottom: '-5vh', // Smaller margin from bottom
+            bottom: '1vh', // Smaller margin from bottom
             left: '50%',
             transform: 'translateX(-50%)', // Center horizontally
             width: 'auto', // Let content define width
             zIndex: 1002, 
             pointerEvents: 'none',
           } : {
-            // Desktop: Keep existing side panel style
+            // Desktop: Position at bottom center like mobile
             position: 'fixed',
-            top: '50%', 
-            right: '5vw', 
-            transform: 'translateY(-50%)', 
-            width: '220px',
-            background: 'rgba(42, 43, 50, 0.8)', 
-            backdropFilter: 'blur(5px)',
-            borderRadius: '10px',
-            padding: '15px',
-            boxShadow: '0 3px 10px rgba(0,0,0,0.2)',
+            bottom: '2vh', // Slightly larger margin from bottom for desktop
+            left: '50%', 
+            transform: 'translateX(-50%)', // Center horizontally
+            width: 'auto',
             zIndex: 1002,
-            maxHeight: '80vh',
-            overflowY: 'auto',
-            pointerEvents: 'auto' 
+            pointerEvents: 'none',
           }}
         >
           <div style={{ 

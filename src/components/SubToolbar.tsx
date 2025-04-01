@@ -133,13 +133,13 @@ const SubToolbar: React.FC<Props> = ({
             {renderIcons()}
           </div>
         ) : (
-          // Desktop: Grid layout
+          // Desktop: Horizontal row like mobile
           <AnimatePresence>
             {isSubToolbarOpen && (
               <motion.div
                 ref={refScroll}
                 className={classNames(
-                  "grid grid-cols-3 gap-2 max-h-96 overflow-y-auto overflow-x-hidden scrollbar-hidden", // Keep 3 columns for desktop
+                  "flex items-center justify-center gap-2 p-2 bg-[#2A2B2F] rounded-lg", // Horizontal flex layout
                   {
                     "scroll-light": theme === "light",
                     "scroll-dark": theme === "dark",
@@ -161,21 +161,21 @@ const SubToolbar: React.FC<Props> = ({
         {isPickerVisible && (
           <motion.div
             className={classNames("fixed z-[1003]", {
-              // Desktop side panel position
-              "top-1/2 left-1/2 transform -translate-y-1/2 -translate-x-[calc(50%+15rem)]": !isMobile,
-              // Mobile modal: Position above the icons at bottom but left aligned
-              "bottom-[15vh] left-[15%] transform -translate-x-1/2": isMobile 
+              // Desktop color picker - position above icons like mobile
+              "bottom-[20vh] left-[50%] transform -translate-x-1/2": !isMobile,
+              // Mobile modal position
+              "bottom-[15vh] left-[25%] transform -translate-x-1/2": isMobile 
             })}
-            initial={isMobile ? { y: 20, opacity: 0 } : { scale: 0.8, opacity: 0 }}
-            animate={isMobile ? { y: 0, opacity: 1 } : { scale: 1, opacity: 1 }}
-            exit={isMobile ? { y: 20, opacity: 0 } : { scale: 0.8, opacity: 0 }}
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 20, opacity: 0 }}
             onClick={(e) => e.stopPropagation()} 
           >
             <div 
               className={classNames("p-4 rounded-xl shadow-xl border", { 
                 "bg-white border-gray-200": theme === "light",
                 "bg-[#2A2B2F] border-gray-700": theme === "dark",
-                "w-[190px]": isMobile // 50% wider than previous 120px
+                "w-[180px]": true // Same width for both mobile and desktop
               })}
             >
               {/* Close Button (Top Right) */}
@@ -230,8 +230,8 @@ const SubToolbar: React.FC<Props> = ({
         )}
       </AnimatePresence>
 
-      {/* Background overlay for MODAL (Mobile only now) */}
-      {isMobile && isPickerVisible && (
+      {/* Background overlay for both mobile and desktop when picker is visible */}
+      {isPickerVisible && (
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
