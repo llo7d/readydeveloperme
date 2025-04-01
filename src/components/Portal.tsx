@@ -249,19 +249,8 @@ const Portal = () => {
 
   // Log configuration instructions
   useEffect(() => {
-    console.log("Portal Configuration:");
-    console.log("Height: window.helperUIConfig.portal.height");
-    console.log("Example: window.helperUIConfig.portal.height = 3  // 3 units high");
-    console.log("\nRotation Settings:");
-    console.log("Speed: window.helperUIConfig.portal.rotationSpeed");
-    console.log("Example: window.helperUIConfig.portal.rotationSpeed = 0.1  // Faster rotation");
-    console.log("\nRotation Offset: window.helperUIConfig.portal.rotation.offset");
-    console.log("Example: window.helperUIConfig.portal.rotation.offset = 0  // No offset");
-    console.log("Example: window.helperUIConfig.portal.rotation.offset = Math.PI  // 180 degrees");
-    console.log("\nX-axis Rotation: window.helperUIConfig.portal.rotation.x");
-    console.log("Example: window.helperUIConfig.portal.rotation.x = Math.PI/2  // 90 degrees (horizontal)");
-    console.log("\nInvert Tracking: window.helperUIConfig.portal.rotation.invertTracking");
-    console.log("Example: window.helperUIConfig.portal.rotation.invertTracking = true  // Invert rotation");
+    // Configuration instructions removed to clean up console
+    // Portal can be configured through window.helperUIConfig.portal properties
   }, []);
 
   return (

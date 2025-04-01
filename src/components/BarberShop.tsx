@@ -38,7 +38,7 @@ const BarberShop = ({
   const shopOffset = [0, 2.5, 0] as [number, number, number];
 
   // Colors for the badge
-  const nearColor = '#22aa22';  // Bright green when near
+  const nearColor = '#f7c948';  // Yellow "Coming Soon" color when near
   const normalColor = '#8B4513'; // Light brown when not near (was #3a4673 blue)
   const nearOpacity = 0.5;      // Opacity when near
   const normalOpacity = 0.7;    // Opacity when not near
@@ -46,9 +46,8 @@ const BarberShop = ({
   // Handle badge click
   const handleBadgeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (canChangeHair && onChangeHair) {
-      onChangeHair();
-    }
+    // Do nothing - shop is coming soon
+    console.log("Barber shop is coming soon!");
   };
 
   // Pulse animation for the badge
@@ -75,7 +74,7 @@ const BarberShop = ({
   // Get badge text based on customization state
   const getBadgeText = () => {
     if (canChangeHair) {
-      return "Change Hair";
+      return "Coming Soon";
     } else {
       return "Change Hair Here";
     }
@@ -88,14 +87,8 @@ const BarberShop = ({
         position={new THREE.Vector3(shopOffset[0], shopOffset[1], shopOffset[2])}
         rotation={shopRotation}
         scale={shopScale}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (canChangeHair && onChangeHair) {
-            onChangeHair();
-          }
-        }}
         onPointerOver={() => {
-          document.body.style.cursor = canChangeHair ? 'pointer' : 'default';
+          document.body.style.cursor = 'auto'; // Always show default cursor
         }}
         onPointerOut={() => {
           document.body.style.cursor = 'auto';
@@ -139,9 +132,9 @@ const BarberShop = ({
             boxShadow: '0 3px 6px rgba(0,0,0,0.3)',
             border: '2px solid white',
             transition: 'all 0.3s ease',
-            cursor: canChangeHair ? 'pointer' : 'default',
-            opacity: badgeHovered ? 1 : 0.9,
-            pointerEvents: 'auto'
+            cursor: canChangeHair ? 'pointer' : 'not-allowed',
+            opacity: canChangeHair ? (badgeHovered ? 1 : 0.9) : 0.7,
+            pointerEvents: canChangeHair ? 'auto' : 'none'
           }}
         >
           {getBadgeText()}

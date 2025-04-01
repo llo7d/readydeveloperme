@@ -149,11 +149,11 @@ const CharacterControls = ({ characterRef }: CharacterControlsProps) => {
       lastUpdateTime.current = now;
       
       // Log (for testing Phase 2)
-      console.log('Multiplayer: Sent position update', { 
-        x: parseFloat(position.x.toFixed(2)), 
-        z: parseFloat(position.z.toFixed(2)), 
-        r: parseFloat(rotation.toFixed(2))
-      });
+      // console.log('Multiplayer: Sent position update', { 
+      //   x: parseFloat(position.x.toFixed(2)), 
+      //   z: parseFloat(position.z.toFixed(2)), 
+      //   r: parseFloat(rotation.toFixed(2))
+      // });
     }
   };
 

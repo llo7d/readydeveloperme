@@ -12,7 +12,7 @@ type Props = {
   colors: any[];
   onClickItem: (item: ToolItem) => void;
   onHoverTool?: (isEntered: boolean) => void;
-  onChangeColor: (color: any) => void;
+  onChangeColor: (changeData: { subToolId: string; color: string }) => void;
   isMobile?: boolean;
 };
 
@@ -31,6 +31,22 @@ const SubToolbar: React.FC<Props> = ({
   const theme = useStore((state) => state.theme);
   const refScroll = useRef<HTMLDivElement>(null);
   const refItems = useRef<(HTMLButtonElement | null)[]>([]);
+  const [colorUpdateCounter, setColorUpdateCounter] = useState(0);
+
+  useEffect(() => {
+    setColorUpdateCounter(prev => prev + 1);
+  }, [colors]);
+
+  // --- Mapping from Icon ID to Target Mesh ID it controls ---
+  const iconToTargetMap: Record<string, string> = {
+    "tool_2_item_1": "tool_2_item_4", // Hair Icon -> Hair Mesh
+    "tool_2_item_2": "tool_2_item_2", // Beard Icon -> Beard Mesh
+    "tool_2_item_3": "tool_2_item_3", // Shirt Main Icon (Now Cuffs) -> Cuffs Mesh
+    "tool_2_item_4": "tool_2_item_5", // Shirt Cuffs Icon (Now Main) -> Main Shirt Mesh
+    "tool_2_item_5": "tool_2_item_1"  // Pants Icon -> Pants Mesh
+    // Add mappings for other colorizable icons if needed
+  };
+  // --------------------------------------------------------
 
   // Filter to only the 5 required color items if on mobile
   const itemsToShow = isMobile 
@@ -73,6 +89,26 @@ const SubToolbar: React.FC<Props> = ({
   };
   
   const handleClosePicker = () => {
+      // Force a final color update before closing to ensure the current color is applied
+      if (activeColorItem) {
+          // Find the target mesh ID using the icon-to-target mapping
+          const targetSubToolId = iconToTargetMap[activeColorItem] || activeColorItem;
+          
+          // Get the color for the target mesh
+          const currentColor = colors.find(c => c.subToolId === targetSubToolId)?.color;
+          
+          if (currentColor) {
+              // Trigger one final color update to ensure UI refreshes
+              onChangeColor({
+                  subToolId: activeColorItem,
+                  color: currentColor,
+              });
+              
+              // Force immediate re-render of icons
+              setColorUpdateCounter(prev => prev + 1);
+          }
+      }
+      
       setIsColorPaletteShow(false);
       setActiveColorItem(null);
   }
@@ -82,11 +118,18 @@ const SubToolbar: React.FC<Props> = ({
     return itemsToShow.map((item, index) => {
       const isActive = subToolId === item.id;
       const Icon = item.icon;
-      const color = colors.find(c => c.subToolId === item.id)?.color || "#94A3B8";
+      
+      // --- Determine color based on the TARGET mesh ID --- 
+      const targetSubToolId = iconToTargetMap[item.id] || item.id; // Find target ID from map, fallback to item.id if not mapped
+      const displayColor = colors.find(c => c.subToolId === targetSubToolId)?.color || "#94A3B8"; // Use target ID for lookup
+      
+      // Use colorUpdateCounter to ensure we have the most recent colors (not used directly but forces re-render)
+      const refresh = colorUpdateCounter;
+      
 
       return (
         <button
-          key={item.id}
+          key={`${item.id}-${displayColor}`} // Add color to key to force re-render when color changes
           ref={(ref) => { refItems.current[index] = ref; }}
           className={classNames(
             "flex items-center justify-center rounded-md border transition-all hover:scale-105", // Smaller radius
@@ -110,7 +153,7 @@ const SubToolbar: React.FC<Props> = ({
         >
           <Icon 
             className={isMobile ? "w-full h-full p-0.5" : "w-10 h-10"} // Added padding inside icon
-            fill={isActive ? "#4B50EC" : color} 
+            fill={isActive ? "#4B50EC" : displayColor} 
           />
         </button>
       );

@@ -150,59 +150,163 @@ export const MultiplayerProvider: React.FC<MultiplayerProviderProps> = ({ childr
 
     // Remote player events (to be fully implemented in Phase 3)
     newSocket.on('existingUsers', (users: any[]) => {
+      console.log('=== PROCESSING EXISTING USERS ===');
       console.log('Multiplayer: Received existing users:', users);
       setLastConnectionEvent(`Received info about ${users.length} existing players`);
       
+      // Helper function to ensure unique player objects
+      const createUniquePlayerObject = (userData: any) => {
+        // Deep copy all state to ensure no reference sharing
+        const playerColors = userData.colors 
+          ? JSON.parse(JSON.stringify(userData.colors)) 
+          : JSON.parse(JSON.stringify(DEFAULT_COLORS));
+          
+        const playerSelected = userData.selected 
+          ? JSON.parse(JSON.stringify(userData.selected)) 
+          : JSON.parse(JSON.stringify(DEFAULT_SELECTED));
+        
+        // Create a new position vector
+        const playerPosition = new THREE.Vector3(
+          userData.position?.x || 0,
+          userData.position?.y || 0,
+          userData.position?.z || 0
+        );
+        
+        // Return completely new object with no shared references
+        return {
+          id: userData.id,
+          username: userData.username || `Player_${userData.id.slice(0,4)}`,
+          position: playerPosition,
+          rotation: userData.rotation || 0,
+          moving: userData.moving || false,
+          colors: playerColors,
+          selected: playerSelected
+        };
+      };
+      
       const newRemotePlayers = new Map<string, RemotePlayer>();
+      
       users.forEach(user => {
-        console.log(` -> Existing user: ${user.id.slice(0,6)}, Received username: ${user.username}`);
-        if (user.id !== newSocket.id) { 
-            const initialColors = user.colors || DEFAULT_COLORS;
-            const initialSelected = user.selected || DEFAULT_SELECTED;
-            newRemotePlayers.set(user.id, {
-              id: user.id,
-              username: user.username || `Player_${user.id.slice(0,4)}`,
-              position: new THREE.Vector3(
-                user.position?.x || 0,
-                user.position?.y || 0,
-                user.position?.z || 0
-              ),
-              rotation: user.rotation || 0,
-              moving: user.moving || false,
-              colors: JSON.parse(JSON.stringify(initialColors)),
-              selected: JSON.parse(JSON.stringify(initialSelected))
-            });
+        console.log(`Processing existing user: ${user.id.slice(0,6)}, Username: ${user.username}`);
+        
+        if (user.id !== newSocket.id) {
+          // Create a completely unique player object with no shared references
+          const uniquePlayer = createUniquePlayerObject(user);
+          
+          // Log the first couple colors to verify
+          console.log(`Created player with unique colors: ${JSON.stringify(uniquePlayer.colors.slice(0,2))}`);
+          
+          // Add to map
+          newRemotePlayers.set(user.id, uniquePlayer);
         }
       });
+      
+      // Verify uniqueness across all players
+      if (newRemotePlayers.size > 1) {
+        console.log('Verifying uniqueness of all player objects...');
+        const players = Array.from(newRemotePlayers.entries());
+        
+        for (let i = 0; i < players.length; i++) {
+          for (let j = i + 1; j < players.length; j++) {
+            const [id1, player1] = players[i];
+            const [id2, player2] = players[j];
+            
+            const sharingColorsReference = player1.colors === player2.colors;
+            
+            if (sharingColorsReference) {
+              console.error(`CRITICAL ERROR: Players ${id1.slice(0,6)} and ${id2.slice(0,6)} are sharing colors reference`);
+            }
+          }
+        }
+      }
+      
       setRemotePlayersMap(newRemotePlayers);
       setPlayerCount(newRemotePlayers.size + 1); // Update count based on map size + self
+      console.log(`Finished processing ${newRemotePlayers.size} existing users`);
     });
 
     newSocket.on('userJoined', (user) => {
       if (user.id === newSocket.id) return; // Ignore self join event
+      
+      // Enhanced logging for debugging color issues
+      console.log(`=== NEW PLAYER JOINED (${user.id.slice(0,6)}) ===`);
+      console.log(`Received user data:`, {
+        id: user.id.slice(0,6),
+        username: user.username,
+        hasColors: !!user.colors,
+        hasSelected: !!user.selected,
+        colorSample: user.colors ? JSON.stringify(user.colors.slice(0, 2)) : 'undefined'
+      });
+      
       // Log the username received for a joining user
       console.log(`Multiplayer: User joined: ID=${user.id.slice(0,6)}, Received username: ${user.username}`);
       setLastConnectionEvent(`Player joined: ${user.username || user.id}`);
       
       // Add the new player to our map
       setRemotePlayersMap(prevMap => {
+        console.log(`Creating map entry for new player ${user.id.slice(0,6)}`);
+        console.log(`Current map has ${prevMap.size} players`);
+        
         const newMap = new Map(prevMap);
-        const initialColors = user.colors || DEFAULT_COLORS;
-        const initialSelected = user.selected || DEFAULT_SELECTED;
-        newMap.set(user.id, {
-          id: user.id,
-          username: user.username || `Player_${user.id.slice(0,4)}`,
-          position: new THREE.Vector3(
-            user.position?.x || 0,
-            user.position?.y || 0,
-            user.position?.z || 0
-          ),
-          rotation: user.rotation || 0,
-          moving: user.moving || false,
-          colors: JSON.parse(JSON.stringify(initialColors)),
-          selected: JSON.parse(JSON.stringify(initialSelected))
-        });
+        
+        // Helper function to ensure unique player objects
+        const createUniquePlayerObject = (userData: any) => {
+          // Deep copy all state to ensure no reference sharing
+          const playerColors = userData.colors 
+            ? JSON.parse(JSON.stringify(userData.colors)) 
+            : JSON.parse(JSON.stringify(DEFAULT_COLORS));
+            
+          const playerSelected = userData.selected 
+            ? JSON.parse(JSON.stringify(userData.selected)) 
+            : JSON.parse(JSON.stringify(DEFAULT_SELECTED));
+          
+          // Create a new position vector
+          const playerPosition = new THREE.Vector3(
+            userData.position?.x || 0,
+            userData.position?.y || 0,
+            userData.position?.z || 0
+          );
+          
+          // Return completely new object with no shared references
+          return {
+            id: userData.id,
+            username: userData.username || `Player_${userData.id.slice(0,4)}`,
+            position: playerPosition,
+            rotation: userData.rotation || 0,
+            moving: userData.moving || false,
+            colors: playerColors,
+            selected: playerSelected
+          };
+        };
+        
+        // Create a completely unique player object with no shared references
+        const uniquePlayer = createUniquePlayerObject(user);
+        
+        // Log the first couple colors to verify
+        console.log(`Created player with unique colors: ${JSON.stringify(uniquePlayer.colors.slice(0,2))}`);
+        
+        // Add to map
+        newMap.set(user.id, uniquePlayer);
+        
         setPlayerCount(newMap.size + 1); // Update count based on new map size + self
+        console.log(`Updated map now has ${newMap.size} players`);
+        
+        // Debug: Verify all players in map have unique color references
+        if (newMap.size > 1) {
+          console.log(`Verifying color uniqueness for ${newMap.size} players...`);
+          const players = Array.from(newMap.entries());
+          for (let i = 0; i < players.length; i++) {
+            for (let j = i + 1; j < players.length; j++) {
+              const [id1, player1] = players[i];
+              const [id2, player2] = players[j];
+              const sharingReference = player1.colors === player2.colors;
+              if (sharingReference) {
+                console.error(`!!! CRITICAL: Players ${id1.slice(0,6)} and ${id2.slice(0,6)} are sharing the same colors reference !!!`);
+              }
+            }
+          }
+        }
+        
         return newMap;
       });
     });
@@ -251,7 +355,15 @@ export const MultiplayerProvider: React.FC<MultiplayerProviderProps> = ({ childr
             moving: positionData.moving
           });
         } else {
-          // Create new player if doesn't exist
+          // Create new player if doesn't exist - IMPORTANT: Always use deep copied default values
+          console.log(`Creating new player from position update (ID: ${positionData.id.slice(0,6)})`);
+          
+          // Deep copy defaults to ensure uniqueness
+          const defaultColors = JSON.parse(JSON.stringify(DEFAULT_COLORS));
+          const defaultSelected = JSON.parse(JSON.stringify(DEFAULT_SELECTED));
+          
+          console.log(`Created unique default colors for new player: ${JSON.stringify(defaultColors.slice(0,2))}`);
+          
           newMap.set(positionData.id, {
             id: positionData.id,
             username: `Player_${positionData.id.slice(0,4)}`,
@@ -262,8 +374,8 @@ export const MultiplayerProvider: React.FC<MultiplayerProviderProps> = ({ childr
             ),
             rotation: positionData.rotation,
             moving: positionData.moving,
-            colors: DEFAULT_COLORS,
-            selected: DEFAULT_SELECTED
+            colors: defaultColors,  // Use deep copied default colors
+            selected: defaultSelected // Use deep copied default selected
           });
         }
         
@@ -276,31 +388,67 @@ export const MultiplayerProvider: React.FC<MultiplayerProviderProps> = ({ childr
 
     // Phase 2: Handle appearance updates
     newSocket.on('userAppearanceChanged', (appearanceData) => {
+      console.log(`=== APPEARANCE CHANGED (${appearanceData.id.slice(0,6)}) ===`);
       console.log('Multiplayer: User appearance changed:', appearanceData.id);
       
       // Update the player's appearance in our map
       setRemotePlayersMap((prevMap) => {
+        console.log(`Updating appearance for player ${appearanceData.id.slice(0,6)}`);
+        
         const newMap = new Map(prevMap);
         const player = newMap.get(appearanceData.id);
+        
+        // Create deep copies of the incoming appearance data
+        const updatedColors = appearanceData.colors ? JSON.parse(JSON.stringify(appearanceData.colors)) : null;
+        const updatedSelected = appearanceData.selected ? JSON.parse(JSON.stringify(appearanceData.selected)) : null;
+        
+        console.log(`Created unique appearance for update:`, {
+          colorSample: updatedColors ? JSON.stringify(updatedColors.slice(0, 2)) : 'null'
+        });
+        
         if (player) {
-          // Update the specific player's appearance with deep copies
-          newMap.set(appearanceData.id, {
+          if (!updatedColors || !updatedSelected) {
+            console.warn(`Multiplayer: Received invalid appearance data for ${appearanceData.id.slice(0,6)}`);
+            return prevMap; // No change
+          }
+          
+          // Update the specific player's appearance
+          const updatedPlayer = {
             ...player,
-            colors: JSON.parse(JSON.stringify(appearanceData.colors)),       // Deep copy colors
-            selected: JSON.parse(JSON.stringify(appearanceData.selected))   // Deep copy selected items
-          });
+            colors: updatedColors,
+            selected: updatedSelected
+          };
+          
+          newMap.set(appearanceData.id, updatedPlayer);
           setAppearanceUpdateCount(c => c + 1); // Increment counter
-          console.log(`Multiplayer: Updated appearance for user ${appearanceData.id.slice(0,6)}`);
+          console.log(`Multiplayer: Updated appearance for user ${appearanceData.id.slice(0,6)}`, JSON.stringify(updatedColors.slice(0, 2)));
+          
+          // Verify this update isn't somehow affecting other players' colors
+          const otherPlayers = Array.from(newMap.entries()).filter(([id]) => id !== appearanceData.id);
+          
+          for (const [otherId, otherPlayer] of otherPlayers) {
+            const sharingReference = updatedPlayer.colors === otherPlayer.colors;
+            if (sharingReference) {
+              console.error(`!!! CRITICAL: After appearance update, player ${appearanceData.id.slice(0,6)} and ${otherId.slice(0,6)} are sharing the same colors reference !!!`);
+            }
+          }
         } else {
-          // Create new player if doesn't exist
+          // Handle unlikely case of appearance update for unknown player
+          console.warn(`Multiplayer: Received appearance update for unknown player ${appearanceData.id.slice(0,6)}`);
+          
+          if (!updatedColors || !updatedSelected) {
+            return prevMap; // No change
+          }
+          
+          // Create new player with the received appearance
           newMap.set(appearanceData.id, {
             id: appearanceData.id,
             username: `Player_${appearanceData.id.slice(0,4)}`,
             position: new THREE.Vector3(0, 0, 0),
             rotation: 0,
             moving: false,
-            colors: appearanceData.colors,
-            selected: appearanceData.selected
+            colors: updatedColors,
+            selected: updatedSelected
           });
         }
         
@@ -460,13 +608,21 @@ export const MultiplayerProvider: React.FC<MultiplayerProviderProps> = ({ childr
   // Function to emit the join event with actual appearance data
   const joinGame = useCallback((initialAppearance: { colors: any[], selected: Record<string, string> }) => {
     if (socket && isConnected) {
-      console.log('Multiplayer: Emitting join event with appearance:', initialAppearance);
+      // Deep copy the appearance data to prevent reference sharing
+      const colorsCopy = JSON.parse(JSON.stringify(initialAppearance.colors)); 
+      const selectedCopy = JSON.parse(JSON.stringify(initialAppearance.selected));
+      
+      console.log('Multiplayer: Emitting join event with appearance:', {
+        colors: colorsCopy.slice(0, 2), // Log first two colors for brevity
+        selected: selectedCopy
+      });
+      
       const initialPosition = new THREE.Vector3(0, 0, 30); // Use default starting position for now
       socket.emit('join', {
         position: { x: initialPosition.x, y: initialPosition.y, z: initialPosition.z },
         rotation: Math.PI, // Default facing toward the shop
-        colors: initialAppearance.colors,
-        selected: initialAppearance.selected
+        colors: colorsCopy, // Send deep copied colors
+        selected: selectedCopy // Send deep copied selected
       });
     } else {
       console.warn('Multiplayer: Cannot join game - socket not connected.');

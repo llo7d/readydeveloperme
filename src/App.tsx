@@ -409,7 +409,7 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       if (characterRef.current) {
         characterRef.current.rotation.y = Math.PI; // Face back toward the shop
         // Move character further away from the house (increase z distance)
-        characterRef.current.position.z = 14.5; // Further back than the original 11.36
+        characterRef.current.position.z = 15; // Increased from 14.5 to match toggleClothingCustomization
         
         // Update position in multiplayer if connected
         if (isConnected && sendPositionUpdate) {
@@ -450,7 +450,7 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       if (characterRef.current) {
         characterRef.current.rotation.y = Math.PI; // Face back toward the shop
         // Move character further away from the house (increase z distance)
-        characterRef.current.position.z = 14.5; // Further back than the original 11.36
+        characterRef.current.position.z = 15; // Increased from 14.5 to match other functions
         
         // Update position in multiplayer if connected
         if (isConnected && sendPositionUpdate) {
@@ -481,25 +481,35 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
     if (isCharacterMoving) return;
     
     const willBeCustomizing = !customizingClothing;
-    setCustomizingClothing(willBeCustomizing);
     
     if (willBeCustomizing) {
-      // Entering customization mode
+      // Always set customization mode first to ensure it's activated on the first click
+      setCustomizingClothing(true);
+      
       // Set global flag to disable movement
       window.isCustomizingClothing = true;
       
       // Position character at the optimal viewing position
       if (characterRef.current) {
+        // Get current position to determine approach angle
+        const currentPosition = characterRef.current.position.clone();
+        
+        // Calculate if they're approaching from the front or back side
+        const isApproachingFromBack = currentPosition.z < clothingShopPosition[2];
+        
+        console.log('Approaching clothing shop from:', isApproachingFromBack ? 'back side' : 'front side');
+        
         // Set to ideal position in front of the shop
         characterRef.current.position.x = 0;
-        characterRef.current.position.z = 11.36;
+        characterRef.current.position.z = 11.5; // Increased from 11.36 to prevent camera clipping
+        
         // Face character AWAY from the shop (180 degrees from before)
         characterRef.current.rotation.y = 0; // 0 is opposite of Math.PI (3.14)
 
         // Send position update to multiplayer if connected
         if (isConnected && sendPositionUpdate) {
-          console.log('Multiplayer: Setting character to ideal shop position', {x: 0, z: 11.36, r: 0});
-          sendPositionUpdate({x: 0, z: 11.36, r: 0});
+          console.log('Multiplayer: Setting character to ideal shop position', {x: 0, z: 11.5, r: 0});
+          sendPositionUpdate({x: 0, z: 11.5, r: 0});
         }
       }
       
@@ -511,7 +521,9 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
         window.startClothingShopInteraction();
       }
     } else {
-      // Exiting customization mode - we'll let the useEffect update the position
+      // Exiting customization mode
+      setCustomizingClothing(false);
+      
       // Remove global flag to re-enable movement
       window.isCustomizingClothing = false;
       
@@ -521,17 +533,17 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       }
       
       // Rotate character and move it further from the house to prevent clipping
-      // Only do this directly, we don't need multiple rotation handlers
       if (characterRef.current) {
-        // Ensure the rotation is set just once
+        // Face back toward the shop
         characterRef.current.rotation.y = Math.PI;
-        characterRef.current.position.z = 14.5;
+        // Move character further from the house (increased from 14.5 to 15 for safety)
+        characterRef.current.position.z = 15;
         
         // Update position in multiplayer if connected
         if (isConnected && sendPositionUpdate) {
           sendPositionUpdate({
             x: characterRef.current.position.x,
-            z: characterRef.current.position.z,
+            z: 15,
             r: Math.PI
           });
         }
@@ -550,24 +562,33 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
     if (isCharacterMoving) return;
     
     const willBeCustomizing = !customizingHair;
-    setCustomizingHair(willBeCustomizing);
     
     if (willBeCustomizing) {
-      // Entering customization mode
+      // Always set customization mode first to ensure it's activated on the first click
+      setCustomizingHair(true);
+      
       // Set global flag to disable movement
       window.isCustomizingClothing = true;
       
       // Position character at the optimal viewing position, facing AWAY from shop
       if (characterRef.current) {
+        // Get current position to determine approach angle
+        const currentPosition = characterRef.current.position.clone();
+        
+        // Calculate if they're approaching from the front or back side
+        const isApproachingFromBack = currentPosition.z < barberShopPosition[2];
+        
+        console.log('Approaching barber shop from:', isApproachingFromBack ? 'back side' : 'front side');
+        
         // Set to ideal position in front of the shop
         characterRef.current.position.x = 0;
-        characterRef.current.position.z = 11.36;
+        characterRef.current.position.z = 11.5; // Increased from 11.36 to match clothing shop
         characterRef.current.rotation.y = 0;
         
         // If we have position update capability, also set proper position
         if (isConnected && sendPositionUpdate) {
           console.log('Multiplayer: Setting character to ideal position');
-          sendPositionUpdate({x: 0, z: 11.36, r: 0});
+          sendPositionUpdate({x: 0, z: 11.5, r: 0});
         }
       }
       
@@ -579,7 +600,9 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
         window.startBarberShopInteraction();
       }
     } else {
-      // Exiting customization mode - we'll let the useEffect update the position
+      // Exiting customization mode
+      setCustomizingHair(false);
+      
       // Remove global flag to re-enable movement
       window.isCustomizingClothing = false;
       
@@ -589,17 +612,16 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       }
       
       // Rotate character and move it further from the shop to prevent clipping
-      // Only do this directly, we don't need multiple rotation handlers
       if (characterRef.current) {
         // Ensure the rotation is set just once
         characterRef.current.rotation.y = Math.PI;
-        characterRef.current.position.z = 14.5;
+        characterRef.current.position.z = 15; // Increased from 14.5 to match other functions
         
         // Update position in multiplayer if connected
         if (isConnected && sendPositionUpdate) {
           sendPositionUpdate({
             x: characterRef.current.position.x,
-            z: characterRef.current.position.z,
+            z: 15,
             r: Math.PI
           });
         }
@@ -776,6 +798,44 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
     }
   }, [isConnected, subToolColors, selected, sendAppearanceUpdate]);
 
+  // ---- NEW useEffect to handle joining the game ----
+  useEffect(() => {
+    // Ensure socket is connected, appearance data is ready, and we haven't joined yet
+    if (isConnected && joinGame && subToolColors && selected && !hasJoinedGame.current) {
+      console.log('AppContent: Connection ready, joining game with current appearance...');
+      joinGame({ colors: subToolColors, selected });
+      hasJoinedGame.current = true; // Mark as joined
+    }
+    // Reset join flag if disconnected
+    if (!isConnected) {
+      hasJoinedGame.current = false;
+    }
+  }, [isConnected, joinGame, subToolColors, selected]);
+  // ---- END NEW useEffect ----
+
+  // ---- Temporarily disable localStorage for debugging color sync issues ----
+  /*
+  // Load appearance from localStorage on initial mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('playerAppearance');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.colors && parsed.selected) {
+          // Validate loaded data (simple check for now)
+          if (Array.isArray(parsed.colors) && typeof parsed.selected === 'object') {
+            setSubToolColors(parsed.colors);
+            setSelected(parsed.selected);
+            console.log('Loaded saved appearance from localStorage');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading appearance from localStorage:', error);
+    }
+  }, []); // Run only once on mount
+  */
+  /*
   // Save appearance to localStorage whenever it changes
   useEffect(() => {
     // Don't save during customization - wait till complete
@@ -789,6 +849,8 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       console.error('Error saving appearance to localStorage:', error);
     }
   }, [subToolColors, selected, customizingClothing, customizingHair]);
+  */
+  // ---- End temporary localStorage disable ----
 
   // Effect to hide the game messaging UI when in special areas or talking to helper
   useEffect(() => {
@@ -874,21 +936,6 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
     }
   }, [characterRef, customizingClothing, customizingHair]);
 
-  // ---- NEW useEffect to handle joining the game ----
-  useEffect(() => {
-    // Ensure socket is connected, appearance data is ready, and we haven't joined yet
-    if (isConnected && joinGame && subToolColors && selected && !hasJoinedGame.current) {
-      console.log('AppContent: Connection ready, joining game with current appearance...');
-      joinGame({ colors: subToolColors, selected });
-      hasJoinedGame.current = true; // Mark as joined
-    }
-    // Reset join flag if disconnected
-    if (!isConnected) {
-      hasJoinedGame.current = false;
-    }
-  }, [isConnected, joinGame, subToolColors, selected]);
-  // ---- END NEW useEffect ----
-
   return (
     <div className="relative w-full h-screen">
       {/* Vibe Jam 2025 link - positioned in top left on mobile */}
@@ -956,15 +1003,53 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
                     refLogoInput.current?.click();
                   }
                 }}
-                onChangeColor={(subToolColor) => {
-                  console.log('Multiplayer: Changing color', { subToolId: selected[tool.id], color: subToolColor.color });
-                  const newSubToolColors = subToolColors.map((color) => {
-                    if (color.subToolId === selected[tool.id]) {
-                      return { ...color, color: subToolColor.color };
+                onChangeColor={(changeData) => {
+                  const { subToolId: iconSubToolId, color } = changeData;
+                  console.log(`Multiplayer: Received color change for icon ${iconSubToolId}`, color);
+
+                  // --- Mapping from Icon subToolId to Target Mesh subToolId ---
+                  let targetSubToolId: string | null = null;
+                  switch (iconSubToolId) {
+                    case "tool_2_item_1": // Hair Icon
+                      targetSubToolId = "tool_2_item_4"; // Target Hair Mesh Color ID
+                      break;
+                    case "tool_2_item_2": // Beard Icon
+                      targetSubToolId = "tool_2_item_2"; // Target Beard Mesh Color ID (Correct)
+                      break;
+                    case "tool_2_item_3": // Shirt Main Icon -> NOW TARGETS CUFFS
+                      targetSubToolId = "tool_2_item_3"; // Target Shirt Cuffs Mesh Color ID
+                      break;
+                    case "tool_2_item_4": // Shirt Cuffs Icon -> NOW TARGETS MAIN SHIRT
+                      targetSubToolId = "tool_2_item_5"; // Target Shirt Main Mesh Color ID
+                      break;
+                    case "tool_2_item_5": // Pants Icon
+                      targetSubToolId = "tool_2_item_1"; // Target Pants Mesh Color ID
+                      break;
+                    // Add cases for other color icons if they exist (e.g., shoes, hat)
+                    // default: 
+                    //  console.warn(`No target mapping found for icon subToolId: ${iconSubToolId}`);
+                  }
+                  // ----------------------------------------------------------
+
+                  if (targetSubToolId) {
+                    console.log(`Multiplayer: Updating target ${targetSubToolId} with color ${color}`);
+                    const newSubToolColors = subToolColors.map((item) => {
+                      if (item.subToolId === targetSubToolId) {
+                        return { ...item, color: color };
+                      }
+                      return item;
+                    });
+                    // Ensure the target item exists before updating state
+                    if (newSubToolColors.some(item => item.subToolId === targetSubToolId)) {
+                         setSubToolColors(newSubToolColors);
+                    } else {
+                        console.warn(`Target subToolId ${targetSubToolId} not found in subToolColors state.`);
+                        // Optionally add the item if it's missing (though it should exist based on DEFAULT_COLORS)
+                        // setSubToolColors([...newSubToolColors, { subToolId: targetSubToolId, color: color }]);
                     }
-                    return color;
-                  });
-                  setSubToolColors(newSubToolColors);
+                  } else {
+                     console.warn(`Could not find target subToolId mapping for icon: ${iconSubToolId}`);
+                  }
                 }}
                 onExitCustomization={toggleClothingCustomization}
                 isMobile={!isDesktop}
@@ -973,9 +1058,9 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
             {inBarberShop && (
               <BarberShop 
                 position={barberShopPosition} 
-                onChangeHair={toggleHairCustomization}
+                onChangeHair={() => console.log("Barber shop coming soon!")}
                 canChangeHair={nearBarberShop && !isCharacterMoving}
-                isCustomizing={customizingHair}
+                isCustomizing={false}
               />
             )}
             <ThirdPersonCamera 

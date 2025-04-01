@@ -75,25 +75,17 @@ const ClothingShop = ({
   // Handle badge click - toggles customization mode
   const handleBadgeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    
     // If customizing, clicking the badge should exit customization
     if (isCustomizing && onExitCustomization) {
       onExitCustomization();
     } 
-    // If not customizing, but can change, clicking enters customization
-    else if (onChangeClothing) {
-      // Always call onChangeClothing even if canChangeClothing is false
-      // This will position the character at the optimal position first
+    // If not customizing, ONLY allow interaction when canChangeClothing is true (player is near)
+    else if (canChangeClothing && onChangeClothing) {
+      // Call onChangeClothing to position character and enter customization
       onChangeClothing();
-      
-      // If we're not already customizing and the button says "Change Clothing",
-      // ensure we enter customization mode after positioning
-      if (!isCustomizing && !canChangeClothing) {
-        // Use a small timeout to ensure character is positioned first
-        setTimeout(() => {
-          if (onChangeClothing) onChangeClothing();
-        }, 100);
-      }
     }
+    // Ignore clicks when too far away (when button says "Change Clothing Here")
   };
 
   // Pulse animation for the badge
@@ -124,24 +116,10 @@ const ClothingShop = ({
         position={new THREE.Vector3(houseOffset[0], houseOffset[1], houseOffset[2])}
         rotation={houseRotation}
         scale={houseScale}
-        onClick={(e) => {
-          e.stopPropagation();
-          // Only allow entering customization mode, not exiting
-          if (!isCustomizing && onChangeClothing) {
-            // Always call onChangeClothing
-            onChangeClothing();
-            
-            // If not near shop, trigger customization again after positioning
-            if (!canChangeClothing) {
-              setTimeout(() => {
-                if (onChangeClothing) onChangeClothing();
-              }, 100);
-            }
-          }
-        }}
+        // Remove onClick handler to prevent interaction with the house itself
         onPointerOver={() => {
-          // Show pointer cursor when ready to enter customization (not during customization)
-          document.body.style.cursor = !isCustomizing ? 'pointer' : 'default';
+          // Don't show pointer cursor when hovering over the house
+          document.body.style.cursor = 'auto';
         }}
         onPointerOut={() => {
           document.body.style.cursor = 'auto';
@@ -192,9 +170,9 @@ const ClothingShop = ({
             boxShadow: '0 3px 6px rgba(0,0,0,0.3)',
             border: '2px solid white',
             transition: 'all 0.3s ease',
-            cursor: isCustomizing ? 'pointer' : (canChangeClothing ? 'pointer' : 'default'),
-            opacity: badgeHovered ? 1 : 0.9,
-            pointerEvents: 'auto'
+            cursor: isCustomizing ? 'pointer' : (canChangeClothing ? 'pointer' : 'not-allowed'),
+            opacity: isCustomizing ? 0.9 : (canChangeClothing ? (badgeHovered ? 1 : 0.9) : 0.7),
+            pointerEvents: isCustomizing || canChangeClothing ? 'auto' : 'none' // Disable pointer events entirely when not clickable
           }}
         >
           {getBadgeText()}
