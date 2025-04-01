@@ -363,7 +363,7 @@ const helperUIConfig = {
     // Add separate scale for "Stop Talking" badge
     stopTalkingScale: {
       desktop: 0.9,  // Larger scale for Stop Talking badge on desktop
-      mobile: 0.9    // Larger scale for Stop Talking badge on mobile
+      mobile: 0.3    // Larger scale for Stop Talking badge on mobile
     }
   },
   // Shadow configuration
