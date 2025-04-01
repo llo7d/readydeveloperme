@@ -2,6 +2,7 @@ import { useProgress } from "@react-three/drei";
 import React, { useEffect, useState, useRef } from "react";
 import classNames from "classnames";
 import { motion, AnimatePresence } from "framer-motion";
+import { useMediaQuery } from "react-responsive";
 
 import { useStore } from "../store/store";
 
@@ -18,6 +19,8 @@ const Loader: React.FC<LoaderProps> = ({ onLoadedSubmit }) => {
   const [isLoadComplete, setIsLoadComplete] = useState(false);
   const [username, setUsername] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
 
   const value = dummyProgress || Math.ceil(progress);
   const isProgressFinished = value >= 100;
@@ -145,11 +148,18 @@ const Loader: React.FC<LoaderProps> = ({ onLoadedSubmit }) => {
               style={{
                 textAlign: 'center',
                 color: 'white',
-                fontFamily: 'system-ui, sans-serif'
+                fontFamily: 'system-ui, sans-serif',
+                width: isMobile ? '90%' : 'auto',
+                maxWidth: '500px',
+                padding: isMobile ? '20px' : '0'
               }}
             >
               <form onSubmit={handleSubmit}>
-                <h2 style={{ marginBottom: '15px', fontSize: '1.3em', fontWeight: 'bold' }}>Choose Your Developer Name</h2>
+                <h2 style={{ 
+                  marginBottom: '15px', 
+                  fontSize: isMobile ? '1.6em' : '1.3em', 
+                  fontWeight: 'bold' 
+                }}>Choose Your Developer Name</h2>
                 <input 
                   ref={inputRef}
                   type="text"
@@ -159,12 +169,13 @@ const Loader: React.FC<LoaderProps> = ({ onLoadedSubmit }) => {
                   placeholder="Enter username..."
                   disabled={!isLoadComplete}
                   style={{
-                    padding: '10px 15px',
-                    fontSize: '1em',
+                    padding: isMobile ? '15px 20px' : '10px 15px',
+                    fontSize: isMobile ? '1.4em' : '1em',
                     border: 'none',
-                    borderRadius: '6px',
+                    borderRadius: '8px',
                     marginBottom: '20px',
-                    width: '250px',
+                    width: isMobile ? '85%' : '250px',
+                    maxWidth: '350px',
                     background: 'rgba(255, 255, 255, 0.1)',
                     color: 'white',
                     opacity: isLoadComplete ? 1 : 0.5,
@@ -172,17 +183,19 @@ const Loader: React.FC<LoaderProps> = ({ onLoadedSubmit }) => {
                   }}
                   required
                 />
+                <br style={{ display: isMobile ? 'block' : 'none' }} />
                 <button 
                   type="submit"
                   disabled={!isLoadComplete || !username.trim()}
                   style={{
-                    padding: '10px 25px',
-                    fontSize: '1em',
+                    padding: isMobile ? '15px 30px' : '10px 25px',
+                    fontSize: isMobile ? '1.3em' : '1em',
                     fontWeight: 'bold',
                     color: 'white',
                     backgroundColor: '#4B50EC', 
                     border: 'none',
-                    borderRadius: '6px',
+                    borderRadius: '8px',
+                    marginTop: isMobile ? '10px' : '0',
                     cursor: (isLoadComplete && username.trim()) ? 'pointer' : 'not-allowed',
                     transition: 'background-color 0.2s ease, opacity 0.3s ease',
                     opacity: (isLoadComplete && username.trim()) ? 1 : 0.5,
