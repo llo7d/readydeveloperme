@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store/store';
 import { useMultiplayer } from '../contexts/MultiplayerContext';
+import { useMediaQuery } from 'react-responsive';
 
 // Add TypeScript declaration for the global window property
 declare global {
@@ -8,6 +9,10 @@ declare global {
     chatboxFocused: boolean;
     setCharacterPose?: (pose: string) => void;
     showMessage?: (message: string) => void;
+    hideGameMessaging: boolean;
+    gameChatConfig: any;
+    forceHideGameChat: boolean;
+    chatboxOpen: boolean;
   }
 }
 
@@ -36,67 +41,151 @@ const Chatbox = () => {
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { sendChatMessage } = useMultiplayer();
+  
+  // Add this line to detect mobile view
+  const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
 
-  // Extract actual message from a pose command message and limit to 12 words
-  const extractActualMessage = (fullMessage: string): string => {
-    if (!fullMessage.startsWith('@')) {
-      // If no pose command, just limit to 12 words
-      return fullMessage.split(' ').slice(0, 12).join(' ');
+  // Get position and style from gameChatConfig if available
+  const getChatPosition = () => {
+    if (window.gameChatConfig) {
+      return isMobile 
+        ? window.gameChatConfig.position.mobile 
+        : window.gameChatConfig.position.desktop;
     }
     
-    // Find the first space after @
-    const spaceIndex = fullMessage.indexOf(' ');
-    if (spaceIndex === -1) return ''; // No actual message, just a pose command
+    // Fallback if config not available
+    return isMobile 
+      ? { bottom: '20px', left: '50%' } 
+      : { bottom: '20px', left: '50%' };
+  };
+  
+  // Get width from gameChatConfig if available
+  const getChatWidth = () => {
+    if (window.gameChatConfig?.size?.width) {
+      const widthValue = isMobile 
+        ? window.gameChatConfig.size.width.mobile 
+        : window.gameChatConfig.size.width.desktop;
+      
+      // Handle special 'fullWidth' value for mobile responsive sizing
+      if (widthValue === 'fullWidth' && isMobile) {
+        return window.innerWidth - 40; // 20px margin on each side
+      }
+      
+      return widthValue;
+    }
     
-    // Return everything after the space, limited to 12 words
-    return fullMessage.substring(spaceIndex + 1).trim().split(' ').slice(0, 12).join(' ');
+    // Fallback if config not available
+    return isMobile ? 300 : 380;
+  };
+  
+  // Determine if messaging should be hidden
+  const isMessagingHidden = () => {
+    // Check for force hide flag first (highest priority)
+    if (window.forceHideGameChat) {
+      console.log("Chat hidden: forceHideGameChat=true");
+      return true;
+    }
+    
+    // Check if helper character chatbox is open
+    if (window.chatboxOpen) {
+      console.log("Chat hidden: Helper character chatbox is open");
+      return true;
+    }
+    
+    // Then check for shop/character interaction flag
+    if (window.hideGameMessaging) {
+      console.log("Chat hidden: hideGameMessaging=true");
+      return true;
+    }
+    
+    // Then check for the gameChatConfig visibility (lowest priority)
+    if (window.gameChatConfig?.visible === false) {
+      console.log("Chat hidden: gameChatConfig.visible=false");
+      return true;
+    }
+    
+    return false;
+  };
+
+  // Extract pose and actual message from a message string
+  const extractPoseAndMessage = (fullMessage: string): { pose: string | null, message: string } => {
+    // Default return values
+    let pose: string | null = null;
+    let message = fullMessage;
+    
+    // Find any @pose tag in the message
+    const poseMatch = fullMessage.match(/@([A-Za-z]+)/);
+    
+    if (poseMatch) {
+      // Get the pose name without the @ symbol
+      const poseName = poseMatch[1];
+      
+      // Check if the pose exists in our available poses
+      const selectedPose = AVAILABLE_POSES.find(pose => 
+        pose.id.toLowerCase() === poseName.toLowerCase()
+      );
+      
+      if (selectedPose) {
+        pose = selectedPose.id;
+        
+        // Remove the pose tag from the message
+        message = fullMessage.replace(poseMatch[0], '').trim();
+      }
+    }
+    
+    // Limit message to 12 words
+    message = message.split(' ').slice(0, 12).join(' ');
+    
+    return { pose, message };
   };
 
   // Process the message - handle pose command and extract actual message
   const processMessage = (fullMessage: string) => {
-    // Extract actual message
-    const actualMessage = extractActualMessage(fullMessage);
+    // Extract pose and actual message
+    const { pose, message } = extractPoseAndMessage(fullMessage);
     
-    // Check if message starts with @
-    if (fullMessage.startsWith('@')) {
-      const posePart = fullMessage.slice(1).split(' ')[0]; // Get the pose part
-      
-      // Check if the pose exists in our available poses
-      const selectedPose = AVAILABLE_POSES.find(pose => pose.id === posePart);
-      if (selectedPose) {
-        // Set the character pose immediately
-        if (window.setCharacterPose) {
-          window.setCharacterPose(selectedPose.id);
-        }
-      }
+    // Apply pose if found
+    if (pose && window.setCharacterPose) {
+      window.setCharacterPose(pose);
     }
     
     // Show message above character if there's actual content
-    if (actualMessage) {
+    if (message) {
       // Show message locally above character
       if (window.showMessage) {
-        window.showMessage(actualMessage);
+        window.showMessage(message);
       }
       
+      // Construct message content for server
+      // For the remote player, send both the message and pose info
+      const messageToSend = pose ? `@${pose} ${message}` : message;
+      
       // Send message to all connected players
-      sendChatMessage(actualMessage);
+      sendChatMessage(messageToSend);
     }
   };
 
-  // Update suggestions when message changes
+  // Update suggestions when message changes - check for @ anywhere in text
   useEffect(() => {
-    if (message.startsWith('@')) {
-      // If there's no space yet, we're still selecting a pose
-      if (!message.includes(' ')) {
-        const searchTerm = message.slice(1).toLowerCase();
+    // Find the position of the last @ symbol
+    const lastAtIndex = message.lastIndexOf('@');
+    
+    if (lastAtIndex !== -1) {
+      // Get the text after the @ symbol up to the next space or end of string
+      const afterAt = message.substring(lastAtIndex + 1);
+      const nextSpaceIndex = afterAt.indexOf(' ');
+      const searchTerm = nextSpaceIndex === -1 ? afterAt : afterAt.substring(0, nextSpaceIndex);
+      
+      // If we're still typing the pose (no space yet after @)
+      if (nextSpaceIndex === -1) {
         const filteredPoses = AVAILABLE_POSES.filter(pose => 
-          pose.display.toLowerCase().includes(searchTerm)
+          pose.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
+          pose.display.toLowerCase().includes(searchTerm.toLowerCase())
         );
         setSuggestions(filteredPoses);
-        setShowSuggestions(true);
+        setShowSuggestions(filteredPoses.length > 0);
         setSelectedIndex(0);
       } else {
-        // If we already have a space, hide suggestions
         setSuggestions([]);
         setShowSuggestions(false);
       }
@@ -127,8 +216,25 @@ const Chatbox = () => {
           if (suggestions[selectedIndex]) {
             e.preventDefault();
             const selectedPose = suggestions[selectedIndex];
-            // Insert the pose into the message and add a space
-            setMessage(`@${selectedPose.id} `);
+            
+            // Find the last @ position
+            const lastAtIndex = message.lastIndexOf('@');
+            
+            // Replace the partial pose with the complete one
+            const beforeAt = message.substring(0, lastAtIndex);
+            const afterAt = message.substring(lastAtIndex + 1);
+            const nextSpaceIndex = afterAt.indexOf(' ');
+            
+            let newMessage;
+            if (nextSpaceIndex === -1) {
+              // No space yet, replace everything after @
+              newMessage = beforeAt + '@' + selectedPose.id + ' ';
+            } else {
+              // Replace just the word after @
+              newMessage = beforeAt + '@' + selectedPose.id + afterAt.substring(nextSpaceIndex);
+            }
+            
+            setMessage(newMessage);
             setShowSuggestions(false);
           }
           break;
@@ -140,8 +246,25 @@ const Chatbox = () => {
           if (suggestions[selectedIndex]) {
             e.preventDefault();
             const selectedPose = suggestions[selectedIndex];
-            // Insert the pose into the message and add a space
-            setMessage(`@${selectedPose.id} `);
+            
+            // Find the last @ position
+            const lastAtIndex = message.lastIndexOf('@');
+            
+            // Replace the partial pose with the complete one
+            const beforeAt = message.substring(0, lastAtIndex);
+            const afterAt = message.substring(lastAtIndex + 1);
+            const nextSpaceIndex = afterAt.indexOf(' ');
+            
+            let newMessage;
+            if (nextSpaceIndex === -1) {
+              // No space yet, replace everything after @
+              newMessage = beforeAt + '@' + selectedPose.id + ' ';
+            } else {
+              // Replace just the word after @
+              newMessage = beforeAt + '@' + selectedPose.id + afterAt.substring(nextSpaceIndex);
+            }
+            
+            setMessage(newMessage);
             setShowSuggestions(false);
           }
           break;
@@ -192,42 +315,75 @@ const Chatbox = () => {
     };
   }, []);
 
+  // Force re-render when visibility changes
+  useEffect(() => {
+    const checkVisibility = () => {
+      // Force component re-render on visibility change
+      setMessage(prev => prev); // This is a trick to force re-render
+    };
+    
+    // Check immediately and set up interval for changes
+    const interval = setInterval(checkVisibility, 100);
+    
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+
   return (
-    <div className="fixed bottom-32 sm:bottom-36 md:bottom-16 left-1/2 transform -translate-x-1/2 w-full sm:w-[80%] md:w-[70%] max-w-md px-4 z-10">
+    <div 
+      id="game-chat-container"
+      className="fixed z-10"
+      style={{
+        // Use dynamic position from config
+        bottom: getChatPosition().bottom,
+        left: getChatPosition().left,
+        transform: 'translateX(-50%)', // Center horizontally
+        width: `${getChatWidth()}px`,
+        // Hide if in special zones (helper, clothing shop, etc)
+        display: isMessagingHidden() ? 'none' : 'block',
+        opacity: window.gameChatConfig?.opacity || 0.9
+      }}
+    >
       {/* Main chat form - always visible */}
-      <form onSubmit={handleSubmit} className="relative">
-        <input
-          ref={inputRef}
-          type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          placeholder="Type message... (@pose)"
-          className={`w-full px-3 py-2 rounded-2xl text-white placeholder-gray-400 
-            ${theme === 'light' 
-              ? 'bg-[#2A2B32] border border-gray-600' 
-              : 'bg-[#2A2B32] border border-gray-600'
-            } 
-            focus:outline-none focus:ring-2 focus:ring-[#22aa22] focus:border-transparent
-            shadow-lg transition-all duration-200
-            text-sm sm:text-base`}
-        />
-        <button
-          type="submit"
-          className={`absolute right-1 top-1/2 transform -translate-y-1/2 
-            px-2 py-1 rounded-xl text-white font-medium
-            ${theme === 'light'
-              ? 'bg-[#22aa22] hover:bg-[#1a8a1a]'
-              : 'bg-[#22aa22] hover:bg-[#1a8a1a]'
-            }
-            transition-colors duration-200
-            focus:outline-none focus:ring-2 focus:ring-[#22aa22] focus:ring-offset-2 focus:ring-offset-[#2A2B32]
-            text-xs sm:text-sm`}
-        >
-          Send
-        </button>
+      <form 
+        onSubmit={handleSubmit} 
+        className={`rounded-lg border-opacity-0 space-y-1`}
+      >
+        <div className="relative p-1"> {/* Added padding container */}
+          <input
+            ref={inputRef}
+            type="text"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            placeholder="Type message... (@pose)"
+            className={`w-full px-3 py-3 rounded-2xl text-white placeholder-gray-400 
+              ${theme === 'light' 
+                ? 'bg-[#2A2B32] border border-gray-600' 
+                : 'bg-[#2A2B32] border border-gray-600'
+              } 
+              focus:outline-none focus:ring-2 focus:ring-[#22aa22] focus:border-transparent
+              shadow-lg transition-all duration-200
+              text-sm sm:text-base pr-16`} // Added right padding for button
+          />
+          <button
+            type="submit"
+            className={`absolute right-3 top-1/2 transform -translate-y-1/2 
+              px-4 py-2 rounded-xl text-white font-medium
+              ${theme === 'light'
+                ? 'bg-[#22aa22] hover:bg-[#1a8a1a]'
+                : 'bg-[#22aa22] hover:bg-[#1a8a1a]'
+              }
+              transition-colors duration-200
+              focus:outline-none focus:ring-2 focus:ring-[#22aa22] focus:ring-offset-2 focus:ring-offset-[#2A2B32]
+              text-xs sm:text-sm`}
+          >
+            Send
+          </button>
+        </div>
       </form>
 
       {/* Suggestions dropdown */}

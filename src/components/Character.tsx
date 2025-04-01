@@ -52,6 +52,9 @@ const ChatBubble = ({ message, position }: { message: { text: string; timestamp:
                 as="div"
                 className="pointer-events-none"
                 distanceFactor={10}
+                zIndexRange={[16777280, 16777290]}
+                occlude={false}
+                sprite={true}
             >
                 <div className="bg-white text-black px-4 py-1 rounded-xl shadow-lg text-center whitespace-normal"
                      style={{ 

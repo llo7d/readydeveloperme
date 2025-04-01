@@ -4,6 +4,7 @@ import { useMediaQuery } from "react-responsive";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { ContactShadows, OrbitControls, Environment } from "@react-three/drei";
 import * as THREE from 'three'
+import { Link } from "react-router-dom";
 
 import ThemeToggle from "./components/ThemeToggle";
 import { useStore } from "./store/store";
@@ -35,7 +36,27 @@ import CharacterMessage from "./components/CharacterMessage";
 import { MultiplayerProvider, useMultiplayer } from './contexts/MultiplayerContext';
 import MultiplayerManager from './components/MultiplayerManager';
 import RemoteCharactersManager from "./components/RemoteCharactersManager";
-import UsernamePrompt from "./components/UsernamePrompt";
+
+// Extend Window interface to include our global functions
+declare global {
+  interface Window {
+    // Chat visibility functions
+    forceHideGameChat?: boolean;
+    hideGameMessaging?: boolean;
+    hideJoystick?: boolean;
+    gameChatConfig?: any;
+    chatboxOpen?: boolean;
+    inChatTransition?: boolean;
+    cameraConfig?: any;
+    isCustomizingClothing?: boolean;
+    
+    // Helper character interaction functions
+    startHelperInteraction?: () => void;
+    startClothingShopInteraction?: () => void;
+    startBarberShopInteraction?: () => void;
+    endCharacterInteraction?: () => void;
+  }
+}
 
 // This component handles all scene-specific behaviors that need to use hooks like useFrame
 const SceneManager = ({ 
@@ -134,6 +155,36 @@ const SceneManager = ({
         doorPosition={doorPosition}
       />
     </>
+  );
+};
+
+// Add the link to the React Three Fiber rotating cube demo
+const RotatingCubeLink = () => {
+  return (
+    <div 
+      style={{
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        zIndex: 1000,
+      }}
+    >
+      <Link 
+        to="/react-three"
+        style={{
+          display: 'block',
+          backgroundColor: '#4a4a4a',
+          color: 'white',
+          padding: '8px 12px',
+          borderRadius: '4px',
+          textDecoration: 'none',
+          fontFamily: 'Arial, sans-serif',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+        }}
+      >
+        View Rotating Cube
+      </Link>
+    </div>
   );
 };
 
@@ -407,15 +458,78 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
     setInBarberShop(true);
   }, [])
   
-  // Toggle clothing customization mode
+  // Handle being near clothing shop
+  const handleNearShop = (isNear: boolean) => {
+    setNearShop(isNear);
+    // If we're no longer near the shop and were customizing, exit customization
+    if (!isNear && customizingClothing) {
+      setCustomizingClothing(false);
+      
+      // Remove global flag to re-enable movement
+      window.isCustomizingClothing = false;
+      
+      // Return character to original rotation if needed
+      if (characterRef.current) {
+        // Reset character rotation to default
+        characterRef.current.rotation.y = Math.PI;
+      }
+      
+      // Send appearance update when exiting customization mode
+      if (isConnected) {
+        sendAppearanceUpdate(subToolColors, selected);
+      }
+      
+      // Restore chat when exiting shop - with a delay to ensure state updates
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && window.endCharacterInteraction) {
+          window.endCharacterInteraction();
+          console.log("Released chat after leaving clothing shop area");
+        }
+      }, 200);
+    }
+  };
+
+  // Handle being near barber shop
+  const handleNearBarberShop = (isNear: boolean) => {
+    setNearBarberShop(isNear);
+    // If we're no longer near the shop and were customizing, exit customization
+    if (!isNear && customizingHair) {
+      setCustomizingHair(false);
+      
+      // Remove global flag to re-enable movement
+      window.isCustomizingClothing = false;
+      
+      // Return character to original rotation if needed
+      if (characterRef.current) {
+        // Reset character rotation to default
+        characterRef.current.rotation.y = Math.PI;
+      }
+      
+      // Send appearance update when exiting customization mode
+      if (isConnected) {
+        sendAppearanceUpdate(subToolColors, selected);
+      }
+      
+      // Restore chat when exiting shop - with a delay to ensure state updates
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && window.endCharacterInteraction) {
+          window.endCharacterInteraction();
+          console.log("Released chat after leaving barber shop area");
+        }
+      }, 200);
+    }
+  };
+
+  // Toggle clothing customization
   const toggleClothingCustomization = () => {
     // Only allow toggling if the character is not moving
     if (isCharacterMoving) return;
     
-    if (!customizingClothing) {
+    const willBeCustomizing = !customizingClothing;
+    setCustomizingClothing(willBeCustomizing);
+    
+    if (willBeCustomizing) {
       // Entering customization mode
-      setCustomizingClothing(true);
-      
       // Set global flag to disable movement
       window.isCustomizingClothing = true;
       
@@ -427,10 +541,13 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       
       // Force select the color tool
       setTool(tools.find(t => t.id === "tool_2") || tools[0]);
+      
+      // Hide chat when customizing
+      if (typeof window !== 'undefined' && window.startClothingShopInteraction) {
+        window.startClothingShopInteraction();
+      }
     } else {
       // Exiting customization mode
-      setCustomizingClothing(false);
-      
       // Remove global flag to re-enable movement
       window.isCustomizingClothing = false;
       
@@ -446,18 +563,24 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
         sendAppearanceUpdate(subToolColors, selected);
         console.log('Multiplayer: Sent appearance update on customization exit');
       }
+      
+      // Restore chat when done customizing
+      if (typeof window !== 'undefined' && window.endCharacterInteraction) {
+        window.endCharacterInteraction();
+      }
     }
   };
 
-  // Toggle hair customization mode
+  // Toggle hair customization
   const toggleHairCustomization = () => {
     // Only allow toggling if the character is not moving
     if (isCharacterMoving) return;
     
-    if (!customizingHair) {
+    const willBeCustomizing = !customizingHair;
+    setCustomizingHair(willBeCustomizing);
+    
+    if (willBeCustomizing) {
       // Entering customization mode
-      setCustomizingHair(true);
-      
       // Set global flag to disable movement
       window.isCustomizingClothing = true;
       
@@ -468,10 +591,13 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       
       // Force select the hair tool
       setTool(tools.find(t => t.id === "hair") || tools[0]);
+      
+      // Hide chat when customizing
+      if (typeof window !== 'undefined' && window.startBarberShopInteraction) {
+        window.startBarberShopInteraction();
+      }
     } else {
       // Exiting customization mode
-      setCustomizingHair(false);
-      
       // Remove global flag to re-enable movement
       window.isCustomizingClothing = false;
       
@@ -485,6 +611,11 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
         // Use the function from context instead of direct socket.emit
         sendAppearanceUpdate(subToolColors, selected);
         console.log('Multiplayer: Sent appearance update on hair customization exit');
+      }
+      
+      // Restore chat when done customizing
+      if (typeof window !== 'undefined' && window.endCharacterInteraction) {
+        window.endCharacterInteraction();
       }
     }
   };
@@ -511,16 +642,6 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
     }, 1000);
   };
 
-  // Handle shop proximity changes
-  const handleNearShop = (isNear) => {
-    setNearShop(isNear);
-  };
-
-  // Handle barber shop proximity changes
-  const handleNearBarberShop = (isNear) => {
-    setNearBarberShop(isNear);
-  };
-  
   // Handle character movement state changes
   const handleCharacterMovementChange = (moving) => {
     if (moving && customizingClothing) {
@@ -530,7 +651,16 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
 
   // Handle character pose changes
   useEffect(() => {
+    // Keep track of current pose timeout
+    let poseTimeout: number | null = null;
+    
     window.setCharacterPose = (pose: string) => {
+      // If there's a pending timeout, clear it
+      if (poseTimeout) {
+        window.clearTimeout(poseTimeout);
+        poseTimeout = null;
+      }
+      
       // Convert camelCase to snake_case properly
       // First handle explicit mappings for poses we know
       let formattedPose;
@@ -572,13 +702,30 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
           formattedPose = `pose_${pose.toLowerCase()}`;
       }
       
+      // Apply the new pose
       setSelected(prev => ({
         ...prev,
         pose: formattedPose
       }));
+      
+      // Set a timeout to revert to CrossedArm after 5 seconds
+      // but only if the pose isn't already CrossedArm
+      if (formattedPose !== "pose_crossed_arm" && formattedPose !== "pose_character_stop") {
+        poseTimeout = window.setTimeout(() => {
+          setSelected(prev => ({
+            ...prev,
+            pose: "pose_crossed_arm"
+          }));
+          poseTimeout = null;
+        }, 5000);
+      }
     };
 
     return () => {
+      // Clean up any pending timeout
+      if (poseTimeout) {
+        window.clearTimeout(poseTimeout);
+      }
       window.setCharacterPose = undefined;
     };
   }, []);
@@ -651,23 +798,89 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
     }
   }, [subToolColors, selected, customizingClothing, customizingHair]);
 
-  // Effect to join room *after* connection and *after* username is provided
+  // Effect to hide the game messaging UI when in special areas or talking to helper
   useEffect(() => {
-    if (isConnected && socket && initialUsername) {
-      // Join with username and current appearance state
-      console.log(`Joining room with username: ${initialUsername}`);
-      socket.emit('join', {
-          username: initialUsername,
-          position: { x: 0, y: 0, z: 30 }, // Use initial position
-          rotation: Math.PI, // Use initial rotation
-          colors: subToolColors, // Send current colors
-          selected: selected // Send current selections
-      });
+    // Make sure window properties exist
+    if (typeof window === 'undefined') return;
+    
+    // Explicitly update the chat visibility status
+    const updateChatVisibility = () => {
+      // Direct flag approach for immediate effect
+      window.hideGameMessaging = customizingClothing || customizingHair || window.chatboxOpen || false;
       
-      // Also send initial appearance explicitly if needed (might be redundant depending on server's 'join' handling)
-      // sendAppearanceUpdate(subToolColors, selected);
+      // Update joystick visibility
+      window.hideJoystick = customizingClothing || customizingHair || window.chatboxOpen || false;
+      
+      // Update the config flag too
+      if (window.gameChatConfig) {
+        window.gameChatConfig.visible = !window.hideGameMessaging;
+      }
+      
+      // Trigger appropriate interaction functions
+      if (customizingClothing && window.startClothingShopInteraction) {
+        window.startClothingShopInteraction();
+      } else if (customizingHair && window.startBarberShopInteraction) {
+        window.startBarberShopInteraction();
+      } else if (window.chatboxOpen && window.startHelperInteraction) {
+        window.startHelperInteraction();
+      } else if (!customizingClothing && !customizingHair && !window.chatboxOpen && window.endCharacterInteraction) {
+        // If we're not in any interaction, make sure chat is shown
+        window.endCharacterInteraction();
+      }
+    };
+    
+    // Run immediately
+    updateChatVisibility();
+    
+    // And set up a periodic check
+    const interval = setInterval(updateChatVisibility, 100);
+    
+    return () => {
+      // Reset on component unmount
+      clearInterval(interval);
+      window.hideGameMessaging = false;
+      window.hideJoystick = false;
+      if (window.gameChatConfig) {
+        window.gameChatConfig.visible = true;
+      }
+    };
+  }, [customizingClothing, customizingHair]);
+
+  // When character is created, set up shop defaults
+  useEffect(() => {
+    if (characterRef.current) {
+      // Hide game messaging when interacting with helper character
+      if (typeof window !== 'undefined' && window.hideGameMessaging !== undefined) {
+        // Add listeners for any time the character interacts with special shops
+        const handleInteractionChange = () => {
+          // Check if any shop or helper is active
+          const inAnyInteraction = customizingClothing || customizingHair || window.chatboxOpen;
+          
+          // Update global messaging visibility
+          if (inAnyInteraction && window.hideGameMessaging === false) {
+            // Hide chat when any interaction starts
+            if (customizingClothing && window.startClothingShopInteraction) {
+              window.startClothingShopInteraction();
+            } else if (customizingHair && window.startBarberShopInteraction) {
+              window.startBarberShopInteraction();
+            } else if (window.chatboxOpen && window.startHelperInteraction) {
+              window.startHelperInteraction();
+            }
+          } 
+        };
+        
+        // Check initially
+        handleInteractionChange();
+        
+        // Set up interval to periodically check interaction state
+        const checkInterval = setInterval(handleInteractionChange, 500);
+        
+        return () => {
+          clearInterval(checkInterval);
+        };
+      }
     }
-  }, [isConnected, socket, initialUsername, subToolColors, selected]); // Add dependencies
+  }, [characterRef, customizingClothing, customizingHair]);
 
   return (
     <div className="relative w-full h-screen">

@@ -58,32 +58,291 @@ document.head.appendChild(styleElement);
 
 // Create a global movement control state that can be accessed by the movement controller
 window.chatboxOpen = false
+// Global flag to hide/show game messaging UI
+window.hideGameMessaging = false
+// Global flag to hide/show joystick
+window.hideJoystick = false
+
+// Game chat messaging UI configuration
+const gameChatConfig = {
+  // Main controls
+  visible: true,     // Set to false to hide the chat UI completely
+  opacity: 0.9,      // Default opacity
+  
+  // Positioning
+  position: {
+    desktop: { bottom: '20px', left: '50%' }, // Desktop position (CSS properties) - centered
+    mobile: { bottom: '180px', left: '50%' }   // Mobile position (CSS properties) - centered
+  },
+  // Sizing
+  size: {
+    width: {
+      desktop: 400,  // Width in pixels for desktop
+      mobile: 'fullWidth'    // Mobile width is responsive by default
+    },
+    height: {
+      desktop: 'auto', // Height for desktop
+      mobile: 'auto'   // Height for mobile
+    }
+  }
+};
+
+// Create a direct control function to manage chat UI
+if (typeof window !== 'undefined') {
+  // Add global flag to force hide chat
+  window.forceHideGameChat = false;
+  
+  // Function to force hide chat UI (with persistence)
+  window.forceHideChatUI = (hide = true) => {
+    // Set global flag
+    window.forceHideGameChat = hide;
+    
+    // Set a cookie for persistence between reloads
+    document.cookie = `forceHideGameChat=${hide ? 'true' : 'false'}; path=/; max-age=86400`;
+    
+    // Try to also update the DOM element directly for immediate effect
+    try {
+      const chatContainer = document.getElementById('game-chat-container');
+      if (chatContainer) {
+        chatContainer.style.display = hide ? 'none' : 'block';
+        console.log(`Directly ${hide ? 'hid' : 'showed'} chat container via DOM manipulation`);
+      }
+    } catch (err) {
+      console.error('Error manipulating chat container:', err);
+    }
+    
+    // Make sure game chat config is updated too
+    if (window.gameChatConfig) {
+      window.gameChatConfig.visible = !hide;
+    }
+    
+    return hide;
+  };
+  
+  // Expose the DOM direct manipulation function
+  window.directlyHideChatUI = (hide = true) => {
+    // First, update all the visibility flags
+    window.hideGameMessaging = hide;
+    
+    if (window.gameChatConfig) {
+      window.gameChatConfig.visible = !hide;
+    }
+    
+    // Then directly manipulate the DOM for immediate effect
+    const chatContainer = document.getElementById('game-chat-container');
+    if (chatContainer) {
+      chatContainer.style.display = hide ? 'none' : 'block';
+      console.log(`Directly ${hide ? 'hiding' : 'showing'} chat container via DOM manipulation`);
+    } else {
+      console.log('Chat container element not found in DOM');
+    }
+  };
+  
+  // Check for the cookie on page load
+  const checkChatVisibilityCookie = () => {
+    const cookieValue = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('forceHideGameChat='))
+      ?.split('=')[1];
+      
+    if (cookieValue === 'true') {
+      window.forceHideGameChat = true;
+      setTimeout(() => {
+        const chatContainer = document.getElementById('game-chat-container');
+        if (chatContainer) {
+          chatContainer.style.display = 'none';
+          console.log('Chat UI hidden based on saved preference');
+        }
+      }, 500); // Small delay to ensure DOM is ready
+    }
+  };
+  
+  // Call the function to check cookie
+  checkChatVisibilityCookie();
+  
+  // Function to toggle chat visibility
+  window.toggleChat = (visible) => {
+    window.gameChatConfig.visible = visible;
+    window.hideGameMessaging = !visible;
+    
+    // Direct DOM manipulation for immediate effect
+    const chatContainer = document.getElementById('game-chat-container');
+    if (chatContainer) {
+      chatContainer.style.display = visible ? 'block' : 'none';
+      console.log(`Chat UI is now ${visible ? 'visible' : 'hidden'} (DOM updated directly)`);
+    } else {
+      console.log(`Chat UI is now ${visible ? 'visible' : 'hidden'} (waiting for DOM update)`);
+    }
+  };
+
+  // Function to position chat
+  window.positionChat = (position, isMobile = false) => {
+    // Example: {bottom: '100px', left: '50%'}
+    if (isMobile) {
+      window.gameChatConfig.position.mobile = position;
+      console.log('Mobile chat position updated:', position);
+      
+      // Direct DOM manipulation for immediate effect
+      const chatContainer = document.getElementById('game-chat-container');
+      if (chatContainer) {
+        Object.keys(position).forEach(key => {
+          chatContainer.style[key] = position[key];
+        });
+        
+        // Ensure transform is applied for centering if left:50% is being used
+        if (position.left === '50%') {
+          chatContainer.style.transform = 'translateX(-50%)';
+        }
+      }
+    } else {
+      window.gameChatConfig.position.desktop = position;
+      console.log('Desktop chat position updated:', position);
+      
+      // Direct DOM manipulation for immediate effect
+      const chatContainer = document.getElementById('game-chat-container');
+      if (chatContainer) {
+        Object.keys(position).forEach(key => {
+          chatContainer.style[key] = position[key];
+        });
+        
+        // Ensure transform is applied for centering if left:50% is being used
+        if (position.left === '50%') {
+          chatContainer.style.transform = 'translateX(-50%)';
+        }
+      }
+    }
+  };
+
+  // Function to resize chat
+  window.resizeChat = (width, isMobile = false) => {
+    if (isMobile) {
+      if (width === 'auto' || width === 'fullWidth') {
+        // Calculate width as window width minus margins (20px on each side)
+        const viewportWidth = window.innerWidth;
+        const fullWidthWithMargins = viewportWidth - 40; // 20px margin on each side
+        
+        window.gameChatConfig.size.width.mobile = fullWidthWithMargins;
+        console.log('Mobile chat width updated to full width with margins:', fullWidthWithMargins);
+        
+        // Direct DOM manipulation for immediate effect
+        const chatContainer = document.getElementById('game-chat-container');
+        if (chatContainer) {
+          chatContainer.style.width = `${fullWidthWithMargins}px`;
+        }
+        
+        // Add resize listener to keep the width updated when screen size changes
+        if (!window.chatResizeListenerAdded) {
+          window.addEventListener('resize', () => {
+            const newWidth = window.innerWidth - 40;
+            const chatContainer = document.getElementById('game-chat-container');
+            if (chatContainer && window.gameChatConfig.size.width.mobile === 'fullWidth') {
+              chatContainer.style.width = `${newWidth}px`;
+              console.log('Adjusted chat width on resize:', newWidth);
+            }
+          });
+          window.chatResizeListenerAdded = true;
+        }
+        
+        // Store that we're using a responsive width
+        window.gameChatConfig.size.width.mobile = 'fullWidth';
+      } else {
+        // Use fixed width as before
+        window.gameChatConfig.size.width.mobile = width;
+        console.log('Mobile chat width updated to fixed width:', width);
+        
+        // Direct DOM manipulation for immediate effect
+        const chatContainer = document.getElementById('game-chat-container');
+        if (chatContainer) {
+          chatContainer.style.width = `${width}px`;
+        }
+      }
+    } else {
+      window.gameChatConfig.size.width.desktop = width;
+      console.log('Desktop chat width updated:', width);
+      
+      // Direct DOM manipulation for immediate effect
+      const chatContainer = document.getElementById('game-chat-container');
+      if (chatContainer) {
+        chatContainer.style.width = `${width}px`;
+      }
+    }
+  };
+
+  // Add a convenience function to apply full width with margins on mobile
+  window.setMobileFullWidth = () => {
+    // Calculate width as window width minus margins (20px on each side)
+    const viewportWidth = window.innerWidth;
+    const fullWidthWithMargins = viewportWidth - 40; // 20px margin on each side
+    
+    // Set initial width value
+    const chatContainer = document.getElementById('game-chat-container');
+    if (chatContainer) {
+      chatContainer.style.width = `${fullWidthWithMargins}px`;
+      console.log('Set chat to full width with margins:', fullWidthWithMargins);
+    }
+    
+    // Store the configuration 
+    window.gameChatConfig.size.width.mobile = 'fullWidth';
+    
+    // Add resize listener (if not already added)
+    if (!window.chatResizeListenerAdded) {
+      window.addEventListener('resize', () => {
+        const newWidth = window.innerWidth - 40;
+        const chatContainer = document.getElementById('game-chat-container');
+        if (chatContainer && window.gameChatConfig.size.width.mobile === 'fullWidth') {
+          chatContainer.style.width = `${newWidth}px`;
+          console.log('Adjusted chat width on resize:', newWidth);
+        }
+      });
+      window.chatResizeListenerAdded = true;
+    }
+    
+    // Position at the desired location
+    window.positionChat({bottom: '180px', left: '50%'}, true);
+    
+    return fullWidthWithMargins;
+  };
+  
+  // Initialize responsive width on load for mobile
+  if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+    setTimeout(() => window.setMobileFullWidth(), 1000);
+  }
+}
 
 // UI configuration for Helper Character with mobile-specific options
 const helperUIConfig = {
   // Character position and size
   position: {
     desktop: [-5.6, 0, 15],  // [x, y, z] for desktop
-    mobile: [-2.5, 0, 10]     // [x, y, z] for mobile (closer/more visible)
+    mobile: [-5.6, 0, 15]     // [x, y, z] for mobile (closer/more visible)
   },
   scale: {
     desktop: 0.14,          // Desktop scale
-    mobile: 0.12            // Mobile scale (slightly smaller)
+    mobile: 0.14            // Mobile scale (slightly smaller)
   },
   // Character box UI
   messageBox: {
     width: {
       desktop: 390,        // Desktop width in pixels
-      mobile: 280          // Mobile width in pixels (smaller)
+      mobile: 370          // Mobile width in pixels (smaller)
+    },
+    height: {
+      desktop: 400,        // Desktop height in pixels
+      mobile: 480          // Mobile height in pixels (fixed 3 to 300)
+    },
+    // Add 3D position property for the chatbox
+    position3D: {
+      desktop: [2.5, 14, 8],  // [x, y, z] for desktop chatbox position
+      mobile: [-1.25, 13, 5]    // [x, y, z] for mobile chatbox position
     },
     position: {
-      desktop: { top: '60px', right: '60px', transform: 'none' },
-      mobile: { top: '40px', right: '10px', transform: 'none' },
-      center: { top: '50%', right: '50%', transform: 'translate(50%, -50%)' }
+      desktop: { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
+      mobile: { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
+      center: { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }
     },
     fontSize: {
       desktop: '14px',
-      mobile: '12px'
+      mobile: '13px'
     },
     zIndex: 1000,
   },
@@ -94,10 +353,13 @@ const helperUIConfig = {
       mobile: '10px'
     },
     position: {
-      desktop: { x: 0, y: 17, z: 0 },
-      mobile: { x: 0, y: 15, z: 0 }
+      desktop: { x: 0, y: 18, z: 0 },
+      mobile: { x: 0, y: 17.5, z: 1}
     },
-    scale: 1.1
+    scale: {
+      desktop: 0.6,  // Reduced by 35% (from 0.5 to 0.325)
+      mobile: 0.6   // Same scale for mobile by default
+    }
   },
   // Shadow configuration
   shadow: {
@@ -112,27 +374,116 @@ const helperUIConfig = {
 console.log("=== Helper UI Configuration Guide ===");
 console.log("Access via the browser console:");
 console.log("");
-console.log("Position:");
+console.log("Character Position:");
 console.log("window.helperUIConfig.position.mobile = [x, y, z]");
 console.log("");
-console.log("Scale:");
+console.log("Character Scale:");
 console.log("window.helperUIConfig.scale.mobile = 0.15");
 console.log("");
-console.log("Message Box Width:");
+console.log("Message Box Width & Height:");
 console.log("window.helperUIConfig.messageBox.width.mobile = 300");
+console.log("window.helperUIConfig.messageBox.height.mobile = 300");
 console.log("");
-console.log("Center Message Box:");
-console.log("window.helperUIConfig.messageBox.position.desktop = window.helperUIConfig.messageBox.position.center");
-console.log("window.helperUIConfig.messageBox.position.mobile = window.helperUIConfig.messageBox.position.center");
+console.log("Chatbox 3D Position (key setting to adjust):");
+console.log("window.helperUIConfig.messageBox.position3D.desktop = [0, 15, 5]");
+console.log("window.helperUIConfig.messageBox.position3D.mobile = [0, 12, 5]");
+console.log("");
+console.log("Badge Scale:");
+console.log("window.helperUIConfig.badge.scale.desktop = 0.325");
+console.log("window.helperUIConfig.badge.scale.mobile = 0.325");
 console.log("");
 console.log("Shadow Color:");
 console.log("window.helperUIConfig.shadow.nearColor = '#00AA00'");
+console.log("");
+console.log("=== Game Chat UI Configuration ===");
+console.log("Direct Control Functions:");
+console.log("window.forceHideChatUI(true)   // Force hide chat UI (most reliable)");
+console.log("window.forceHideChatUI(false)  // Force show chat UI");
+console.log("");
+console.log("Special Interactions:");
+console.log("window.startHelperInteraction()      // Hide chat during Helper interaction");
+console.log("window.startClothingShopInteraction() // Hide chat during ClothingShop interaction");
+console.log("window.startBarberShopInteraction()  // Hide chat during BarberShop interaction");
+console.log("window.endCharacterInteraction()     // Show chat after interaction ends");
+console.log("");
+console.log("Standard Control:");
+console.log("window.toggleChat(false)  // Hide chat UI");
+console.log("window.toggleChat(true)   // Show chat UI");
+console.log("");
+console.log("Position Chat (Desktop):");
+console.log("window.positionChat({bottom: '20px', left: '50%'})");
+console.log("");
+console.log("Position Chat (Mobile):");
+console.log("window.positionChat({bottom: '180px', left: '50%'}, true)");
+console.log("");
+console.log("Resize Chat Width (Desktop):");
+console.log("window.resizeChat(400)  // Width in pixels");
+console.log("");
+console.log("Resize Chat Width (Mobile):");
+console.log("window.resizeChat(320, true)  // Fixed width in pixels");
+console.log("window.resizeChat('fullWidth', true)  // Responsive width (window width - 40px margins)");
+console.log("window.setMobileFullWidth()  // Quick setup for responsive mobile width + position");
+console.log("");
+console.log("Legacy Commands (may not work as expected):");
+console.log("window.gameChatConfig.position.mobile = { bottom: '70px', left: '50%' }");
+console.log("window.gameChatConfig.size.width.mobile = 300");
+console.log("window.gameChatConfig.visible = false // Hide game chat");
+console.log("window.gameChatConfig.visible = true  // Show game chat");
+console.log("");
+console.log("Hide Game Messaging UI in Shops:");
+console.log("window.hideGameMessaging = true  // Hide chat in shops");
+console.log("window.hideGameMessaging = false // Show chat in shops");
+console.log("");
+console.log("Hide/Show Joystick:");
+console.log("window.hideJoystick = true  // Hide joystick");
+console.log("window.hideJoystick = false // Show joystick");
 console.log("================================");
 
 // Make configuration accessible globally for real-time adjustments
 if (typeof window !== 'undefined') {
   window.helperUIConfig = helperUIConfig;
+  window.gameChatConfig = gameChatConfig; // Make game chat config available globally
 }
+
+// Function to hide chat when interacting with special characters
+window.hideGameChatDuringInteraction = (interactionType) => {
+  // Set the flag to hide the chat UI
+  window.hideGameMessaging = true;
+  console.log(`Chat UI hidden while interacting with: ${interactionType}`);
+};
+
+// Function to show chat after interaction ends
+window.showGameChatAfterInteraction = () => {
+  // Only restore chat if it wasn't force hidden
+  if (!window.forceHideGameChat) {
+    // Explicitly reset all flags that might prevent the chat from showing
+    window.hideGameMessaging = false;
+    
+    // Make sure the config is also updated
+    if (window.gameChatConfig) {
+      window.gameChatConfig.visible = true;
+    }
+    
+    console.log('Chat UI restored after interaction');
+  }
+};
+
+// Helper functions for each interaction type
+window.startHelperInteraction = () => {
+  window.hideGameChatDuringInteraction('HelperCharacter');
+};
+
+window.startClothingShopInteraction = () => {
+  window.hideGameChatDuringInteraction('ClothingShop');
+};
+
+window.startBarberShopInteraction = () => {
+  window.hideGameChatDuringInteraction('BarberShop');
+};
+
+window.endCharacterInteraction = () => {
+  window.showGameChatAfterInteraction();
+};
 
 const HelperCharacter = forwardRef((props, ref) => {
   const group = React.useRef()
@@ -162,12 +513,8 @@ const HelperCharacter = forwardRef((props, ref) => {
   const messageBoxStyle = {
     width: isMobile ? helperUIConfig.messageBox.width.mobile : helperUIConfig.messageBox.width.desktop,
     fontSize: isMobile ? helperUIConfig.messageBox.fontSize.mobile : helperUIConfig.messageBox.fontSize.desktop,
-    position: 'fixed',
-    top: isMobile ? helperUIConfig.messageBox.position.mobile.top : helperUIConfig.messageBox.position.desktop.top,
-    right: isMobile ? helperUIConfig.messageBox.position.mobile.right : helperUIConfig.messageBox.position.desktop.right,
-    transform: isMobile ? helperUIConfig.messageBox.position.mobile.transform : helperUIConfig.messageBox.position.desktop.transform,
     zIndex: helperUIConfig.messageBox.zIndex,
-    // ... other existing styles
+    // Remove position properties - handled by the 3D positioning now
   };
   
   // For the badge styling
@@ -532,6 +879,23 @@ const HelperCharacter = forwardRef((props, ref) => {
     }
   }
 
+  // Function to safely open the chatbox
+  const openChatbox = () => {
+    console.log("Opening chatbox from shared function");
+    setShowChatbox(true);
+    
+    // Use direct DOM manipulation to hide game chat immediately
+    window.directlyHideChatUI(true);
+    
+    // Start helper interaction to hide game chat
+    window.startHelperInteraction();
+    console.log("Started helper interaction, hiding chat");
+    
+    // Ensure the global flags are updated immediately
+    window.chatboxOpen = true;
+    window.hideJoystick = true; // Hide joystick UI
+  }
+  
   // Function to safely close the chatbox
   const closeChatbox = () => {
     console.log("Closing chatbox from shared function");
@@ -540,8 +904,20 @@ const HelperCharacter = forwardRef((props, ref) => {
     setMessage('');
     setReply([]);
     
-    // Ensure the global flag is updated immediately
+    // Ensure the global flags are updated immediately
     window.chatboxOpen = false;
+    window.hideJoystick = false; // Show joystick again
+    
+    // Make sure the hideGameMessaging flag is reset AFTER state updates
+    // to ensure proper cleanup
+    setTimeout(() => {
+      // Use direct DOM manipulation to show game chat
+      window.directlyHideChatUI(false);
+      
+      // End interaction to restore game chat AFTER all state is updated
+      window.endCharacterInteraction();
+      console.log("Released chat after helper interaction ended");
+    }, 100);
     
     // Force camera transition to complete by manipulating camera config temporarily
     if (window.cameraConfig) {
@@ -572,14 +948,6 @@ const HelperCharacter = forwardRef((props, ref) => {
         }, 500);
       }, 500);
     }
-  }
-  
-  // Function to safely open the chatbox
-  const openChatbox = () => {
-    console.log("Opening chatbox from shared function");
-    setShowChatbox(true);
-    // Ensure the global flag is updated immediately
-    window.chatboxOpen = true;
   }
 
   return (
@@ -638,7 +1006,7 @@ const HelperCharacter = forwardRef((props, ref) => {
               boxShadow: '0 3px 6px rgba(0,0,0,0.3)',
               border: '2px solid white',
               transition: 'all 0.3s ease',
-              transform: isNear ? `scale(${helperUIConfig.badge.scale})` : 'scale(1)',
+              transform: `scale(${isMobile ? helperUIConfig.badge.scale.mobile : helperUIConfig.badge.scale.desktop})`,
               cursor: isNear ? 'pointer' : 'default',
               pointerEvents: 'auto',
               zIndex: 1000,
@@ -681,6 +1049,7 @@ const HelperCharacter = forwardRef((props, ref) => {
               fontFamily: 'system-ui, -apple-system, sans-serif',
               boxShadow: '0 3px 6px rgba(0,0,0,0.3)',
               border: '2px solid white',
+              transform: `scale(${isMobile ? helperUIConfig.badge.scale.mobile : helperUIConfig.badge.scale.desktop})`,
               cursor: 'pointer',
               zIndex: 1010,
               opacity: 0.9,
@@ -694,7 +1063,7 @@ const HelperCharacter = forwardRef((props, ref) => {
       {/* Chatbox popup */}
       {showChatbox && (
         <Html
-          position={[0, 2, 0]}  // Use a simple, fixed position
+          position={isMobile ? helperUIConfig.messageBox.position3D.mobile : helperUIConfig.messageBox.position3D.desktop}
           wrapperClass="helper-chatbox-wrapper"
           style={{
             width: messageBoxStyle.width,
@@ -706,10 +1075,6 @@ const HelperCharacter = forwardRef((props, ref) => {
             pointerEvents: 'auto',
             color: 'white',
             zIndex: messageBoxStyle.zIndex,
-            position: 'fixed',
-            top: messageBoxStyle.top,
-            right: messageBoxStyle.right,
-            transform: messageBoxStyle.transform
           }}
         >
           <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
@@ -743,7 +1108,7 @@ const HelperCharacter = forwardRef((props, ref) => {
             <div 
               ref={chatContainerRef}
               style={{ 
-                height: isMobile ? '300px' : '400px',
+                height: isMobile ? `${helperUIConfig.messageBox.height.mobile}px` : `${helperUIConfig.messageBox.height.desktop}px`,
                 marginBottom: '10px', 
                 padding: '10px',
                 background: '#333',

@@ -66,7 +66,7 @@ const MultiplayerManager: React.FC<MultiplayerManagerProps> = ({ visible = true 
   if (!visible) return null;
 
   return (
-    <div 
+    <div
       style={{
         position: 'fixed',
         bottom: '10px',
@@ -78,8 +78,10 @@ const MultiplayerManager: React.FC<MultiplayerManagerProps> = ({ visible = true 
         fontSize: '12px',
         zIndex: 1000,
         maxWidth: '300px',
+        display: visible ? 'block' : 'none', // Hide the entire component when not visible
       }}
     >
+      {/* Multiplayer Status UI - Temporarily commented out
       <div style={{ marginBottom: '5px' }}>
         <strong>Multiplayer Status:</strong>{' '}
         <span style={{ 
@@ -100,12 +102,10 @@ const MultiplayerManager: React.FC<MultiplayerManagerProps> = ({ visible = true 
         <strong>Players Online:</strong> {playerCount}
       </div>
 
-      {/* Phase 2 update info */}
       <div style={{ marginBottom: '5px' }}>
         <strong>Position Updates:</strong> {positionUpdateCount}
       </div>
 
-      {/* Highlight appearance updates when they happen */}
       <div 
         style={{ 
           marginBottom: '5px',
@@ -119,7 +119,6 @@ const MultiplayerManager: React.FC<MultiplayerManagerProps> = ({ visible = true 
         {showAppearanceUpdate && <span style={{ marginLeft: '5px', color: '#4CAF50' }}>✓ New</span>}
       </div>
       
-      {/* Local user activity indicators */}
       <div style={{ display: 'flex', gap: '10px', marginBottom: '5px' }}>
         <div style={{ 
           padding: '2px 5px', 
@@ -141,7 +140,6 @@ const MultiplayerManager: React.FC<MultiplayerManagerProps> = ({ visible = true 
         </div>
       </div>
 
-      {/* Show remote players (Phase 2) */}
       {remotePlayersMap.size > 0 && (
         <div style={{ marginBottom: '5px' }}>
           <strong>Remote Players:</strong>
@@ -179,6 +177,7 @@ const MultiplayerManager: React.FC<MultiplayerManagerProps> = ({ visible = true 
       <div style={{ fontSize: '10px', marginTop: '5px', opacity: 0.7 }}>
         {isConnected ? 'Connected to websocket server' : 'Not connected'}
       </div>
+      */}
     </div>
   );
 };

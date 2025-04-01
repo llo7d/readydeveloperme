@@ -88,10 +88,35 @@ const getColorHelper = (colors: any[] | undefined, subToolId: string): string =>
     return colorEntry ? colorEntry.color : "#141414";
 };
 
+// Extract pose from message text if present
+const extractPoseFromMessage = (messageText: string): { pose: string | null, cleanText: string } => {
+    // Check if message starts with @pose
+    const poseMatch = messageText.match(/^@([A-Za-z]+)\s+(.*)$/);
+    if (poseMatch) {
+        const pose = poseMatch[1]; // The pose name
+        const cleanText = poseMatch[2]; // The rest of the message
+        return { pose, cleanText };
+    }
+    
+    return { pose: null, cleanText: messageText };
+};
+
 // ChatBubble component to display messages above character
 const ChatBubble = ({ message, position }: { message: { text: string; timestamp: number; messageId: string }, position: [number, number, number] }) => {
     const [visible, setVisible] = useState(true);
     const [currentMessageId, setCurrentMessageId] = useState(message.messageId);
+    
+    // Extract pose and clean text from message
+    const { pose, cleanText } = useMemo(() => extractPoseFromMessage(message.text), [message.text]);
+    
+    // Apply pose if found - needs to be in an effect to ensure it's called after the component mounts
+    useEffect(() => {
+        if (pose) {
+            // Find parent RemoteCharacter component and apply pose
+            // This will be handled by the animation system since we update the RemoteCharacter props
+            console.log(`Remote player has pose in message: ${pose}`);
+        }
+    }, [pose, message.messageId]);
     
     // When message ID changes, reset the visibility and update current ID
     useEffect(() => {
@@ -112,6 +137,9 @@ const ChatBubble = ({ message, position }: { message: { text: string; timestamp:
     
     if (!visible) return null;
     
+    // Always use the clean text without the pose tag for display
+    const displayText = cleanText || message.text;
+    
     return (
         <group position={position}>
             <Html
@@ -119,10 +147,13 @@ const ChatBubble = ({ message, position }: { message: { text: string; timestamp:
                 as="div"
                 className="pointer-events-none"
                 distanceFactor={10}
+                zIndexRange={[16777285, 16777290]}
+                occlude={false}
+                sprite={true}
             >
                 <div className="bg-white text-black px-4 py-1 rounded-xl shadow-lg text-center whitespace-normal"
                      style={{ 
-                       minWidth: message.text.length < 10 ? '100px' : '160px',
+                       minWidth: displayText.length < 10 ? '100px' : '160px',
                        maxWidth: '300px',
                        width: 'auto',
                        wordSpacing: '0.05em',
@@ -130,7 +161,7 @@ const ChatBubble = ({ message, position }: { message: { text: string; timestamp:
                        whiteSpace: 'normal',
                        wordWrap: 'break-word'
                      }}>
-                  <p className="text-base font-medium">{message.text}</p>
+                  <p className="text-base font-medium">{displayText}</p>
                 </div>
             </Html>
         </group>
@@ -468,6 +499,9 @@ export default function RemoteCharacter({ id, username, position, rotation, colo
             console.log(`[${id.slice(0,6)}] Falling back to default idle: ${targetAnimationName}`);
         }
 
+        // IMPORTANT: Save current position before animation transition
+        const savedPosition = groupRef.current ? groupRef.current.position.clone() : null;
+        
         // First, stop ALL currently running animations to ensure clean transitions
         Object.entries(actions).forEach(([name, action]) => {
             if (action && action.isRunning() && name !== targetAnimationName) {
@@ -485,6 +519,11 @@ export default function RemoteCharacter({ id, username, position, rotation, colo
                 .setEffectiveWeight(1)
                 .fadeIn(SETTINGS.ANIMATION_FADE_DURATION)
                 .play();
+                
+            // IMPORTANT: Restore position after animation has started
+            if (savedPosition && groupRef.current) {
+                groupRef.current.position.copy(savedPosition);
+            }
         } else {
             console.error(`[${id.slice(0,6)}] Could not play animation: ${targetAnimationName} - action not found`);
         }
@@ -576,33 +615,39 @@ export default function RemoteCharacter({ id, username, position, rotation, colo
         </mesh>
     );
 
-    const Nametag = () => (
-        <group position={[0, 2.3, 0]}>
-            <Html
-                center
-                as="div"
-                className="pointer-events-none"
-                distanceFactor={10}
-                zIndexRange={[16777271, 16777272]}
-                occlude={false}
-            >
-                <div className="px-5 py-1 rounded-xl shadow-lg text-center" 
-                     style={{ 
-                         backgroundColor: "#4B50EC", 
-                         opacity: 0.9,
-                         color: 'white', 
-                         fontSize: '15px', 
-                         fontWeight: 'bold', 
-                         fontFamily: 'Arial, sans-serif', 
-                         whiteSpace: 'nowrap', 
-                         userSelect: 'none', 
-                         textShadow: '1px 1px 1px rgba(0,0,0,0.5)' 
-                     }}>
-                    {username || `Player_${id.slice(0, 6)}`}
-                </div>
-            </Html>
-        </group>
-    );
+    const Nametag = () => {
+        // Create a separate username component to avoid re-renders tied to the character's movement
+        const [usernameToShow] = useState(username || `Player_${id.slice(0, 6)}`);
+        
+        return (
+            <group position={[0, 2.3, 0]}>
+                <Html
+                    center
+                    as="div"
+                    className="pointer-events-none"
+                    distanceFactor={10}
+                    zIndexRange={[16777280, 16777284]}
+                    occlude={false}
+                    sprite={true}
+                >
+                    <div className="px-5 py-1 rounded-xl shadow-lg text-center" 
+                         style={{ 
+                             backgroundColor: "#4B50EC", 
+                             opacity: 0.9,
+                             color: 'white', 
+                             fontSize: '15px', 
+                             fontWeight: 'bold', 
+                             fontFamily: 'Arial, sans-serif', 
+                             whiteSpace: 'nowrap', 
+                             userSelect: 'none', 
+                             textShadow: '1px 1px 1px rgba(0,0,0,0.5)'
+                         }}>
+                        {usernameToShow}
+                    </div>
+                </Html>
+            </group>
+        );
+    };
 
     // --- Render Logic ---
     const canRender = isReady && clonedScene;

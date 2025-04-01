@@ -309,17 +309,71 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     newSocket.on('chatMessage', (messageData) => {
       console.log('Multiplayer: Chat message received:', messageData.id, messageData.message.text);
       
+      // Extract pose from message if present
+      const poseMatch = messageData.message.text.match(/^@([A-Za-z]+)\s+(.*)$/);
+      let pose: string | null = null;
+      let messageText = messageData.message.text;
+      
+      if (poseMatch) {
+        // The message contains a pose
+        pose = poseMatch[1]; // The pose name (e.g., "Waving")
+        messageText = poseMatch[2]; // The clean message without the pose tag
+        
+        console.log('Multiplayer: Message contains pose:', pose);
+      }
+      
       // Update the player with the message
       setRemotePlayersMap(prevMap => {
         const newMap = new Map(prevMap);
         const existingPlayer = newMap.get(messageData.id);
         
         if (existingPlayer) {
-          // Update existing player with the new message
-          newMap.set(messageData.id, {
-            ...existingPlayer,
-            message: messageData.message
-          });
+          // If the message has a pose, also update the player's selected pose
+          if (pose) {
+            // Convert pose name to pose_name format (e.g., "Waving" -> "pose_waving")
+            const formattedPose = `pose_${pose.toLowerCase()}`;
+            
+            // Update existing player with new message and pose
+            newMap.set(messageData.id, {
+              ...existingPlayer,
+              message: {
+                ...messageData.message,
+                text: messageText // Use the clean message text without the pose tag
+              },
+              // Also update the selected pose
+              selected: {
+                ...existingPlayer.selected,
+                pose: formattedPose
+              }
+            });
+            
+            // Set a timeout to revert the pose after 5 seconds
+            setTimeout(() => {
+              setRemotePlayersMap(currentMap => {
+                const updatedMap = new Map(currentMap);
+                const player = updatedMap.get(messageData.id);
+                
+                if (player && player.selected?.pose === formattedPose) {
+                  // Only revert if the pose hasn't been changed by another message
+                  updatedMap.set(messageData.id, {
+                    ...player,
+                    selected: {
+                      ...player.selected,
+                      pose: "pose_crossed_arm" // Default pose
+                    }
+                  });
+                }
+                
+                return updatedMap;
+              });
+            }, 5000);
+          } else {
+            // Just update the message without changing the pose
+            newMap.set(messageData.id, {
+              ...existingPlayer,
+              message: messageData.message
+            });
+          }
         }
         
         return newMap;

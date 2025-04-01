@@ -45,9 +45,9 @@ const cameraConfig = {
     // Adjustable offsets for fine-tuning
     offset: {
       x: 0,      // Left/right offset for target
-      y: -0.65,  // Up/down offset for target (lowered by 0.65)
+      y: -0.75,  // Up/down offset for target (changed from -0.65 to -0.75)
       z: 0,      // Forward/back offset for target
-      pitch: -0.2,  // Adjust pitch angle (vertical rotation) to -0.2
+      pitch: -0.27,  // Adjust pitch angle (vertical rotation) (changed from -0.2 to -0.27)
       angle: 0.4    // Adjust horizontal angle around helper to 0.4
     }
   }

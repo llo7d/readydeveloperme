@@ -13,6 +13,7 @@ interface MovementState {
 declare global {
   interface Window {
     setCharacterMovement?: React.Dispatch<React.SetStateAction<MovementState>>;
+    hideJoystick?: boolean;
   }
 }
 
@@ -61,6 +62,7 @@ const MobileControlsProvider: React.FC = () => {
   const isTabletScreen = useMediaQuery({ query: '(max-width: 1024px)' });
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [showControls, setShowControls] = useState(false);
+  const [joystickHidden, setJoystickHidden] = useState(false);
   
   // Joystick state
   const joystickRef = useRef<HTMLDivElement>(null);
@@ -102,6 +104,21 @@ const MobileControlsProvider: React.FC = () => {
   useEffect(() => {
     setShowControls(isMobileScreen || isTabletScreen || isTouchDevice);
   }, [isMobileScreen, isTabletScreen, isTouchDevice]);
+
+  // Check if joystick should be hidden (when in chatbox, etc.)
+  useEffect(() => {
+    const checkJoystickVisibility = () => {
+      setJoystickHidden(window.hideJoystick === true);
+    };
+    
+    // Check immediately and set up interval
+    checkJoystickVisibility();
+    const interval = setInterval(checkJoystickVisibility, 100);
+    
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
 
   // Movement handlers - updates the window.setCharacterMovement function
   const updateMovement = (newState: Partial<MovementState>) => {
@@ -210,8 +227,8 @@ const MobileControlsProvider: React.FC = () => {
     window.removeEventListener('mouseup', handleJoystickEnd as any);
   };
 
-  // Don't render anything if we don't need to show controls
-  if (!showControls) return null;
+  // Don't render anything if we don't need to show controls or if joystick is hidden
+  if (!showControls || joystickHidden) return null;
 
   return (
     <div style={mobileControlsStyle}>

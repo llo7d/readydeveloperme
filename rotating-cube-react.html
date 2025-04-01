@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotating White Cube - React Three Fiber</title>
+    <!-- Load React and ReactDOM -->
+    <script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
+    <!-- Load Three.js -->
+    <script src="https://unpkg.com/three@0.156.1/build/three.js"></script>
+    <!-- Load JSX preprocessor -->
+    <script src="https://unpkg.com/@babel/standalone@7.23.2/babel.min.js"></script>
+    <!-- Load Three.js extras needed by react-three-fiber -->
+    <script src="https://unpkg.com/three@0.156.1/examples/js/loaders/GLTFLoader.js"></script>
+    <!-- Load React Three Fiber via skypack (which handles ES modules) -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.156.1/build/three.module.js",
+          "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.14.3"
+        }
+      }
+    </script>
+    <script async src="https://unpkg.com/es-module-shims@1.7.0/dist/es-module-shims.js"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #888888;
+        }
+        canvas {
+            display: block;
+        }
+        #root {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="module">
+        import { Canvas, useFrame } from '@react-three/fiber';
+        
+        // Make react-three-fiber available to Babel script
+        window.ReactThreeModule = {
+            Canvas,
+            useFrame
+        };
+    </script>
+    
+    <script type="text/babel">
+        const { Canvas, useFrame } = window.ReactThreeModule;
+        const { useRef, useState, useEffect } = React;
+        
+        // Rotating cube component
+        function RotatingCube() {
+            const meshRef = useRef();
+            
+            // Animation frame hook
+            useFrame(() => {
+                if (meshRef.current) {
+                    meshRef.current.rotation.x += 0.01;
+                    meshRef.current.rotation.y += 0.01;
+                }
+            });
+            
+            return (
+                <mesh ref={meshRef}>
+                    <boxGeometry args={[2, 2, 2]} />
+                    <meshBasicMaterial color="#ffffff" />
+                </mesh>
+            );
+        }
+        
+        // Main App component
+        function App() {
+            const [loaded, setLoaded] = useState(false);
+            
+            // Wait for ReactThreeModule to be available
+            useEffect(() => {
+                const checkLoaded = () => {
+                    if (window.ReactThreeModule) {
+                        setLoaded(true);
+                    } else {
+                        setTimeout(checkLoaded, 100);
+                    }
+                };
+                checkLoaded();
+            }, []);
+            
+            if (!loaded) {
+                return <div>Loading...</div>;
+            }
+            
+            return (
+                <Canvas style={{ background: '#888888' }}>
+                    <ambientLight intensity={0.5} />
+                    <directionalLight position={[0, 1, 1]} intensity={0.5} />
+                    <RotatingCube />
+                </Canvas>
+            );
+        }
+        
+        // Render the App when the document is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            const rootElement = document.getElementById('root');
+            if (rootElement) {
+                ReactDOM.render(<App />, rootElement);
+            }
+        });
+    </script>
+</body>
+</html> 
