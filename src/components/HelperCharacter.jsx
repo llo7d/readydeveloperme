@@ -324,16 +324,16 @@ const helperUIConfig = {
   messageBox: {
     width: {
       desktop: 390,        // Desktop width in pixels
-      mobile: 370          // Mobile width in pixels (smaller)
+      mobile: 320          // Mobile width in pixels (smaller)
     },
     height: {
       desktop: 400,        // Desktop height in pixels
-      mobile: 480          // Mobile height in pixels (fixed 3 to 300)
+      mobile: 350         // Mobile height in pixels (fixed 3 to 300)
     },
     // Add 3D position property for the chatbox
     position3D: {
       desktop: [2.5, 14, 8],  // [x, y, z] for desktop chatbox position
-      mobile: [-1.25, 13, 5]    // [x, y, z] for mobile chatbox position
+      mobile: [-1.6, 13, 5]    // [x, y, z] for mobile chatbox position
     },
     position: {
       desktop: { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
@@ -359,6 +359,11 @@ const helperUIConfig = {
     scale: {
       desktop: 0.6,  // Reduced by 35% (from 0.5 to 0.325)
       mobile: 0.6   // Same scale for mobile by default
+    },
+    // Add separate scale for "Stop Talking" badge
+    stopTalkingScale: {
+      desktop: 0.9,  // Larger scale for Stop Talking badge on desktop
+      mobile: 0.9    // Larger scale for Stop Talking badge on mobile
     }
   },
   // Shadow configuration
@@ -391,6 +396,10 @@ console.log("");
 console.log("Badge Scale:");
 console.log("window.helperUIConfig.badge.scale.desktop = 0.325");
 console.log("window.helperUIConfig.badge.scale.mobile = 0.325");
+console.log("");
+console.log("Stop Talking Badge Scale:");
+console.log("window.helperUIConfig.badge.stopTalkingScale.desktop = 0.9");
+console.log("window.helperUIConfig.badge.stopTalkingScale.mobile = 0.9");
 console.log("");
 console.log("Shadow Color:");
 console.log("window.helperUIConfig.shadow.nearColor = '#00AA00'");
@@ -1049,7 +1058,7 @@ const HelperCharacter = forwardRef((props, ref) => {
               fontFamily: 'system-ui, -apple-system, sans-serif',
               boxShadow: '0 3px 6px rgba(0,0,0,0.3)',
               border: '2px solid white',
-              transform: `scale(${isMobile ? helperUIConfig.badge.scale.mobile : helperUIConfig.badge.scale.desktop})`,
+              transform: `scale(${isMobile ? helperUIConfig.badge.stopTalkingScale.mobile : helperUIConfig.badge.stopTalkingScale.desktop})`,
               cursor: 'pointer',
               zIndex: 1010,
               opacity: 0.9,

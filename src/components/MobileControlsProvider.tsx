@@ -125,7 +125,9 @@ const MobileControlsProvider: React.FC = () => {
     if (window.setCharacterMovement && typeof window.setCharacterMovement === 'function') {
       window.setCharacterMovement(prevState => ({
         ...prevState,
-        ...newState
+        ...newState,
+        // Always set running to false on mobile to prevent sprinting
+        running: false
       }));
     }
   };
@@ -203,6 +205,7 @@ const MobileControlsProvider: React.FC = () => {
     const turnLeft = limitedX < -10;
     const turnRight = limitedX > 10;
     
+    // Update movement state - running is forced to false in updateMovement
     updateMovement({
       forward,
       turnLeft,
