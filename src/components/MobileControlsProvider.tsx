@@ -9,13 +9,12 @@ interface MovementState {
   running: boolean;
 }
 
-// Add global declaration for TypeScript
-declare global {
-  interface Window {
-    setCharacterMovement?: React.Dispatch<React.SetStateAction<MovementState>>;
-    hideJoystick?: boolean;
-  }
-}
+// Window interface is now defined globally in src/types/window.d.ts
+// declare global {
+//   interface Window {
+    // ... removed declarations ...
+//   }
+// }
 
 // Container styles
 const mobileControlsStyle: React.CSSProperties = {

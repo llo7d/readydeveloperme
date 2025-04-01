@@ -3,16 +3,12 @@ import { useFrame, useThree } from '@react-three/fiber'
 import React, { useRef, useEffect, useState, MutableRefObject } from 'react'
 import * as THREE from "three";
 
-// Add TypeScript declaration for the global window property
-declare global {
-  interface Window {
-    chatboxOpen: boolean;
-    inChatTransition: boolean;
-    cameraConfig: typeof cameraConfig;
-    helperUIConfig: any;
-    isColorPickerDragging: boolean;
-  }
-}
+// Window interface is now defined globally in src/types/window.d.ts
+// declare global {
+//   interface Window {
+    // ... removed declarations ...
+//   }
+// }
 
 // Configuration for the third-person camera
 const cameraConfig = {

@@ -3,18 +3,12 @@ import { useStore } from '../store/store';
 import { useMultiplayer } from '../contexts/MultiplayerContext';
 import { useMediaQuery } from 'react-responsive';
 
-// Add TypeScript declaration for the global window property
-declare global {
-  interface Window {
-    chatboxFocused: boolean;
-    setCharacterPose?: (pose: string) => void;
-    showMessage?: (message: string) => void;
-    hideGameMessaging: boolean;
-    gameChatConfig: any;
-    forceHideGameChat: boolean;
-    chatboxOpen: boolean;
-  }
-}
+// Window interface is now defined globally in src/types/window.d.ts
+// declare global {
+//   interface Window {
+    // ... removed declarations ...
+//   }
+// }
 
 // List of available poses with their display names
 const AVAILABLE_POSES = [

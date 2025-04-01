@@ -50,26 +50,27 @@ import IconHats from "../assets/icons/IconHats";
 import IconPose0 from "../assets/icons/IconPose0";
 import IconGlasses1 from "../assets/icons/IconGlasses2";
 
-
-type SubTool = {
+// Type definition for ToolItem
+export type ToolItem = {
   id: string;
-  icon: React.FC<SVGProps<SVGSVGElement>>;
+  icon: React.FC<React.SVGProps<SVGSVGElement>>;
   name?: string;
   color?: string;
 };
 
-type Tool = {
+// Type definition for Tool
+export type Tool = {
   id: string;
-  label: string;
-  icon: React.FC<SVGProps<SVGSVGElement>>;
-  items: SubTool[];
+  icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  items: ToolItem[];
+  title: string;
 };
 
 export const getToolbarData = (): Tool[] => {
   return [
     {
       id: "pose",
-      label: "Poses",
+      title: "Poses",
       icon: IconPose,
       items: [
         {
@@ -183,7 +184,7 @@ export const getToolbarData = (): Tool[] => {
 
     {
       id: "tool_2",
-      label: "Colors",
+      title: "Colors",
       icon: IconColor,
       items: [
         {
@@ -206,41 +207,13 @@ export const getToolbarData = (): Tool[] => {
           id: `tool_2_item_5`,
           icon: IconPants1,
         },
-        {
-          id: `tool_2_item_6`,
-          icon: IconPants2,
-        },
-        {
-          id: `tool_2_item_7`,
-          icon: IconPants3,
-        },
-        {
-          id: `tool_2_item_8`,
-          icon: IconShoes1,
-        },
-        {
-          id: `tool_2_item_9`,
-          icon: IconShoes2,
-        },
-        {
-          id: `tool_2_item_10`,
-          icon: IconShoes3,
-        },
-        {
-          id: `tool_2_item_11`,
-          icon: IconWatch,
-        },
-        {
-          id: `tool_2_item_12`,
-          icon: IconHats,
-        },
       ]
     },
 
 
     {
       id: "hair",
-      label: "Hair",
+      title: "Hair",
       icon: IconHair1,
       items: [
         {
@@ -278,7 +251,7 @@ export const getToolbarData = (): Tool[] => {
 
     {
       id: "beard",
-      label: "Beard",
+      title: "Beard",
       icon: IconBeard1,
       items: [
         {
@@ -318,7 +291,7 @@ export const getToolbarData = (): Tool[] => {
 
     {
       id: "face",
-      label: "Face",
+      title: "Face",
       icon: IconFace,
       items: [
         {
@@ -341,7 +314,7 @@ export const getToolbarData = (): Tool[] => {
     },
     {
       id: "glasses",
-      label: "Glasses",
+      title: "Glasses",
       icon: IconGlasses,
       items:
         [{
@@ -373,7 +346,7 @@ export const getToolbarData = (): Tool[] => {
     },
     {
       id: "lights",
-      label: "Lights",
+      title: "Lights",
       icon: IconLight,
       items:
         [
@@ -398,7 +371,7 @@ export const getToolbarData = (): Tool[] => {
     },
     {
       id: "hats",
-      label: "Hats",
+      title: "Hats",
       icon: IconHats,
       items:
         [{
@@ -416,7 +389,7 @@ export const getToolbarData = (): Tool[] => {
     },
     {
       id: "logo",
-      label: "Logo",
+      title: "Logo",
       icon: IconImage,
       items:
         [{

@@ -37,26 +37,12 @@ import { MultiplayerProvider, useMultiplayer } from './contexts/MultiplayerConte
 import MultiplayerManager from './components/MultiplayerManager';
 import RemoteCharactersManager from "./components/RemoteCharactersManager";
 
-// Extend Window interface to include our global functions
-declare global {
-  interface Window {
-    // Chat visibility functions
-    forceHideGameChat?: boolean;
-    hideGameMessaging?: boolean;
-    hideJoystick?: boolean;
-    gameChatConfig?: any;
-    chatboxOpen?: boolean;
-    inChatTransition?: boolean;
-    cameraConfig?: any;
-    isCustomizingClothing?: boolean;
-    
-    // Helper character interaction functions
-    startHelperInteraction?: () => void;
-    startClothingShopInteraction?: () => void;
-    startBarberShopInteraction?: () => void;
-    endCharacterInteraction?: () => void;
-  }
-}
+// Window interface is now defined globally in src/types/window.d.ts
+// declare global {
+//   interface Window {
+    // ... removed declarations ...
+//   }
+// }
 
 // This component handles all scene-specific behaviors that need to use hooks like useFrame
 const SceneManager = ({ 
@@ -276,84 +262,31 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
   // Tool 2 subtool colors. Set default color state here.
   const [subToolColors, setSubToolColors] = useState(
     savedAppearance?.colors || tools[1].items.map((item) => {
-      if (item.id === "tool_2_item_1") {
-        return {
-          subToolId: item.id,
-          color: "#131313",
-        };
+      // Keep defaults for items 1-5
+      if (item.id === "tool_2_item_1") { // Hair
+        return { subToolId: item.id, color: "#131313" };
       }
-      if (item.id === "tool_2_item_2") {
-        return {
-          subToolId: item.id,
-          color: "#131313",
-        };
+      if (item.id === "tool_2_item_2") { // Beard
+        return { subToolId: item.id, color: "#131313" };
       }
-      if (item.id === "tool_2_item_3") {
-        return {
-          subToolId: item.id,
-          color: "#d8d8d8",
-        };
+      if (item.id === "tool_2_item_3") { // Shirt Main
+        return { subToolId: item.id, color: "#d8d8d8" };
       }
+      if (item.id === "tool_2_item_4") { // Shirt Cuffs
+        return { subToolId: item.id, color: "#ffffff" };
+      }
+      if (item.id === "tool_2_item_5") { // Pants Main
+        return { subToolId: item.id, color: "#aabef9" };
+      }
+      
+      // Removed defaults for items 6-12
 
-      if (item.id === "tool_2_item_4") {
-        return {
-          subToolId: item.id,
-          color: "#ffffff",
-        };
-      }
-      if (item.id === "tool_2_item_5") {
-        return {
-          subToolId: item.id,
-          color: "#aabef9",
-        };
-      }
-      if (item.id === "tool_2_item_6") {
-        return {
-          subToolId: item.id,
-          color: "#768bca",
-        };
-      }
-
-      if (item.id === "tool_2_item_8") {
-        return {
-          subToolId: item.id,
-          color: "#ffffff",
-        };
-      }
-
-      if (item.id === "tool_2_item_9") {
-        return {
-          subToolId: item.id,
-          color: "#4e5a87",
-        };
-      }
-
-      if (item.id === "tool_2_item_10") {
-        return {
-          subToolId: item.id,
-          color: "#3a4673",
-        };
-      }
-
-      if (item.id === "tool_2_item_11") {
-        return {
-          subToolId: item.id,
-          color: "#ffffff",
-        };
-      }
-
-      if (item.id === "tool_2_item_12") {
-        return {
-          subToolId: item.id,
-          color: "#3a4673",
-        };
-      }
-
+      // Fallback for any unexpected items (should not happen now)
       return {
         subToolId: item.id,
         color: "#141414",
       };
-    })
+    }).filter(Boolean) // Filter out any potential null/undefined values from removed items
   );
 
   // Filter the tools array to only show Colors when in clothing customization mode
@@ -929,6 +862,38 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
                 onChangeClothing={toggleClothingCustomization}
                 canChangeClothing={nearShop && !isCharacterMoving}
                 isCustomizing={customizingClothing}
+                tool={tool}
+                selected={selected}
+                subToolColors={subToolColors}
+                onClickItem={(item) => {
+                  console.log('--- Clothing Item Clicked ---');
+                  console.log('Item ID:', item.id);
+                  console.log('Tool ID:', tool.id);
+                  console.log('-----------------------------');
+                  
+                  // Existing logic
+                  console.log('Multiplayer: Changing item', { toolId: tool.id, itemId: item.id });
+                  setSelected({
+                    ...selected,
+                    [tool.id]: item.id
+                  });
+                  // Handle logo upload click specifically if needed
+                  if (item.id === 'logo_upload') {
+                    refLogoInput.current?.click();
+                  }
+                }}
+                onChangeColor={(subToolColor) => {
+                  console.log('Multiplayer: Changing color', { subToolId: selected[tool.id], color: subToolColor.color });
+                  const newSubToolColors = subToolColors.map((color) => {
+                    if (color.subToolId === selected[tool.id]) {
+                      return { ...color, color: subToolColor.color };
+                    }
+                    return color;
+                  });
+                  setSubToolColors(newSubToolColors);
+                }}
+                onExitCustomization={toggleClothingCustomization}
+                isMobile={!isDesktop}
               />
             )}
             {inBarberShop && (
@@ -1044,102 +1009,6 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
               </p>
             </div>
           </>
-        )}
-
-        {/* Fixed position close button for clothing customization */}
-        {customizingClothing && (
-          <div className="fixed top-8 right-8 z-50">
-            <button
-              className="text-2xl w-16 h-16 flex items-center justify-center bg-red-500 rounded-full shadow-lg border-2 border-white"
-              type="button"
-              onClick={() => toggleClothingCustomization()}
-              style={{
-                color: 'white',
-                fontSize: '28px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.1)';
-                e.currentTarget.style.backgroundColor = '#e74c3c';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.backgroundColor = '#ef4444';
-              }}
-            >
-              ✕
-            </button>
-          </div>
-        )}
-
-        {/* Customization UI */}
-        {customizingClothing && isDesktop && (
-          <div className="fixed bottom-1/2 right-56 transform translate-y-1/2 z-30">
-            <SubToolbar
-              subToolId={selected[tool.id]}
-              tool={tool}
-              colors={subToolColors}
-              onClickItem={(item) => {
-                console.log('Multiplayer: Changing item', { toolId: tool.id, itemId: item.id });
-                setSelected({
-                  ...selected,
-                  [tool.id]: item.id
-                })
-
-                if (item.id === 'logo_upload') {
-                  refLogoInput.current?.click();
-                }
-              }}
-              onChangeColor={(subToolColor) => {
-                console.log('Multiplayer: Changing color', { subToolId: selected[tool.id], color: subToolColor.color });
-                const newSubToolColors = subToolColors.map((color) => {
-                  if (color.subToolId === selected[tool.id]) {
-                    return {
-                      ...color,
-                      color: subToolColor.color,
-                    };
-                  }
-
-                  return color;
-                });
-
-                setSubToolColors(newSubToolColors);
-              }}
-            />
-            <input
-              ref={refLogoInput}
-              className="hidden"
-              type="file"
-              accept="image/png"
-              onChange={handlePickedLogo}
-            />
-            
-            {/* Exit button positioned right under the customization UI */}
-            <div className="mt-4 flex justify-center">
-              <button
-                className="text-white font-bold px-6 py-3 bg-red-500 rounded-full shadow-lg border-2 border-white"
-                type="button"
-                onClick={() => toggleClothingCustomization()}
-                style={{
-                  fontSize: '16px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.05)';
-                  e.currentTarget.style.backgroundColor = '#e74c3c';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.backgroundColor = '#ef4444';
-                }}
-              >
-                Exit Clothing Customization
-              </button>
-            </div>
-          </div>
         )}
 
         <ManualPopup

@@ -7,17 +7,15 @@ import { useMultiplayer } from '../contexts/MultiplayerContext';
 // Remove the import as we're not using it directly here
 // import MobileControls from './MobileControls';
 
-// Add TypeScript declaration for the global window property
-declare global {
-  interface Window {
-    chatboxOpen: boolean;
-    isCustomizingClothing?: boolean;
-    chatboxFocused: boolean;
-    setCharacterMovement?: React.Dispatch<React.SetStateAction<MovementState>>;
-  }
-}
+// Window interface is now defined globally in src/types/window.d.ts
+// declare global {
+//   interface Window {
+    // ... removed declarations ...
+//   }
+// }
 
-interface MovementState {
+// Export the MovementState interface
+export interface MovementState {
   forward: boolean;
   turnLeft: boolean;
   turnRight: boolean;

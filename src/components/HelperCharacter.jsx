@@ -53,6 +53,41 @@ styleElement.innerHTML = `
     pointer-events: auto !important;
     z-index: 999 !important;
   }
+  
+  /* Custom scrollbar for Webkit browsers */
+  .helper-chat-messages::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .helper-chat-messages::-webkit-scrollbar-track {
+    background: #333;
+    border-radius: 4px;
+  }
+  
+  .helper-chat-messages::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+  }
+  
+  .helper-chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #666;
+  }
+  
+  /* Ensure input doesn't overflow on small screens */
+  @media (max-width: 360px) {
+    .helper-chat-form {
+      flex-direction: column;
+    }
+    
+    .helper-chat-input {
+      margin-bottom: 8px;
+    }
+    
+    .helper-chat-button {
+      width: 100%;
+      margin-left: 0 !important;
+    }
+  }
 `;
 document.head.appendChild(styleElement);
 
@@ -328,12 +363,16 @@ const helperUIConfig = {
     },
     height: {
       desktop: 400,        // Desktop height in pixels
-      mobile: 350         // Mobile height in pixels (fixed 3 to 300)
+      mobile: 350          // Mobile height in pixels
+    },
+    aspectRatio: {
+      width: 4,            // Standard width ratio
+      height: 5            // Standard height ratio (4:5 ratio)
     },
     // Add 3D position property for the chatbox
     position3D: {
       desktop: [2.5, 14, 8],  // [x, y, z] for desktop chatbox position
-      mobile: [-1.6, 13, 5]    // [x, y, z] for mobile chatbox position
+      mobile: [-1.8, 14.8, 5]   // [x, y, z] for mobile chatbox position - moved left and slightly down
     },
     position: {
       desktop: { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
@@ -364,6 +403,12 @@ const helperUIConfig = {
     stopTalkingScale: {
       desktop: 0.9,  // Larger scale for Stop Talking badge on desktop
       mobile: 0.3    // Larger scale for Stop Talking badge on mobile
+    },
+    // Add responsive positioning for the Stop Talking badge
+    stopTalkingPosition: {
+      // These values will be calculated dynamically based on screen size
+      defaultY: 500, // Distance from top in pixels on Samsung Galaxy S20 Ultra
+      defaultScreenHeight: 915 // Reference height for Samsung Galaxy S20 Ultra
     }
   },
   // Shadow configuration
@@ -400,6 +445,10 @@ console.log("");
 console.log("Stop Talking Badge Scale:");
 console.log("window.helperUIConfig.badge.stopTalkingScale.desktop = 0.9");
 console.log("window.helperUIConfig.badge.stopTalkingScale.mobile = 0.9");
+console.log("");
+console.log("Responsive Positioning:");
+console.log("window.calculateResponsivePositions() // Recalculate positions based on current screen size");
+console.log("window.helperUIConfig.badge.stopTalkingPosition.defaultY = 500 // Distance from top in reference screen");
 console.log("");
 console.log("Shadow Color:");
 console.log("window.helperUIConfig.shadow.nearColor = '#00AA00'");
@@ -494,6 +543,85 @@ window.endCharacterInteraction = () => {
   window.showGameChatAfterInteraction();
 };
 
+// Add window-level functions for responsive positioning
+if (typeof window !== 'undefined') {
+  // Function to calculate responsive positions for UI elements
+  window.calculateResponsivePositions = () => {
+    if (!window.helperUIConfig) return;
+    
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    
+    // Reference values (Samsung Galaxy S20 Ultra)
+    const referenceHeight = window.helperUIConfig.badge.stopTalkingPosition.defaultScreenHeight;
+    const referenceStopTalkingY = window.helperUIConfig.badge.stopTalkingPosition.defaultY; 
+    
+    // Calculate proportional positioning - maintaining same visual spacing
+    const heightRatio = viewportHeight / referenceHeight;
+    
+    // Calculate Y position for Stop Talking badge (maintaining same relative distance from top)
+    const scaledStopTalkingY = referenceStopTalkingY * heightRatio;
+    
+    // Convert screen space to world space for the badge
+    // Higher Y value = higher position in 3D space
+    const badgeWorldY = 21 - (scaledStopTalkingY / viewportHeight * 8);
+    
+    // Update badge position
+    if (window.helperUIConfig.badge && window.helperUIConfig.badge.position) {
+      window.helperUIConfig.badge.position.mobile.y = badgeWorldY;
+      console.log(`Adjusted badge Y position to ${badgeWorldY} (screen height: ${viewportHeight}px)`);
+    }
+    
+    // Update chatbox position - position it in center of screen
+    if (window.helperUIConfig.messageBox && window.helperUIConfig.messageBox.position3D) {
+      // Mobile chatbox offset based on screen proportions
+      window.helperUIConfig.messageBox.position3D.mobile = [
+        -1.6, // X position
+        15, // Y position - much higher to be at face level, not at feet
+        5 + (viewportWidth < 400 ? -1 : 0) // Z position - closer on narrower screens
+      ];
+      
+      // Calculate responsive width based on screen width
+      const responsiveWidth = Math.min(
+        Math.round(viewportWidth * 0.8), // 80% of screen width
+        400 // max width
+      );
+      
+      // Use aspect ratio to calculate height
+      const { width: ratioWidth, height: ratioHeight } = window.helperUIConfig.messageBox.aspectRatio;
+      const responsiveHeight = Math.round(responsiveWidth * (ratioHeight / ratioWidth));
+      
+      // Set chatbox dimensions
+      window.helperUIConfig.messageBox.width.mobile = responsiveWidth;
+      window.helperUIConfig.messageBox.height.mobile = Math.min(
+        responsiveHeight, // height based on aspect ratio
+        Math.round(viewportHeight * 0.6), // max 60% of viewport height
+        400 // absolute max height
+      );
+      
+      console.log(`Adjusted chatbox: ${responsiveWidth}x${window.helperUIConfig.messageBox.height.mobile}px (screen: ${viewportWidth}x${viewportHeight})`);
+    }
+    
+    return {
+      badgeY: badgeWorldY,
+      chatboxPosition: window.helperUIConfig.messageBox.position3D.mobile
+    };
+  };
+  
+  // Call immediately and add resize listener
+  if (window.innerWidth <= 768) {
+    window.calculateResponsivePositions();
+    
+    // Add resize listener if not already added
+    if (!window.helperUIPositionListenerAdded) {
+      window.addEventListener('resize', () => {
+        window.calculateResponsivePositions();
+      });
+      window.helperUIPositionListenerAdded = true;
+    }
+  }
+}
+
 const HelperCharacter = forwardRef((props, ref) => {
   const group = React.useRef()
   const [isNear, setIsNear] = useState(false)
@@ -509,6 +637,14 @@ const HelperCharacter = forwardRef((props, ref) => {
 
   // Add this line to detect mobile view
   const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
+  
+  // Recalculate responsive positions when component mounts on mobile
+  useEffect(() => {
+    if (isMobile && typeof window !== 'undefined' && window.calculateResponsivePositions) {
+      // Recalculate positions for this specific device
+      window.calculateResponsivePositions();
+    }
+  }, [isMobile]);
   
   // For example, in your render function:
   // Use the appropriate scale based on device
@@ -554,7 +690,7 @@ const HelperCharacter = forwardRef((props, ref) => {
 
   // Set up a state to track post-chat transition
   const [inPostChatTransition, setInPostChatTransition] = useState(false);
-
+  
   // Store original rotation to return to after conversation ends
   const originalRotation = useRef([0, Math.PI / 4, 0]);
   
@@ -903,6 +1039,67 @@ const HelperCharacter = forwardRef((props, ref) => {
     // Ensure the global flags are updated immediately
     window.chatboxOpen = true;
     window.hideJoystick = true; // Hide joystick UI
+    
+    // Calculate appropriate chatbox size for current device
+    setTimeout(calculateChatboxSize, 100);
+    
+    // Position the player character and camera consistently for conversation
+    if (window.cameraConfig && camera && group.current) {
+      // Get the helper character's position
+      const helperPos = new THREE.Vector3();
+      group.current.getWorldPosition(helperPos);
+      
+      // Store original camera settings
+      const originalDistance = window.cameraConfig.distance;
+      const originalHeight = window.cameraConfig.height;
+      
+      // Set fixed camera position for conversation
+      // This ensures consistent view across all devices
+      window.cameraConfig.helperFocus.active = true;
+      window.cameraConfig.helperFocus.transitionSpeed = 3;
+      window.cameraConfig.distance = 7; // Closer to see the character well
+      window.cameraConfig.height = 3; // Eye level with character
+      
+      // Position player character in front of the helper character
+      if (window.characterRef?.current) {
+        // Save original position and rotation before moving
+        if (!originalPlayerPosition.current) {
+          originalPlayerPosition.current = window.characterRef.current.position.clone();
+          originalPlayerRotation.current = window.characterRef.current.rotation.y;
+          console.log("Saved original player position:", originalPlayerPosition.current);
+        }
+        
+        // Calculate optimal position in front of helper character
+        // Get normalized vector pointing from helper to camera
+        const cameraPos = new THREE.Vector3();
+        camera.getWorldPosition(cameraPos);
+        
+        // Direction vector from helper to camera, projected onto XZ plane
+        const direction = new THREE.Vector2(
+          cameraPos.x - helperPos.x,
+          cameraPos.z - helperPos.z
+        ).normalize();
+        
+        // Position player at fixed distance in front of helper
+        const distanceFromHelper = 4; // 4 units in front of helper
+        const playerPos = new THREE.Vector3(
+          helperPos.x - direction.x * distanceFromHelper,
+          0, // Keep on ground
+          helperPos.z - direction.y * distanceFromHelper
+        );
+        
+        // Move player character to this position
+        window.characterRef.current.position.copy(playerPos);
+        
+        // Rotate player to face helper
+        const angle = Math.atan2(-direction.x, -direction.y);
+        window.characterRef.current.rotation.y = angle;
+        
+        console.log("Positioned player character in front of helper");
+      }
+      
+      console.log("Camera positioned for helper character conversation");
+    }
   }
   
   // Function to safely close the chatbox
@@ -934,6 +1131,24 @@ const HelperCharacter = forwardRef((props, ref) => {
       const originalDistance = window.cameraConfig.distance;
       const originalTransitionSpeed = window.cameraConfig.helperFocus.transitionSpeed;
       const originalReturnSpeed = window.cameraConfig.returnSpeed;
+      const originalHeight = window.cameraConfig.height;
+      
+      // Turn off helper focus mode
+      window.cameraConfig.helperFocus.active = false;
+      
+      // Restore player character position and rotation
+      if (window.characterRef?.current && originalPlayerPosition.current) {
+        // Wait a moment to ensure the camera has started moving back
+        setTimeout(() => {
+          window.characterRef.current.position.copy(originalPlayerPosition.current);
+          window.characterRef.current.rotation.y = originalPlayerRotation.current;
+          console.log("Restored player character position and rotation");
+          
+          // Reset saved position
+          originalPlayerPosition.current = null;
+          originalPlayerRotation.current = null;
+        }, 300);
+      }
       
       // Temporarily boost transition speeds for immediate effect - but not too fast
       window.cameraConfig.helperFocus.transitionSpeed = 5; // Reduced from 10 for smoother transition
@@ -948,16 +1163,90 @@ const HelperCharacter = forwardRef((props, ref) => {
         window.cameraConfig.helperFocus.transitionSpeed = originalTransitionSpeed * 1.5;
         window.cameraConfig.returnSpeed = originalReturnSpeed * 1.5;
         window.cameraConfig.distance = originalDistance * 1.1;
+        window.cameraConfig.height = originalHeight;
         
         // Final step: restore original values completely
         setTimeout(() => {
           window.cameraConfig.helperFocus.transitionSpeed = originalTransitionSpeed;
           window.cameraConfig.returnSpeed = originalReturnSpeed;
           window.cameraConfig.distance = originalDistance;
+          window.cameraConfig.height = originalHeight;
+          console.log("Camera settings restored after conversation");
         }, 500);
       }, 500);
     }
   }
+
+  // Store original player character position and rotation
+  const originalPlayerPosition = useRef(null);
+  const originalPlayerRotation = useRef(null);
+
+  // Store references to chatbox elements
+  const chatboxRef = useRef(null);
+  const calculateChatboxSize = () => {
+    // Get outer chatbox element and inner message container
+    const chatbox = document.querySelector('.helper-chatbox-wrapper');
+    const messageContainer = document.querySelector('.helper-chat-messages');
+    
+    if (!chatbox || !messageContainer) return;
+    
+    // Get viewport dimensions
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    
+    // Calculate appropriate sizes and positions based on viewport
+    let chatboxWidth, messagesHeight;
+    
+    // Responsive Width based on viewport width
+    chatboxWidth = Math.min(
+      Math.round(viewportWidth * 0.85), // 85% of screen width
+      450 // max width
+    ) + 'px';
+    
+    // Responsive Message Area Height
+    if (viewportHeight < 600) {
+      // Very small screens - compact chat
+      messagesHeight = 'calc(60vh - 80px)';
+    } else if (viewportHeight < 800) {
+      // Medium screens
+      messagesHeight = 'calc(55vh - 90px)';
+    } else {
+      // Larger screens
+      messagesHeight = 'calc(50vh - 100px)';
+    }
+    
+    // Apply calculated values
+    chatbox.style.width = chatboxWidth;
+    // Note: We don't set chatbox height directly, let content define it with maxHeight
+    // chatbox.style.maxHeight is already set in the initial style
+    
+    messageContainer.style.height = messagesHeight;
+    
+    console.log(`Adjusted mobile chatbox size for ${viewportWidth}x${viewportHeight}: width=${chatboxWidth}, messagesHeight=${messagesHeight}`);
+  };
+  
+  // Handle screen rotation or size changes
+  useEffect(() => {
+    const handleResize = () => {
+      // Only run if chatbox is open AND on mobile
+      if (showChatbox && isMobile) {
+        calculateChatboxSize();
+      }
+    };
+    
+    // Calculate initial size only if open and on mobile
+    if (showChatbox && isMobile) {
+      // Small delay to ensure DOM is updated
+      setTimeout(calculateChatboxSize, 100);
+    }
+    
+    // Add resize listener
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [showChatbox, isMobile]); // Add isMobile dependency
 
   return (
     <group 
@@ -1072,10 +1361,32 @@ const HelperCharacter = forwardRef((props, ref) => {
       {/* Chatbox popup */}
       {showChatbox && (
         <Html
+          ref={chatboxRef}
+          // Use 3D position for both desktop and mobile
           position={isMobile ? helperUIConfig.messageBox.position3D.mobile : helperUIConfig.messageBox.position3D.desktop}
           wrapperClass="helper-chatbox-wrapper"
-          style={{
-            width: messageBoxStyle.width,
+          // Apply styles conditionally
+          style={isMobile ? {
+            // Mobile styles (viewport-based sizing, positioned by Html)
+            width: `${helperUIConfig.messageBox.width.mobile}px`, // Initial width, adjusted dynamically
+            height: `${helperUIConfig.messageBox.height.mobile}px`, // Initial height, adjusted dynamically
+            background: '#2a2a2a',
+            borderRadius: '8px',
+            boxShadow: '0 3px 9px rgba(0,0,0,0.3)',
+            padding: '12px',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            pointerEvents: 'auto',
+            color: 'white',
+            zIndex: helperUIConfig.messageBox.zIndex,
+            // Removed fixed positioning, top, left, transform - let Html handle it
+            overflow: 'hidden', 
+            fontSize: '11px',
+            display: 'flex', // Added flex for vertical layout
+            flexDirection: 'column' // Added flex for vertical layout
+          } : {
+            // Desktop styles (fixed size, positioned by Html component)
+            width: `${helperUIConfig.messageBox.width.desktop}px`,
+            height: `${helperUIConfig.messageBox.height.desktop}px`,
             background: '#2a2a2a',
             borderRadius: '10px',
             boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
@@ -1083,10 +1394,14 @@ const HelperCharacter = forwardRef((props, ref) => {
             fontFamily: 'system-ui, -apple-system, sans-serif',
             pointerEvents: 'auto',
             color: 'white',
-            zIndex: messageBoxStyle.zIndex,
+            zIndex: helperUIConfig.messageBox.zIndex,
+            fontSize: helperUIConfig.messageBox.fontSize.desktop, // Use desktop font size
+            display: 'flex', // Use flexbox for desktop layout
+            flexDirection: 'column' // Stack elements vertically
           }}
         >
-          <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }} onClick={(e) => e.stopPropagation()}>
+            {/* Close button - Adjust styles if needed for desktop */}
             <button
               onClick={(e) => {
                 e.stopPropagation(); // Prevent event propagation
@@ -1095,54 +1410,73 @@ const HelperCharacter = forwardRef((props, ref) => {
               }}
               style={{
                 position: 'absolute',
-                top: '-5px',
-                right: '-5px',
+                top: isMobile ? '-4px' : '5px', // Different position for desktop
+                right: isMobile ? '-4px' : '5px', // Different position for desktop
                 background: '#e74c3c',
                 color: 'white',
                 border: 'none',
                 borderRadius: '50%',
-                width: '24px',
-                height: '24px',
+                width: isMobile ? '20px' : '24px', // Slightly larger on desktop
+                height: isMobile ? '20px' : '24px',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: isMobile ? '12px' : '14px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                zIndex: 10 // Ensure it's above other chatbox content
               }}
             >
               ✕
             </button>
             
+            {/* Messages Container - Adjust styles for desktop */}
             <div 
               ref={chatContainerRef}
-              style={{ 
-                height: isMobile ? `${helperUIConfig.messageBox.height.mobile}px` : `${helperUIConfig.messageBox.height.desktop}px`,
-                marginBottom: '10px', 
+              className="helper-chat-messages"
+              style={isMobile ? {
+                // Mobile message container styles
+                height: 'calc(45vh - 80px)', // Will be adjusted by calculateChatboxSize
+                marginBottom: '8px',
+                padding: '8px',
+                background: '#333',
+                borderRadius: '6px',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#555 #333',
+              } : {
+                // Desktop message container styles
+                flexGrow: 1, // Allow it to fill available space
+                marginBottom: '10px',
                 padding: '10px',
                 background: '#333',
                 borderRadius: '8px',
                 overflowY: 'auto',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                // Add webkit scrollbar styles directly for desktop if needed
               }}
             >
+              {/* Message rendering logic (no changes needed here) */}
               {reply.length > 0 ? (
                 reply.map((msg, index) => (
                   <div 
                     key={index}
-                    style={{ 
+                    style={{
                       background: msg.sender === 'ai' ? '#37BA7E' : '#555',
-                      padding: '8px 12px', 
-                      borderRadius: '12px',
-                      marginBottom: '8px',
+                      padding: isMobile ? '6px 10px' : '8px 12px',
+                      borderRadius: isMobile ? '10px' : '12px',
+                      marginBottom: isMobile ? '6px' : '8px',
                       marginLeft: msg.sender === 'ai' ? '0' : 'auto',
                       marginRight: msg.sender === 'ai' ? 'auto' : '0',
-                      maxWidth: '80%',
+                      maxWidth: isMobile ? '75%' : '80%',
                       color: 'white',
                       alignSelf: msg.sender === 'ai' ? 'flex-start' : 'flex-end',
                       textAlign: msg.sender === 'ai' ? 'left' : 'right',
-                      wordBreak: 'break-word'
+                      wordBreak: 'break-word',
+                      fontSize: isMobile ? '11px' : helperUIConfig.messageBox.fontSize.desktop, // Use appropriate font size
                     }}
                   >
                     {msg.text}
@@ -1154,20 +1488,33 @@ const HelperCharacter = forwardRef((props, ref) => {
                   color: '#888',
                   marginTop: 'auto',
                   marginBottom: 'auto',
-                  fontSize: messageBoxStyle.fontSize
+                  fontSize: isMobile ? '10px' : '12px' // Adjust placeholder size
                 }}>
                   Type a message to start chatting
                 </div>
               )}
             </div>
             
-            <form onSubmit={handleSubmit} style={{ display: 'flex' }}>
+            {/* Input Form - Adjust styles for desktop */}
+            <form onSubmit={handleSubmit} className="helper-chat-form" style={{ display: 'flex', flexShrink: 0 /* Prevent form from shrinking */ }}>
               <input
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Type a message..."
-                style={{
+                className="helper-chat-input"
+                style={isMobile ? {
+                  // Mobile input styles
+                  flex: 1,
+                  padding: '6px 10px',
+                  borderRadius: '16px',
+                  border: '1px solid #444',
+                  outline: 'none',
+                  background: '#333',
+                  color: 'white',
+                  fontSize: '11px',
+                } : {
+                  // Desktop input styles
                   flex: 1,
                   padding: '8px 12px',
                   borderRadius: '20px',
@@ -1175,11 +1522,25 @@ const HelperCharacter = forwardRef((props, ref) => {
                   outline: 'none',
                   background: '#333',
                   color: 'white',
+                  fontSize: helperUIConfig.messageBox.fontSize.desktop,
                 }}
               />
               <button
                 type="submit"
-                style={{
+                className="helper-chat-button"
+                style={isMobile ? {
+                  // Mobile button styles
+                  background: '#37BA7E',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '16px',
+                  padding: '6px 12px',
+                  marginLeft: '6px',
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  fontSize: '11px',
+                } : {
+                   // Desktop button styles
                   background: '#37BA7E',
                   color: 'white',
                   border: 'none',
@@ -1188,6 +1549,7 @@ const HelperCharacter = forwardRef((props, ref) => {
                   marginLeft: '8px',
                   cursor: 'pointer',
                   boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                  fontSize: helperUIConfig.messageBox.fontSize.desktop,
                 }}
               >
                 Send

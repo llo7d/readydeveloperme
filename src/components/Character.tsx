@@ -2,12 +2,12 @@ import { useAnimations, useGLTF, Html } from "@react-three/drei";
 import React, { useEffect, useRef, MutableRefObject, useState } from "react";
 import * as THREE from 'three';
 
-// Extend window type definition to include our debug function
-declare global {
-    interface Window {
-        logAnimStates?: () => string;
-    }
-}
+// Window interface is now defined globally in src/types/window.d.ts
+// declare global {
+//     interface Window {
+//         logAnimStates?: () => string;
+//     }
+// }
 
 interface CharacterProps {
     selected: any;

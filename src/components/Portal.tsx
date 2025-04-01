@@ -1,15 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
+import { Html, useGLTF, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 import { useControls } from 'leva';
-
-// Declare global window property
-declare global {
-  interface Window {
-    helperUIConfig: any;
-  }
-}
 
 // Initialize portal config if it doesn't exist
 if (!window.helperUIConfig) {
