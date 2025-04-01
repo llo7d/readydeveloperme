@@ -37,6 +37,8 @@ interface MultiplayerContextType {
   sendChatMessage: (message: string) => void;
   // Position update function
   sendPositionUpdate: (position: {x: number, z: number, r: number}) => void;
+  // Add joinGame function type
+  joinGame: (initialAppearance: { colors: any[], selected: Record<string, string> }) => void;
 }
 
 // Define props for the Provider, including initialUsername
@@ -58,7 +60,8 @@ const MultiplayerContext = createContext<MultiplayerContextType>({
   appearanceUpdateCount: 0,
   sendAppearanceUpdate: () => {}, // Default no-op function
   sendChatMessage: () => {}, // Default no-op function
-  sendPositionUpdate: () => {} // Default no-op function
+  sendPositionUpdate: () => {}, // Default no-op function
+  joinGame: () => {} // Default no-op function for joinGame
 });
 
 // Socket.io server URL
@@ -66,7 +69,7 @@ const SOCKET_SERVER_URL = 'https://ws.readydeveloper.me';
 
 // Default values for appearance - ensuring 12 items for indices 0-11
 export const DEFAULT_COLORS = [
-  { subToolId: "tool_2_item_4", color: "#ffffff" },   // Index 0: Hair (Based on Character.tsx Hair() using colors[0])
+  { subToolId: "tool_2_item_4", color: "#131313" },   // Index 0: Hair -> Set default to black
   { subToolId: "tool_2_item_2", color: "#131313" },   // Index 1: Beard (Based on Character.tsx Beard() using lookup)
   { subToolId: "tool_2_item_3", color: "#d8d8d8" },   // Index 2: Shirt Cuffs (Based on Character.tsx Tshirt() using colors[2])
   { subToolId: "tool_2_item_5", color: "#aabef9" },   // Index 3: Shirt Main (Based on Character.tsx Tshirt() using colors[3])
@@ -126,15 +129,10 @@ export const MultiplayerProvider: React.FC<MultiplayerProviderProps> = ({ childr
       newSocket.emit('setUsername', initialUsername);
       console.log(`Multiplayer: Set initial local username to "${initialUsername}" and emitted to server.`);
 
-      // Send initial player data when joining
-      const initialPosition = new THREE.Vector3(0, 0, 30); // Default starting position
-      newSocket.emit('join', {
-        position: { x: initialPosition.x, y: initialPosition.y, z: initialPosition.z },
-        rotation: Math.PI, // Default facing toward the shop
-        // Use default appearance values instead of null
-        colors: DEFAULT_COLORS,
-        selected: DEFAULT_SELECTED
-      });
+      // ---- REMOVE 'join' EMISSION FROM HERE ----
+      // const initialPosition = new THREE.Vector3(0, 0, 30); 
+      // newSocket.emit('join', { ... }); 
+      // ---- END REMOVAL ----
     });
 
     newSocket.on('connect_error', (error) => {
@@ -157,12 +155,12 @@ export const MultiplayerProvider: React.FC<MultiplayerProviderProps> = ({ childr
       
       const newRemotePlayers = new Map<string, RemotePlayer>();
       users.forEach(user => {
-        // Log the username received for each existing user
         console.log(` -> Existing user: ${user.id.slice(0,6)}, Received username: ${user.username}`);
-        if (user.id !== newSocket.id) { // Don't add self to remote players
+        if (user.id !== newSocket.id) { 
+            const initialColors = user.colors || DEFAULT_COLORS;
+            const initialSelected = user.selected || DEFAULT_SELECTED;
             newRemotePlayers.set(user.id, {
               id: user.id,
-              // Use fallback if username is missing
               username: user.username || `Player_${user.id.slice(0,4)}`,
               position: new THREE.Vector3(
                 user.position?.x || 0,
@@ -171,8 +169,8 @@ export const MultiplayerProvider: React.FC<MultiplayerProviderProps> = ({ childr
               ),
               rotation: user.rotation || 0,
               moving: user.moving || false,
-              colors: user.colors || DEFAULT_COLORS,
-              selected: user.selected || DEFAULT_SELECTED
+              colors: JSON.parse(JSON.stringify(initialColors)),
+              selected: JSON.parse(JSON.stringify(initialSelected))
             });
         }
       });
@@ -189,6 +187,8 @@ export const MultiplayerProvider: React.FC<MultiplayerProviderProps> = ({ childr
       // Add the new player to our map
       setRemotePlayersMap(prevMap => {
         const newMap = new Map(prevMap);
+        const initialColors = user.colors || DEFAULT_COLORS;
+        const initialSelected = user.selected || DEFAULT_SELECTED;
         newMap.set(user.id, {
           id: user.id,
           username: user.username || `Player_${user.id.slice(0,4)}`,
@@ -199,8 +199,8 @@ export const MultiplayerProvider: React.FC<MultiplayerProviderProps> = ({ childr
           ),
           rotation: user.rotation || 0,
           moving: user.moving || false,
-          colors: user.colors || DEFAULT_COLORS,
-          selected: user.selected || DEFAULT_SELECTED
+          colors: JSON.parse(JSON.stringify(initialColors)),
+          selected: JSON.parse(JSON.stringify(initialSelected))
         });
         setPlayerCount(newMap.size + 1); // Update count based on new map size + self
         return newMap;
@@ -279,17 +279,18 @@ export const MultiplayerProvider: React.FC<MultiplayerProviderProps> = ({ childr
       console.log('Multiplayer: User appearance changed:', appearanceData.id);
       
       // Update the player's appearance in our map
-      setRemotePlayersMap(prevMap => {
+      setRemotePlayersMap((prevMap) => {
         const newMap = new Map(prevMap);
-        const existingPlayer = newMap.get(appearanceData.id);
-        
-        if (existingPlayer) {
-          // Update existing player
+        const player = newMap.get(appearanceData.id);
+        if (player) {
+          // Update the specific player's appearance with deep copies
           newMap.set(appearanceData.id, {
-            ...existingPlayer,
-            colors: appearanceData.colors,
-            selected: appearanceData.selected
+            ...player,
+            colors: JSON.parse(JSON.stringify(appearanceData.colors)),       // Deep copy colors
+            selected: JSON.parse(JSON.stringify(appearanceData.selected))   // Deep copy selected items
           });
+          setAppearanceUpdateCount(c => c + 1); // Increment counter
+          console.log(`Multiplayer: Updated appearance for user ${appearanceData.id.slice(0,6)}`);
         } else {
           // Create new player if doesn't exist
           newMap.set(appearanceData.id, {
@@ -305,9 +306,6 @@ export const MultiplayerProvider: React.FC<MultiplayerProviderProps> = ({ childr
         
         return newMap;
       });
-      
-      // Increment appearance update counter for testing
-      setAppearanceUpdateCount(prev => prev + 1);
     });
 
     newSocket.on('userLeft', (userId) => {
@@ -459,6 +457,22 @@ export const MultiplayerProvider: React.FC<MultiplayerProviderProps> = ({ childr
     }
   }, [socket, isConnected]);
 
+  // Function to emit the join event with actual appearance data
+  const joinGame = useCallback((initialAppearance: { colors: any[], selected: Record<string, string> }) => {
+    if (socket && isConnected) {
+      console.log('Multiplayer: Emitting join event with appearance:', initialAppearance);
+      const initialPosition = new THREE.Vector3(0, 0, 30); // Use default starting position for now
+      socket.emit('join', {
+        position: { x: initialPosition.x, y: initialPosition.y, z: initialPosition.z },
+        rotation: Math.PI, // Default facing toward the shop
+        colors: initialAppearance.colors,
+        selected: initialAppearance.selected
+      });
+    } else {
+      console.warn('Multiplayer: Cannot join game - socket not connected.');
+    }
+  }, [socket, isConnected]);
+
   // The context value to be provided
   const contextValue = {
     socket,
@@ -472,7 +486,8 @@ export const MultiplayerProvider: React.FC<MultiplayerProviderProps> = ({ childr
     appearanceUpdateCount,
     sendAppearanceUpdate,
     sendChatMessage,
-    sendPositionUpdate
+    sendPositionUpdate,
+    joinGame
   };
 
   return (

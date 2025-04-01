@@ -186,6 +186,14 @@ const ChatBubble = ({ message, position }: { message: { text: string; timestamp:
 };
 
 export default function RemoteCharacter({ id, username, position, rotation, colors, selected, moving, message }: RemoteCharacterProps) {
+    // --- DEBUG: Log received props --- 
+    console.log(`[RemoteCharacter ${id.slice(0,6)}] Received Props:`, {
+      username,
+      colors: JSON.stringify(colors), // Log stringified colors to see the actual data received
+      selected: JSON.stringify(selected)
+    });
+    // --- END DEBUG --- 
+
     // Log the username prop received by the component
     console.log(`[RemoteCharacter ${id.slice(0,6)}] Received username prop: "${username}"`);
     

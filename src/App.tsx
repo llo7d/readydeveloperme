@@ -33,7 +33,7 @@ import MobileControlsProvider from "./components/MobileControlsProvider";
 import BarberShop from "./components/BarberShop";
 import Chatbox from "./components/Chatbox";
 import CharacterMessage from "./components/CharacterMessage";
-import { MultiplayerProvider, useMultiplayer } from './contexts/MultiplayerContext';
+import { MultiplayerProvider, useMultiplayer, DEFAULT_COLORS } from './contexts/MultiplayerContext';
 import MultiplayerManager from './components/MultiplayerManager';
 import RemoteCharactersManager from "./components/RemoteCharactersManager";
 
@@ -229,9 +229,12 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       far: { value: 1.2, step: 0.05 },
     });
   
-  // Get socket from multiplayer context
-  const { socket, isConnected, sendAppearanceUpdate, sendPositionUpdate } = useMultiplayer();
+  // Get socket and joinGame function from multiplayer context
+  const { socket, isConnected, sendAppearanceUpdate, sendPositionUpdate, joinGame } = useMultiplayer();
   
+  // Track if we've already joined the game to prevent multiple join emissions
+  const hasJoinedGame = useRef(false);
+
   // Track last sent appearance
   const lastSentAppearance = useRef<{colors: any[] | null, selected: any | null}>({ colors: null, selected: null });
 
@@ -870,6 +873,21 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       }
     }
   }, [characterRef, customizingClothing, customizingHair]);
+
+  // ---- NEW useEffect to handle joining the game ----
+  useEffect(() => {
+    // Ensure socket is connected, appearance data is ready, and we haven't joined yet
+    if (isConnected && joinGame && subToolColors && selected && !hasJoinedGame.current) {
+      console.log('AppContent: Connection ready, joining game with current appearance...');
+      joinGame({ colors: subToolColors, selected });
+      hasJoinedGame.current = true; // Mark as joined
+    }
+    // Reset join flag if disconnected
+    if (!isConnected) {
+      hasJoinedGame.current = false;
+    }
+  }, [isConnected, joinGame, subToolColors, selected]);
+  // ---- END NEW useEffect ----
 
   return (
     <div className="relative w-full h-screen">
