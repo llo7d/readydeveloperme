@@ -11,6 +11,11 @@ interface RemotePlayer {
   moving?: boolean;
   colors?: any; // Will match the color structure in the app
   selected?: Record<string, string>; // Will match the selected items structure
+  message?: {
+    text: string;
+    timestamp: number;
+    messageId: string;
+  };
 }
 
 // Define the context value type
@@ -28,6 +33,8 @@ interface MultiplayerContextType {
   appearanceUpdateCount: number;
   // New function for appearance updates
   sendAppearanceUpdate: (colors: any[], selected: Record<string, string>) => void;
+  // Phase 3 chat functions
+  sendChatMessage: (message: string) => void;
 }
 
 // Create the context with default values
@@ -41,7 +48,8 @@ const MultiplayerContext = createContext<MultiplayerContextType>({
   lastConnectionEvent: '',
   positionUpdateCount: 0,
   appearanceUpdateCount: 0,
-  sendAppearanceUpdate: () => {} // Default no-op function
+  sendAppearanceUpdate: () => {}, // Default no-op function
+  sendChatMessage: () => {} // Default no-op function
 });
 
 // Socket.io server URL
@@ -297,6 +305,27 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
       });
     });
 
+    // Phase 3: Handle chat messages
+    newSocket.on('chatMessage', (messageData) => {
+      console.log('Multiplayer: Chat message received:', messageData.id, messageData.message.text);
+      
+      // Update the player with the message
+      setRemotePlayersMap(prevMap => {
+        const newMap = new Map(prevMap);
+        const existingPlayer = newMap.get(messageData.id);
+        
+        if (existingPlayer) {
+          // Update existing player with the new message
+          newMap.set(messageData.id, {
+            ...existingPlayer,
+            message: messageData.message
+          });
+        }
+        
+        return newMap;
+      });
+    });
+
     setSocket(newSocket);
 
     // Cleanup on unmount
@@ -317,6 +346,16 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, [socket, isConnected]);
 
+  // Function to send chat messages
+  const sendChatMessage = useCallback((message: string) => {
+    if (socket && isConnected && message.trim()) {
+      console.log('Multiplayer: Sending chat message:', message);
+      socket.emit('sendMessage', message);
+    } else {
+      console.warn('Multiplayer: Cannot send chat message - not connected or empty message');
+    }
+  }, [socket, isConnected]);
+
   // The context value to be provided
   const contextValue = {
     socket,
@@ -328,7 +367,8 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     lastConnectionEvent,
     positionUpdateCount,
     appearanceUpdateCount,
-    sendAppearanceUpdate
+    sendAppearanceUpdate,
+    sendChatMessage
   };
 
   return (

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store/store';
+import { useMultiplayer } from '../contexts/MultiplayerContext';
 
 // Add TypeScript declaration for the global window property
 declare global {
@@ -34,6 +35,7 @@ const Chatbox = () => {
   const theme = useStore((state) => state.theme);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { sendChatMessage } = useMultiplayer();
 
   // Extract actual message from a pose command message and limit to 12 words
   const extractActualMessage = (fullMessage: string): string => {
@@ -70,8 +72,14 @@ const Chatbox = () => {
     }
     
     // Show message above character if there's actual content
-    if (actualMessage && window.showMessage) {
-      window.showMessage(actualMessage);
+    if (actualMessage) {
+      // Show message locally above character
+      if (window.showMessage) {
+        window.showMessage(actualMessage);
+      }
+      
+      // Send message to all connected players
+      sendChatMessage(actualMessage);
     }
   };
 

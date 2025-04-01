@@ -1,4 +1,4 @@
-import { useAnimations, useGLTF } from "@react-three/drei";
+import { useAnimations, useGLTF, Html } from "@react-three/drei";
 import React, { useEffect, useRef, MutableRefObject, useState } from "react";
 import * as THREE from 'three';
 
@@ -14,9 +14,63 @@ interface CharacterProps {
     colors: any[];
     logo: any;
     characterRef?: MutableRefObject<THREE.Group | null>;
+    message?: {
+        text: string;
+        timestamp: number;
+        messageId: string;
+    };
 }
 
-export default function Character({ selected, colors, logo, characterRef }: CharacterProps) {
+// ChatBubble component to display messages above character
+const ChatBubble = ({ message, position }: { message: { text: string; timestamp: number; messageId: string }, position: [number, number, number] }) => {
+    const [visible, setVisible] = useState(true);
+    const [currentMessageId, setCurrentMessageId] = useState(message.messageId);
+    
+    // When message ID changes, reset the visibility and update current ID
+    useEffect(() => {
+        if (message.messageId !== currentMessageId) {
+            setVisible(true);
+            setCurrentMessageId(message.messageId);
+        }
+    }, [message.messageId, currentMessageId]);
+    
+    // Remove message after 5 seconds
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setVisible(false);
+        }, 5000);
+        
+        return () => clearTimeout(timer);
+    }, [message.messageId]);
+    
+    if (!visible) return null;
+    
+    return (
+        <group position={position}>
+            <Html
+                center
+                as="div"
+                className="pointer-events-none"
+                distanceFactor={10}
+            >
+                <div className="bg-white text-black px-4 py-1 rounded-xl shadow-lg text-center whitespace-normal"
+                     style={{ 
+                       minWidth: message.text.length < 10 ? '100px' : '160px',
+                       maxWidth: '300px',
+                       width: 'auto',
+                       wordSpacing: '0.05em',
+                       lineHeight: '1.3',
+                       whiteSpace: 'normal',
+                       wordWrap: 'break-word'
+                     }}>
+                  <p className="text-base font-medium">{message.text}</p>
+                </div>
+            </Html>
+        </group>
+    );
+};
+
+export default function Character({ selected, colors, logo, characterRef, message }: CharacterProps) {
     // Create an internal ref if no external ref is provided
     const internalRef = useRef<THREE.Group>(null);
     
@@ -764,6 +818,9 @@ export default function Character({ selected, colors, logo, characterRef }: Char
 
     return (
         <group ref={characterRef || internalRef} dispose={null}>
+            {/* Chat message bubble */}
+            {message && <ChatBubble message={message} position={[0, 3.1, 0]} />}
+            
             {/* Character shadow */}
             <CharacterShadow />
             

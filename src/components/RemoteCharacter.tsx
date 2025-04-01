@@ -1,8 +1,7 @@
-import { useGLTF, useAnimations } from "@react-three/drei";
+import { useGLTF, useAnimations, Html } from "@react-three/drei";
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import * as THREE from 'three';
 import { useFrame } from "@react-three/fiber";
-import { Html } from "@react-three/drei";
 import { SkeletonUtils } from 'three-stdlib';
 
 interface RemoteCharacterProps {
@@ -13,6 +12,11 @@ interface RemoteCharacterProps {
     colors?: any[];
     selected?: Record<string, string>;
     moving?: boolean;
+    message?: {
+        text: string;
+        timestamp: number;
+        messageId: string;
+    };
 }
 
 // Position history interface
@@ -84,7 +88,56 @@ const getColorHelper = (colors: any[] | undefined, subToolId: string): string =>
     return colorEntry ? colorEntry.color : "#141414";
 };
 
-export default function RemoteCharacter({ id, username, position, rotation, colors, selected, moving }: RemoteCharacterProps) {
+// ChatBubble component to display messages above character
+const ChatBubble = ({ message, position }: { message: { text: string; timestamp: number; messageId: string }, position: [number, number, number] }) => {
+    const [visible, setVisible] = useState(true);
+    const [currentMessageId, setCurrentMessageId] = useState(message.messageId);
+    
+    // When message ID changes, reset the visibility and update current ID
+    useEffect(() => {
+        if (message.messageId !== currentMessageId) {
+            setVisible(true);
+            setCurrentMessageId(message.messageId);
+        }
+    }, [message.messageId, currentMessageId]);
+    
+    // Remove message after 5 seconds
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setVisible(false);
+        }, 5000);
+        
+        return () => clearTimeout(timer);
+    }, [message.messageId]);
+    
+    if (!visible) return null;
+    
+    return (
+        <group position={position}>
+            <Html
+                center
+                as="div"
+                className="pointer-events-none"
+                distanceFactor={10}
+            >
+                <div className="bg-white text-black px-4 py-1 rounded-xl shadow-lg text-center whitespace-normal"
+                     style={{ 
+                       minWidth: message.text.length < 10 ? '100px' : '160px',
+                       maxWidth: '300px',
+                       width: 'auto',
+                       wordSpacing: '0.05em',
+                       lineHeight: '1.3',
+                       whiteSpace: 'normal',
+                       wordWrap: 'break-word'
+                     }}>
+                  <p className="text-base font-medium">{message.text}</p>
+                </div>
+            </Html>
+        </group>
+    );
+};
+
+export default function RemoteCharacter({ id, username, position, rotation, colors, selected, moving, message }: RemoteCharacterProps) {
     const groupRef = useRef<THREE.Group>(null);
     const [clonedScene, setClonedScene] = useState<THREE.Object3D | null>(null);
     const [isReady, setIsReady] = useState(false);
@@ -524,13 +577,27 @@ export default function RemoteCharacter({ id, username, position, rotation, colo
     );
 
     const Nametag = () => (
-        <group position={[0, 2.5, 0]}>
-            <mesh position={[0, 0, -0.01]}>
-                <planeGeometry args={[1, 0.3]} />
-                <meshBasicMaterial color="#4B50EC" transparent opacity={0.7} side={THREE.DoubleSide} />
-            </mesh>
-            <Html position={[0, 0, 0]} center className="pointer-events-none" distanceFactor={10} zIndexRange={[16777271, 16777272]} occlude={false}>
-                <div style={{ color: 'white', fontSize: '12px', fontWeight: 'bold', fontFamily: 'Arial, sans-serif', padding: '2px 6px', whiteSpace: 'nowrap', userSelect: 'none', textShadow: '1px 1px 1px rgba(0,0,0,0.5)' }}>
+        <group position={[0, 2.3, 0]}>
+            <Html
+                center
+                as="div"
+                className="pointer-events-none"
+                distanceFactor={10}
+                zIndexRange={[16777271, 16777272]}
+                occlude={false}
+            >
+                <div className="px-5 py-1 rounded-xl shadow-lg text-center" 
+                     style={{ 
+                         backgroundColor: "#4B50EC", 
+                         opacity: 0.9,
+                         color: 'white', 
+                         fontSize: '15px', 
+                         fontWeight: 'bold', 
+                         fontFamily: 'Arial, sans-serif', 
+                         whiteSpace: 'nowrap', 
+                         userSelect: 'none', 
+                         textShadow: '1px 1px 1px rgba(0,0,0,0.5)' 
+                     }}>
                     {username || `Player_${id.slice(0, 6)}`}
                 </div>
             </Html>
@@ -546,6 +613,9 @@ export default function RemoteCharacter({ id, username, position, rotation, colo
         <group ref={groupRef} name={`remote-player-${id}`} position={position.toArray()}>
             <CharacterShadow />
             <Nametag />
+            
+            {/* Chat message bubble */}
+            {message && <ChatBubble message={message} position={[0, 2.7, 0]} />}
 
             {/* Render the CLONED SCENE directly via primitive - do NOT add rotation here */}
             {canRender && (

@@ -50,7 +50,7 @@ const CharacterMessage = ({ characterRef }: CharacterMessageProps) => {
         className="pointer-events-none"
         distanceFactor={10}
       >
-        <div className="bg-white text-black px-4 py-2 rounded-xl shadow-lg text-center whitespace-normal"
+        <div className="bg-white text-black px-4 py-1 rounded-xl shadow-lg text-center whitespace-normal"
              style={{ 
                minWidth: message.length < 10 ? '100px' : '160px',
                maxWidth: '300px',

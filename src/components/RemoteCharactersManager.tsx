@@ -28,6 +28,7 @@ const RemoteCharactersManager: React.FC = () => {
           moving={player.moving}
           colors={player.colors}
           selected={player.selected}
+          message={player.message}
         />
       ))}
     </>
