@@ -80,10 +80,20 @@ const ClothingShop = ({
       onExitCustomization();
     } 
     // If not customizing, but can change, clicking enters customization
-    else if (canChangeClothing && onChangeClothing) {
+    else if (onChangeClothing) {
+      // Always call onChangeClothing even if canChangeClothing is false
+      // This will position the character at the optimal position first
       onChangeClothing();
+      
+      // If we're not already customizing and the button says "Change Clothing",
+      // ensure we enter customization mode after positioning
+      if (!isCustomizing && !canChangeClothing) {
+        // Use a small timeout to ensure character is positioned first
+        setTimeout(() => {
+          if (onChangeClothing) onChangeClothing();
+        }, 100);
+      }
     }
-    // Otherwise, do nothing if cannot change clothing
   };
 
   // Pulse animation for the badge
@@ -117,13 +127,21 @@ const ClothingShop = ({
         onClick={(e) => {
           e.stopPropagation();
           // Only allow entering customization mode, not exiting
-          if (canChangeClothing && !isCustomizing && onChangeClothing) {
+          if (!isCustomizing && onChangeClothing) {
+            // Always call onChangeClothing
             onChangeClothing();
+            
+            // If not near shop, trigger customization again after positioning
+            if (!canChangeClothing) {
+              setTimeout(() => {
+                if (onChangeClothing) onChangeClothing();
+              }, 100);
+            }
           }
         }}
         onPointerOver={() => {
-          // Only show pointer cursor when entering customization is possible
-          document.body.style.cursor = (canChangeClothing && !isCustomizing) ? 'pointer' : 'default';
+          // Show pointer cursor when ready to enter customization (not during customization)
+          document.body.style.cursor = !isCustomizing ? 'pointer' : 'default';
         }}
         onPointerOut={() => {
           document.body.style.cursor = 'auto';
@@ -201,7 +219,7 @@ const ClothingShop = ({
           style={isMobile ? {
             // Mobile: Position icon row at bottom center
             position: 'fixed',
-            bottom: '-10vh', // Smaller margin from bottom
+            bottom: '-5vh', // Smaller margin from bottom
             left: '50%',
             transform: 'translateX(-50%)', // Center horizontally
             width: 'auto', // Let content define width

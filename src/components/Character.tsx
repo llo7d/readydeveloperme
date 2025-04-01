@@ -458,12 +458,16 @@ export default function Character({ selected, colors, logo, characterRef, messag
     }
 
     const Beard = () => {
+        // Find the beard color by subToolId instead of using a fixed index
+        const beardColorItem = colors.find(color => color.subToolId === "tool_2_item_2");
+        const beardColor = beardColorItem ? beardColorItem.color : "#131313"; // Fallback color
+        
         const GEO_Beard_01 = <skinnedMesh
             name="GEO_Beard_01"
             geometry={nodes.GEO_Beard_01.geometry}
             material={materials.MAT_Beard}
             skeleton={nodes.GEO_Beard_01.skeleton}
-            material-color={colors[1].color}
+            material-color={beardColor}
             material-roughness={0.6}
             material-metalness={0.1}
             material-envMap={null}
@@ -475,7 +479,7 @@ export default function Character({ selected, colors, logo, characterRef, messag
                 geometry={nodes.GEO_Beard_02.geometry}
                 material={materials.MAT_Beard}
                 skeleton={nodes.GEO_Beard_02.skeleton}
-                material-color={colors[1].color}
+                material-color={beardColor}
             />
 
         const GEO_Beard_03 = <skinnedMesh
@@ -483,7 +487,7 @@ export default function Character({ selected, colors, logo, characterRef, messag
             geometry={nodes.GEO_Beard_03.geometry}
             material={materials.MAT_Beard}
             skeleton={nodes.GEO_Beard_03.skeleton}
-            material-color={colors[1].color}
+            material-color={beardColor}
         />
 
         const GEO_Beard_04 = <skinnedMesh
@@ -491,7 +495,7 @@ export default function Character({ selected, colors, logo, characterRef, messag
             geometry={nodes.GEO_Beard_04.geometry}
             material={materials.MAT_Beard}
             skeleton={nodes.GEO_Beard_04.skeleton}
-            material-color={colors[1].color}
+            material-color={beardColor}
         />
 
         return (

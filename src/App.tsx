@@ -230,7 +230,7 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
     });
   
   // Get socket from multiplayer context
-  const { socket, isConnected, sendAppearanceUpdate } = useMultiplayer();
+  const { socket, isConnected, sendAppearanceUpdate, sendPositionUpdate } = useMultiplayer();
   
   // Track last sent appearance
   const lastSentAppearance = useRef<{colors: any[] | null, selected: any | null}>({ colors: null, selected: null });
@@ -401,10 +401,17 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       // Remove global flag to re-enable movement
       window.isCustomizingClothing = false;
       
-      // Return character to original rotation if needed
+      // Rotate character 180 degrees to face the shop again
       if (characterRef.current) {
-        // Reset character rotation to default
-        characterRef.current.rotation.y = Math.PI;
+        characterRef.current.rotation.y = Math.PI; // Face back toward the shop
+        
+        // Update position in multiplayer if connected
+        if (isConnected && sendPositionUpdate) {
+          const x = characterRef.current.position.x;
+          const z = characterRef.current.position.z;
+          console.log('Multiplayer: Rotating character to face shop', {x, z, r: Math.PI});
+          sendPositionUpdate({x, z, r: Math.PI});
+        }
       }
       
       // Send appearance update when exiting customization mode
@@ -432,10 +439,17 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       // Remove global flag to re-enable movement
       window.isCustomizingClothing = false;
       
-      // Return character to original rotation if needed
+      // Rotate character 180 degrees to face the shop again
       if (characterRef.current) {
-        // Reset character rotation to default
-        characterRef.current.rotation.y = Math.PI;
+        characterRef.current.rotation.y = Math.PI; // Face back toward the shop
+        
+        // Update position in multiplayer if connected
+        if (isConnected && sendPositionUpdate) {
+          const x = characterRef.current.position.x;
+          const z = characterRef.current.position.z;
+          console.log('Multiplayer: Rotating character to face shop', {x, z, r: Math.PI});
+          sendPositionUpdate({x, z, r: Math.PI});
+        }
       }
       
       // Send appearance update when exiting customization mode
@@ -447,7 +461,6 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       setTimeout(() => {
         if (typeof window !== 'undefined' && window.endCharacterInteraction) {
           window.endCharacterInteraction();
-          console.log("Released chat after leaving barber shop area");
         }
       }, 200);
     }
@@ -466,10 +479,19 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       // Set global flag to disable movement
       window.isCustomizingClothing = true;
       
-      // Rotate character to face the camera
+      // Position character at the optimal viewing position
       if (characterRef.current) {
-        // Face character toward the camera (character shows front to camera)
-        characterRef.current.rotation.y = 0; // This makes the front of the character face the camera
+        // Set to ideal position in front of the shop
+        characterRef.current.position.x = 0;
+        characterRef.current.position.z = 11.36;
+        // Face character AWAY from the shop (180 degrees from before)
+        characterRef.current.rotation.y = 0; // 0 is opposite of Math.PI (3.14)
+
+        // Send position update to multiplayer if connected
+        if (isConnected && sendPositionUpdate) {
+          console.log('Multiplayer: Setting character to ideal shop position', {x: 0, z: 11.36, r: 0});
+          sendPositionUpdate({x: 0, z: 11.36, r: 0});
+        }
       }
       
       // Force select the color tool
@@ -484,17 +506,22 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       // Remove global flag to re-enable movement
       window.isCustomizingClothing = false;
       
-      // Return character to original rotation if needed
+      // Rotate character 180 degrees to face the shop again
       if (characterRef.current) {
-        // Reset character rotation to default (facing the shop)
-        characterRef.current.rotation.y = Math.PI;
+        characterRef.current.rotation.y = Math.PI; // Face back toward the shop
+        
+        // Update position in multiplayer if connected
+        if (isConnected && sendPositionUpdate) {
+          const x = characterRef.current.position.x;
+          const z = characterRef.current.position.z;
+          console.log('Multiplayer: Rotating character to face shop', {x, z, r: Math.PI});
+          sendPositionUpdate({x, z, r: Math.PI});
+        }
       }
       
       // Send appearance update when exiting customization mode
       if (isConnected) {
-        // Use the function from context instead of direct socket.emit
         sendAppearanceUpdate(subToolColors, selected);
-        console.log('Multiplayer: Sent appearance update on customization exit');
       }
       
       // Restore chat when done customizing
@@ -517,9 +544,15 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       // Set global flag to disable movement
       window.isCustomizingClothing = true;
       
-      // Rotate character to face the camera
+      // Position character at the optimal viewing position, facing AWAY from shop
       if (characterRef.current) {
         characterRef.current.rotation.y = 0;
+        
+        // If we have position update capability, also set proper position
+        if (isConnected && sendPositionUpdate) {
+          console.log('Multiplayer: Setting character to ideal position');
+          sendPositionUpdate({x: 0, z: 11.36, r: 0});
+        }
       }
       
       // Force select the hair tool
@@ -534,16 +567,22 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
       // Remove global flag to re-enable movement
       window.isCustomizingClothing = false;
       
-      // Return character to original rotation if needed
+      // Rotate character 180 degrees to face the shop again
       if (characterRef.current) {
-        characterRef.current.rotation.y = Math.PI;
+        characterRef.current.rotation.y = Math.PI; // Face back toward the shop
+        
+        // Update position in multiplayer if connected
+        if (isConnected && sendPositionUpdate) {
+          const x = characterRef.current.position.x;
+          const z = characterRef.current.position.z;
+          console.log('Multiplayer: Rotating character to face shop', {x, z, r: Math.PI});
+          sendPositionUpdate({x, z, r: Math.PI});
+        }
       }
       
       // Send appearance update when exiting customization mode
       if (isConnected) {
-        // Use the function from context instead of direct socket.emit
         sendAppearanceUpdate(subToolColors, selected);
-        console.log('Multiplayer: Sent appearance update on hair customization exit');
       }
       
       // Restore chat when done customizing

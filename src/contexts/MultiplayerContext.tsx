@@ -35,6 +35,8 @@ interface MultiplayerContextType {
   sendAppearanceUpdate: (colors: any[], selected: Record<string, string>) => void;
   // Phase 3 chat functions
   sendChatMessage: (message: string) => void;
+  // Position update function
+  sendPositionUpdate: (position: {x: number, z: number, r: number}) => void;
 }
 
 // Create the context with default values
@@ -49,7 +51,8 @@ const MultiplayerContext = createContext<MultiplayerContextType>({
   positionUpdateCount: 0,
   appearanceUpdateCount: 0,
   sendAppearanceUpdate: () => {}, // Default no-op function
-  sendChatMessage: () => {} // Default no-op function
+  sendChatMessage: () => {}, // Default no-op function
+  sendPositionUpdate: () => {} // Default no-op function
 });
 
 // Socket.io server URL
@@ -410,6 +413,24 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, [socket, isConnected]);
 
+  // Function to send position updates to the server
+  const sendPositionUpdate = useCallback((position: {x: number, z: number, r: number}) => {
+    if (socket && isConnected) {
+      console.log('Multiplayer: Sending position update', position);
+      socket.emit('updatePosition', {
+        position: {
+          x: position.x,
+          y: 0, // Y is always 0 in this application
+          z: position.z
+        },
+        rotation: position.r,
+        moving: false // We're not moving when manually setting position
+      });
+    } else {
+      console.warn('Multiplayer: Cannot send position update - not connected');
+    }
+  }, [socket, isConnected]);
+
   // The context value to be provided
   const contextValue = {
     socket,
@@ -422,7 +443,8 @@ export const MultiplayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     positionUpdateCount,
     appearanceUpdateCount,
     sendAppearanceUpdate,
-    sendChatMessage
+    sendChatMessage,
+    sendPositionUpdate
   };
 
   return (
