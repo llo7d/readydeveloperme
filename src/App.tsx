@@ -46,11 +46,16 @@ const INITIAL_ROTATION = Math.PI; // Face towards the shop
 const SceneManager = ({ 
   characterRef, 
   shopPosition, 
+  portalPosition,
+  username,
   onNearShop, 
   onCharacterMovementChange 
 }) => {
   // Convert shop position array to Vector3
   const shopVec = new THREE.Vector3(shopPosition[0], shopPosition[1], shopPosition[2]);
+  // Convert portal position array to Vector3
+  const portalVec = new THREE.Vector3(portalPosition[0], portalPosition[1], portalPosition[2]);
+  const PORTAL_ACTIVATION_THRESHOLD = 2.0;
   
   // Shop dimensions matching the ClothingShop component
   const shopSize = { width: 5, height: 3, depth: 5 };
@@ -94,6 +99,27 @@ const SceneManager = ({
     // If position changed significantly, character is moving
     const wasMoving = isMoving.current;
     isMoving.current = distance > 0.005;
+    
+    // --- Portal Interaction Logic --- 
+    if (isMoving.current) {
+      // Calculate distance only on the XZ plane for portal check
+      const distanceToPortal = Math.sqrt(
+        Math.pow(position.x - portalVec.x, 2) +
+        Math.pow(position.z - portalVec.z, 2)
+      );
+      
+      if (distanceToPortal < PORTAL_ACTIVATION_THRESHOLD) {
+        console.log("Character entered portal area! Redirecting...");
+        // Prevent multiple redirects if frame runs quickly
+        if (!(window as any).portalRedirecting) {
+            (window as any).portalRedirecting = true;
+            const portalURL = `http://portal.pieter.com/?ref=readydeveloper.me&username=${encodeURIComponent(username)}`;
+            console.log(`Redirecting to: ${portalURL}`);
+            window.location.href = portalURL; 
+        }
+      }
+    }
+    // --- End Portal Interaction Logic ---
     
     // Update last position
     lastPosition.current.copy(position);
@@ -999,6 +1025,10 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
   );
   // -------------------------
 
+  // --- Define Portal Position --- 
+  const portalPosition: [number, number, number] = [25, 0, 25];
+  // ------------------------------
+
   return (
     <div className="relative w-full h-screen">
       {/* Vibe Jam 2025 link - positioned in top left on mobile */}
@@ -1136,7 +1166,9 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
             {inClothingShop && (
               <SceneManager 
                 characterRef={characterRef} 
-                shopPosition={clothingShopPosition} 
+                shopPosition={clothingShopPosition}
+                portalPosition={portalPosition}
+                username={initialUsername}
                 onNearShop={handleNearShop}
                 onCharacterMovementChange={handleCharacterMovementChange}
               />
@@ -1145,6 +1177,8 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
               <SceneManager 
                 characterRef={characterRef} 
                 shopPosition={barberShopPosition} 
+                portalPosition={portalPosition}
+                username={initialUsername}
                 onNearShop={handleNearBarberShop}
                 onCharacterMovementChange={handleCharacterMovementChange}
               />
