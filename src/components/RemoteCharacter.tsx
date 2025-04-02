@@ -68,15 +68,37 @@ const calculateVelocity = (newSample: PositionSample, oldSample: PositionSample)
     return velocity;
 };
 
-// Map pose IDs to animation names
+// Map pose IDs to animation names - UPDATED WITH FULL MAPPING
 const getAnimationNameFromPose = (poseId?: string): string => {
     if (!poseId) return "CrossedArm";
     
     switch (poseId) {
+        // Existing ones
         case "pose_character_stop": return "CrossedArm";
+        case "pose_crossed_arm": return "CrossedArm"; // Add alias
+        case "pose_crossed_arm_1": return "CrossedArm"; // Add alias
         case "pose_confident": return "Confident";
         case "pose_waving": return "Waving";
         case "pose_welcome": return "Welcome";
+
+        // Added from Character.tsx
+        case "pose_confused": return "Confused";
+        case "pose_happy_open_arm": return "HappyOpenArm";
+        case "pose_jump_happy": return "JumpHappy";
+        case "pose_on_phone": return "OnPhone";
+        case "pose_pc01": return "PC01";
+        case "pose_pc02": return "PC02";
+        case "pose_pointing_down": return "PointingDown";
+        case "pose_pointing_left": return "PointingLeft";
+        case "pose_pointing_right": return "PointingRight";
+        case "pose_pointing_up": return "PointingUp";
+        case "pose_sitting_happy": return "SittingHappy";
+        case "pose_sitting_sad": return "SittingSad";
+        case "pose_standing1": return "Standing1"; // Keeping this mapped, although Character.tsx overrides it
+        case "pose_standing_sad": return "StandingSad";
+        case "pose_standing_thinking": return "StandingThinking";
+        
+        // Default
         default: return "CrossedArm";
     }
 };
@@ -89,12 +111,15 @@ const getColorHelper = (colors: any[] | undefined, subToolId: string): string =>
 };
 
 // Extract pose from message text if present
-const extractPoseFromMessage = (messageText: string): { pose: string | null, cleanText: string } => {
-    // Check if message starts with @pose
-    const poseMatch = messageText.match(/^@([A-Za-z]+)\s+(.*)$/);
+const extractPoseFromMessage = (messageText: string, id: string): { pose: string | null, cleanText: string } => {
+    // Regex to match "@poseName Rest of message" or "@poseName"
+    const poseMatch = messageText.match(/^@([A-Za-z0-9_]+)\s*(.*)$/); 
     if (poseMatch) {
-        const pose = poseMatch[1]; // The pose name
-        const cleanText = poseMatch[2]; // The rest of the message
+        const pose = `pose_${poseMatch[1].toLowerCase()}`; // Standardize to pose_ format
+        const cleanText = poseMatch[2]?.trim() || ''; // Rest of the message or empty string
+        // Basic validation: Check if the extracted pose exists in our mapping (case insensitive check might be needed if animation names vary)
+        // We'll rely on the getAnimationNameFromPose to handle invalid poses for now.
+        console.log(`[${id.slice(0,6)}] Extracted pose from message: ${pose}, Clean text: "${cleanText}"`);
         return { pose, cleanText };
     }
     
@@ -119,12 +144,12 @@ const getFormattedMeshName = (prefix: string, type: string | undefined): string 
 };
 
 // ChatBubble component to display messages above character
-const ChatBubble = ({ message, position }: { message: { text: string; timestamp: number; messageId: string }, position: [number, number, number] }) => {
+const ChatBubble = ({ message, position, id }: { message: { text: string; timestamp: number; messageId: string }, position: [number, number, number], id: string }) => {
     const [visible, setVisible] = useState(true);
     const [currentMessageId, setCurrentMessageId] = useState(message.messageId);
     
-    // Extract pose and clean text from message
-    const { pose, cleanText } = useMemo(() => extractPoseFromMessage(message.text), [message.text]);
+    // Extract pose and clean text from message - pass id here
+    const { pose, cleanText } = useMemo(() => extractPoseFromMessage(message.text, id), [message.text, id]);
     
     // Apply pose if found - needs to be in an effect to ensure it's called after the component mounts
     useEffect(() => {
@@ -523,15 +548,23 @@ export default function RemoteCharacter({ id, username, position, rotation, colo
         const data = playerData.get(id);
         if (!data) return;
 
-        // The key change: determine target animation based on movement state first
+        // Extract potential pose from the current message - Pass ID here and fix destructuring
+        const { pose: messagePose } = message ? extractPoseFromMessage(message.text, id) : { pose: null };
+
         let targetAnimationName: string;
 
         if (isMoving.current) {
             // When moving, always use walking_loop regardless of pose
             targetAnimationName = "walking_loop";
         } else {
-            // When stopped, use the selected pose from the user
-            targetAnimationName = getAnimationNameFromPose(selected?.pose);
+            // When stopped: Prioritize message pose, then selected pose, then default
+            if (messagePose) {
+                targetAnimationName = getAnimationNameFromPose(messagePose);
+                console.log(`[${id.slice(0,6)}] Using pose from message: ${messagePose} -> ${targetAnimationName}`);
+            } else {
+                targetAnimationName = getAnimationNameFromPose(selected?.pose);
+                console.log(`[${id.slice(0,6)}] Using pose from selected state: ${selected?.pose} -> ${targetAnimationName}`);
+            }
         }
 
         // Skip if already playing this animation
@@ -595,7 +628,8 @@ export default function RemoteCharacter({ id, username, position, rotation, colo
         data.currentAnimation = targetAnimationName;
         playerData.set(id, data);
 
-    }, [isReady, actions, mixer, isMoving.current, selected?.pose, id]); // Dependencies that trigger transitions
+    // Include message?.messageId to re-run when a new message arrives
+    }, [isReady, actions, mixer, isMoving.current, selected?.pose, id, message?.messageId]); 
 
     // Interpolation logic - Add mixer update
     useFrame((state, delta) => {
@@ -725,8 +759,8 @@ export default function RemoteCharacter({ id, username, position, rotation, colo
             <CharacterShadow />
             <Nametag />
             
-            {/* Chat message bubble */}
-            {message && <ChatBubble message={message} position={[0, 2.7, 0]} />}
+            {/* Chat message bubble - pass id here */}
+            {message && <ChatBubble message={message} position={[0, 2.7, 0]} id={id} />}
 
             {/* Render the CLONED SCENE directly via primitive - do NOT add rotation here */}
             {canRender && (
