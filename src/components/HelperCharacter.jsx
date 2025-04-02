@@ -348,8 +348,8 @@ if (typeof window !== 'undefined') {
 const helperUIConfig = {
   // Character position and size
   position: {
-    desktop: [-5.6, 0, 15],  // [x, y, z] for desktop
-    mobile: [-5.6, 0, 15]     // [x, y, z] for mobile (closer/more visible)
+    desktop: [-5.6, 0, 25],  // Increased Z from 15 to 25
+    mobile: [-10, 0, 25]     // Increased Z from 15 to 25
   },
   scale: {
     desktop: 0.14,          // Desktop scale

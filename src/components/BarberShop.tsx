@@ -81,7 +81,7 @@ const BarberShop = ({
   };
 
   return (
-    <group ref={groupRef} position={new THREE.Vector3(10, position[1], 10)}>
+    <group ref={groupRef} position={new THREE.Vector3(15, position[1], 20)}>
       {/* The barber shop model with its own positioning, rotation and scale */}
       <group 
         position={new THREE.Vector3(shopOffset[0], shopOffset[1], shopOffset[2])}

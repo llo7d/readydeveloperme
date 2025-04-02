@@ -353,11 +353,10 @@ const ThirdPersonCamera = ({
 
     // --- Check for Customization Mode FIRST --- 
     if (customizingClothing) {
-        orbitControlsRef.current.enabled = true; // Ensure controls are globally enabled
-        orbitControlsRef.current.enableRotate = false; // <<<=== DISABLE ROTATION
+        orbitControlsRef.current.enableRotate = false; // Keep rotation disabled here
 
-        // Use the HARDCODED character position for stability during transition
-        const targetCharPos = new THREE.Vector3(0, 0, 11.5); 
+        // Use the UPDATED HARDCODED character position for stability during transition
+        const targetCharPos = new THREE.Vector3(0, 0, 21.5); // Updated Z to 21.5
         
         // Calculate desired camera position (behind character)
         const cameraOffset = new THREE.Vector3(
@@ -374,14 +373,13 @@ const ThirdPersonCamera = ({
             targetCharPos.z
         );
         
-        transitionSpeed = cameraConfig.customizationFocus.transitionSpeed; // Use specific transition speed
+        transitionSpeed = cameraConfig.customizationFocus.transitionSpeed;
 
-        // Apply using lerp (smooth transition)
+        // Apply using lerp
         camera.position.lerp(desiredCameraPos, transitionSpeed * delta);
         orbitControlsRef.current.target.lerp(finalTargetPos, transitionSpeed * delta);
         orbitControlsRef.current.update();
 
-        // EXIT EARLY - Don't run helper or default logic
         return; 
     }
 

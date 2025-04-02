@@ -38,7 +38,7 @@ import MultiplayerManager from './components/MultiplayerManager';
 import RemoteCharactersManager from "./components/RemoteCharactersManager";
 
 // --- Constants for initial state ---
-const INITIAL_POSITION = { x: 0, y: 0, z: 30 };
+const INITIAL_POSITION = { x: 0, y: 0, z: 40 };
 const INITIAL_ROTATION = Math.PI; // Face towards the shop
 // ----------------------------------
 
@@ -192,8 +192,8 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
   // Add state to track if character is moving
   const [isCharacterMoving, setIsCharacterMoving] = useState(false);
   
-  // Update the clothing shop position to be further away
-  const clothingShopPosition: [number, number, number] = [0, 0, 5.25]; // Moved 45% closer to spawn
+  // Original (and only) clothing shop position
+  const clothingShopPosition: [number, number, number] = [0, 0, 15];
 
   // Add state to track if we're in the barber shop mode
   const [inBarberShop, setInBarberShop] = useState(false);
@@ -201,11 +201,12 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
   // Add state to track if hair customization is active
   const [customizingHair, setCustomizingHair] = useState(false);
 
-  // Add state to track proximity to the barber shop
+  // *** ADD State to track proximity to the barber shop ***
   const [nearBarberShop, setNearBarberShop] = useState(false);
-  
+  // ********************************************************
+
   // Update the barber shop position to be next to the clothing shop
-  const barberShopPosition: [number, number, number] = [8, 0, 5.25]; // Positioned to the right of the clothing shop
+  const barberShopPosition: [number, number, number] = [12, 0, 15];
 
   // Change to "false" if you want hide/reveal version of the toolbar.
   const [isToolbarOpen, setIsToolbarOpen] = useState(true);
@@ -529,79 +530,50 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
 
   // Toggle clothing customization
   const toggleClothingCustomization = () => {
-    // Only allow toggling if the character is not moving
     if (isCharacterMoving) return;
     
     const willBeCustomizing = !customizingClothing;
     
     if (willBeCustomizing) {
-      // Always set customization mode first to ensure it's activated on the first click
       setCustomizingClothing(true);
-      
-      // Set global flag to disable movement
       window.isCustomizingClothing = true;
       
-      // Position character at the optimal viewing position
+      // Position character
       if (characterRef.current) {
-        // Get current position to determine approach angle
-        const currentPosition = characterRef.current.position.clone();
-        
-        // Calculate if they're approaching from the front or back side
-        const isApproachingFromBack = currentPosition.z < clothingShopPosition[2];
-        
-        console.log('Approaching clothing shop from:', isApproachingFromBack ? 'back side' : 'front side');
-        
-        // Set to ideal position in front of the shop
         characterRef.current.position.x = 0;
-        characterRef.current.position.z = 11.5; // Increased from 11.36 to prevent camera clipping
-        
-        // Face character AWAY from the shop (180 degrees from before)
-        characterRef.current.rotation.y = 0; // 0 is opposite of Math.PI (3.14)
+        characterRef.current.position.z = 21.5; // Match new depth: 15 (shop pos) + 6.5 (offset) -> rounded up?
+        characterRef.current.rotation.y = 0; 
 
-        // Send position update to multiplayer if connected
+        // Send position update
         if (isConnected && sendPositionUpdate) {
-          console.log('Multiplayer: Setting character to ideal shop position', {x: 0, z: 11.5, r: 0});
-          sendPositionUpdate({x: 0, z: 11.5, r: 0});
+          sendPositionUpdate({x: 0, z: 21.5, r: 0}); // Update Z here too
         }
       }
       
-      // Force select the color tool
       setTool(tools.find(t => t.id === "tool_2") || tools[0]);
-      
-      // Hide chat when customizing
       if (typeof window !== 'undefined' && window.startClothingShopInteraction) {
         window.startClothingShopInteraction();
       }
     } else {
-      // Exiting customization mode
       setCustomizingClothing(false);
-      
-      // Remove global flag to re-enable movement
       window.isCustomizingClothing = false;
       
-      // Send appearance update when exiting customization mode
+      // Send appearance update 
       if (isConnected) {
         sendAppearanceUpdate(subToolColors, selected);
       }
       
-      // Rotate character and move it further from the house to prevent clipping
+      // Rotate character and move it back 
       if (characterRef.current) {
-        // Face back toward the shop
         characterRef.current.rotation.y = Math.PI;
-        // Move character further from the house (increased from 14.5 to 15 for safety)
-        characterRef.current.position.z = 15;
+        characterRef.current.position.z = 25; // Increase exit Z pos relative to new shop pos (15 + 10)
         
-        // Update position in multiplayer if connected
+        // Send position update
         if (isConnected && sendPositionUpdate) {
-          sendPositionUpdate({
-            x: characterRef.current.position.x,
-            z: 15,
-            r: Math.PI
-          });
+          sendPositionUpdate({ x: characterRef.current.position.x, z: 25, r: Math.PI }); // Update Z here too
         }
       }
       
-      // Restore chat when done customizing
       if (typeof window !== 'undefined' && window.endCharacterInteraction) {
         window.endCharacterInteraction();
       }
@@ -865,45 +837,6 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
   }, [isConnected, joinGame, subToolColors, selected]);
   // ---- END NEW useEffect ----
 
-  // ---- Temporarily disable localStorage for debugging color sync issues ----
-  /*
-  // Load appearance from localStorage on initial mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('playerAppearance');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.colors && parsed.selected) {
-          // Validate loaded data (simple check for now)
-          if (Array.isArray(parsed.colors) && typeof parsed.selected === 'object') {
-            setSubToolColors(parsed.colors);
-            setSelected(parsed.selected);
-            console.log('Loaded saved appearance from localStorage');
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error loading appearance from localStorage:', error);
-    }
-  }, []); // Run only once on mount
-  */
-  /*
-  // Save appearance to localStorage whenever it changes
-  useEffect(() => {
-    // Don't save during customization - wait till complete
-    if (customizingClothing || customizingHair) return;
-    
-    try {
-      const appearanceToSave = { colors: subToolColors, selected };
-      localStorage.setItem('playerAppearance', JSON.stringify(appearanceToSave));
-      console.log('Saved appearance to localStorage');
-    } catch (error) {
-      console.error('Error saving appearance to localStorage:', error);
-    }
-  }, [subToolColors, selected, customizingClothing, customizingHair]);
-  */
-  // ---- End temporary localStorage disable ----
-
   // Effect to hide the game messaging UI when in special areas or talking to helper
   useEffect(() => {
     // Make sure window properties exist
@@ -1047,7 +980,7 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
             <RemoteCharactersManager />
             {inClothingShop && (
               <ClothingShop 
-                position={clothingShopPosition} 
+                position={clothingShopPosition}
                 onChangeClothing={toggleClothingCustomization}
                 canChangeClothing={nearShop && !isCharacterMoving}
                 isCustomizing={customizingClothing}
@@ -1135,8 +1068,8 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
             {/* --- Render ThirdPersonCamera ALWAYS, pass customization state --- */}
             <ThirdPersonCamera 
               characterRef={characterRef} 
-              customizingClothing={customizingClothing || customizingHair} // Pass combined state 
-              shopPosition={clothingShopPosition} // Keep for potential collision use
+              customizingClothing={customizingClothing || customizingHair}
+              shopPosition={clothingShopPosition}
               helperCharacterRef={helperCharacterRef}
             />
             {/* --------------------------------------------------------------- */}
