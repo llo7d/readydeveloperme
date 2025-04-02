@@ -37,12 +37,10 @@ import { MultiplayerProvider, useMultiplayer, DEFAULT_COLORS } from './contexts/
 import MultiplayerManager from './components/MultiplayerManager';
 import RemoteCharactersManager from "./components/RemoteCharactersManager";
 
-// Window interface is now defined globally in src/types/window.d.ts
-// declare global {
-//   interface Window {
-    // ... removed declarations ...
-//   }
-// }
+// --- Constants for initial state ---
+const INITIAL_POSITION = { x: 0, y: 0, z: 30 };
+const INITIAL_ROTATION = Math.PI; // Face towards the shop
+// ----------------------------------
 
 // This component handles all scene-specific behaviors that need to use hooks like useFrame
 const SceneManager = ({ 
@@ -75,8 +73,8 @@ const SceneManager = ({
   useEffect(() => {
     if (characterRef.current) {
       // Position character further away from the shop initially
-      characterRef.current.position.set(0, 0, 30); // Start much further away from the shop
-      characterRef.current.rotation.y = Math.PI; // 180 degrees, facing toward the shop
+      characterRef.current.position.set(INITIAL_POSITION.x, INITIAL_POSITION.y, INITIAL_POSITION.z);
+      characterRef.current.rotation.y = INITIAL_ROTATION;
       lastPosition.current.copy(characterRef.current.position);
     }
   }, [characterRef]);
@@ -215,7 +213,7 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
   const isDesktop = useMediaQuery({ query: "(min-width: 960px)" });
   const refLogoInput = useRef<HTMLInputElement>(null);
 
-  const [debuggerVisible, setDebuggerVisible] = useState(true);
+  const [debuggerVisible, setDebuggerVisible] = useState(false);
   const [visible, setVisible] = useState(true);
   const tools = getToolbarData();
   const [tool, setTool] = useState(tools[0]);
@@ -237,6 +235,59 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
 
   // Track last sent appearance
   const lastSentAppearance = useRef<{colors: any[] | null, selected: any | null}>({ colors: null, selected: null });
+
+  // --- Move Reset Function Definition Here ---
+  const handleReset = useCallback(() => {
+    console.log("Resetting character position and state...");
+    
+    // 1. Reset Character Position and Rotation
+    if (characterRef.current) {
+      characterRef.current.position.set(INITIAL_POSITION.x, INITIAL_POSITION.y, INITIAL_POSITION.z);
+      characterRef.current.rotation.y = INITIAL_ROTATION;
+      // Ensure the camera updates immediately after reset
+      characterRef.current.updateMatrixWorld(true); 
+    }
+    
+    // 2. Exit Customization Modes
+    if (customizingClothing) {
+      setCustomizingClothing(false);
+    }
+    if (customizingHair) {
+      setCustomizingHair(false);
+    }
+    
+    // 3. Reset Global Flags/State
+    window.isCustomizingClothing = false;
+    
+    // 4. Restore Chat Interaction (if needed)
+    if (typeof window !== 'undefined' && window.endCharacterInteraction) {
+      // Use a small delay to ensure state updates propagate before enabling chat
+      setTimeout(() => {
+        window.endCharacterInteraction?.();
+        console.log("Chat interaction restored after reset.");
+      }, 100);
+    }
+    
+    // 5. Send Update via Multiplayer
+    if (isConnected && sendPositionUpdate) {
+      console.log('Multiplayer: Sending reset position update');
+      sendPositionUpdate({ 
+        x: INITIAL_POSITION.x, 
+        z: INITIAL_POSITION.z, 
+        r: INITIAL_ROTATION 
+      });
+    }
+    
+    // 6. Optionally: Send appearance update if it might have been mid-change
+    if (isConnected && sendAppearanceUpdate) {
+      sendAppearanceUpdate(subToolColors, selected);
+    }
+
+    // 7. Reset Toolbar (optional, depending on desired behavior)
+    // setTool(tools[0]); // Uncomment to reset to the first tool
+
+  }, [characterRef, customizingClothing, customizingHair, isConnected, sendPositionUpdate, sendAppearanceUpdate]);
+  // ------------------------------------------------------------
 
   // Load saved appearance from localStorage if it exists
   const loadSavedAppearance = () => {
@@ -936,6 +987,18 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
     }
   }, [characterRef, customizingClothing, customizingHair]);
 
+  // --- Render Reset Button ---
+  const ResetButton = () => (
+    <button
+      onClick={handleReset}
+      className="fixed bottom-5 right-5 z-[10000] bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-150 ease-in-out"
+      aria-label="Reset Position"
+    >
+      I'm Stuck
+    </button>
+  );
+  // -------------------------
+
   return (
     <div className="relative w-full h-screen">
       {/* Vibe Jam 2025 link - positioned in top left on mobile */}
@@ -1100,7 +1163,7 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
         <Chatbox />
 
         {/* Add MultiplayerManager component for connection status display */}
-        <MultiplayerManager visible={true} />
+        <MultiplayerManager initialUsername={initialUsername} />
 
         {/* Only show minimal UI on mobile */}
         {!isDesktop && (
@@ -1175,7 +1238,10 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
           onClickClose={() => setIsManualOpen(false)}
         />
 
-        <Leva hidden={debuggerVisible} />
+        <Leva hidden={!debuggerVisible || !isDesktop} titleBar={{ title: 'Debugger' }} />
+
+        {/* Render the reset button */}
+        <ResetButton />
       </div>
     </div>
   );

@@ -82,12 +82,25 @@ const ThirdPersonCamera = ({
   const lastCharacterPos = useRef(new THREE.Vector3());
   const helperCharacterPos = useRef(new THREE.Vector3());
   
+  // --- Add state for mobile detection ---
+  const [isMobile, setIsMobile] = useState(false);
+  // -------------------------------------
+  
   // Shop dimensions (matching the ClothingShop component)
   const shopSize = { width: 5, height: 3, depth: 5 };
   const shopVec = new THREE.Vector3(shopPosition[0], shopPosition[1], shopPosition[2]);
   
   // Chat transition state - read from global window property
   const inChatTransition = window.inChatTransition || false;
+  
+  // --- Add effect for mobile detection ---
+  useEffect(() => {
+    const userAgent = typeof navigator === 'undefined' ? '' : navigator.userAgent;
+    const mobile = /Mobi|Android|iPhone/i.test(userAgent);
+    setIsMobile(mobile);
+    console.log(`Device is mobile: ${mobile}`);
+  }, []);
+  // -------------------------------------
   
   // Check for chatbox open status
   useEffect(() => {
@@ -359,15 +372,27 @@ const ThirdPersonCamera = ({
     if (!isDragging) {
       let targetAngle;
       let targetDistance = cameraDistance.current;
-      let targetPitch = cameraPitch.current;
+      let targetPitch; // Default pitch is now determined contextually
       let targetHeight = cameraConfig.height;
+      
+      // --- Determine target pitch based on context ---
+      if (customizingClothing) {
+        targetPitch = cameraConfig.customizationPitch;
+      } else if (helperCharacterRef?.current && focusingHelper) {
+        targetPitch = cameraConfig.helperFocus.offset.pitch;
+      } else if (isMobile) { // Check if mobile
+        targetPitch = -0.13; // Apply fixed pitch for mobile
+      } else {
+        // Default for desktop: Target horizontal (0) or lerp towards it
+        targetPitch = 0;
+      }
+      // --- End target pitch determination ---
       
       if (customizingClothing) {
         // When customizing clothing, always position the camera directly in front of the character
         // regardless of how the player approached the clothing shop
         targetAngle = Math.PI; // 180 degrees - directly in front (character facing camera)
         targetDistance = cameraConfig.customizationDistance;
-        targetPitch = cameraConfig.customizationPitch; // Slight downward pitch for better view
         targetHeight = cameraConfig.customizationHeight; // Lower height for better view
         
         // Force immediate transition to the target angle when entering customization mode
@@ -410,19 +435,22 @@ const ThirdPersonCamera = ({
         
         cameraAngle.current += rotationDiff * rotationSpeed;
         
-        // Also reset vertical angle when not in customization mode and not focusing helper
+        // --- Pitch logic adjustment ---
+        // When focusing helper, transition to helper pitch
+        // Otherwise (mobile or desktop), transition towards the determined targetPitch
         if (!focusingHelper) {
-          cameraPitch.current *= 0.95; // Gradually return to horizontal
+            const pitchDiff = targetPitch - cameraPitch.current;
+            // Use a slightly faster transition for pitch adjustment
+            cameraPitch.current += pitchDiff * cameraConfig.returnSpeed * 1.5;
         } else {
-          // When focusing helper, adjust pitch with configurable offset
-          const targetPitch = cameraConfig.helperFocus.offset.pitch;
-          cameraPitch.current += (targetPitch - cameraPitch.current) * cameraConfig.helperFocus.transitionSpeed * delta;
+            // Keep existing helper focus pitch logic
+            cameraPitch.current += (targetPitch - cameraPitch.current) * cameraConfig.helperFocus.transitionSpeed * delta;
         }
+        // --- End pitch logic adjustment ---
+      } else {
+         // When customizing, directly set pitch (prevents lerping during UI interaction)
+         cameraPitch.current = targetPitch;
       }
-      
-      // Smoothly transition to target pitch (vertical angle)
-      const pitchDiff = targetPitch - cameraPitch.current;
-      cameraPitch.current += pitchDiff * cameraConfig.returnSpeed * 2; // Faster pitch transition
       
       // Smoothly transition to target height
       const heightDiff = targetHeight - cameraHeight.current;
