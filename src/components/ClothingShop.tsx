@@ -135,7 +135,7 @@ const ClothingShop = ({
       
       {/* 2D Badge above the house */}
       <Html
-        position={isMobile && isCustomizing ? [-0.9, 5.5, 1.1] : [-0.9, 3.7, 1.1]}
+        position={isMobile && isCustomizing ? [-0.9, 5.5, 1.1] : [-0.9, 3.7, 1.1]} // Keep 3D position for context, but rely on CSS for final placement
         center
         distanceFactor={10}
         occlude={[]}
@@ -144,12 +144,15 @@ const ClothingShop = ({
           transition: 'all 0.3s ease',
           zIndex: 100, // Ensure badge is on top
           ...(isMobile && isCustomizing ? {
+            // Mobile & Customizing: Fixed position at top-center
             position: 'fixed',
-            top: '55px', // Changed from 30px to 45px (15% more down)
+            top: '60px', // Place closer to the top edge
             left: '50%',
-            transform: 'translateX(15%)',
+            transform: 'translateX(25%)', // Center horizontally
           } : {
-            transform: `scale(${(isCustomizing ? 1 : badgeScale) * 1.5})`
+            // Non-customizing or Desktop: Use scale transform based on proximity
+            transform: `scale(${(isCustomizing ? 1 : badgeScale) * 1.5})` 
+            // Note: The 3D position prop will handle placement when not fixed
           })
         }}
       >
@@ -193,25 +196,15 @@ const ClothingShop = ({
         <Html
           center 
           distanceFactor={10} 
-          // Remove position prop, use style only for positioning
-          style={isMobile ? {
-            // Mobile: Position icon row at bottom center
+          // Remove 3D position prop, rely entirely on style for fixed positioning
+          style={{ // Apply same style for both mobile and desktop when customizing
             position: 'fixed',
-            bottom: '-10vh', // Changed from 1vh to 2vh to move closer to bottom
+            bottom: '-12vh', // Place near the bottom edge (adjust as needed)
             left: '50%',
             transform: 'translateX(-50%)', // Center horizontally
             width: 'auto', // Let content define width
             zIndex: 1002, 
-            pointerEvents: 'none',
-          } : {
-            // Desktop: Position at bottom center like mobile
-            position: 'fixed',
-            bottom: '-12vh', // Changed from 2vh to 0.5vh to move closer to bottom on desktop
-            left: '50%', 
-            transform: 'translateX(-50%)', // Center horizontally
-            width: 'auto',
-            zIndex: 1002,
-            pointerEvents: 'none',
+            pointerEvents: 'none', // Container doesn't need events, children do
           }}
         >
           <div style={{ 

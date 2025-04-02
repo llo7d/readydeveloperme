@@ -42,25 +42,16 @@ const INITIAL_POSITION = { x: 0, y: 0, z: 30 };
 const INITIAL_ROTATION = Math.PI; // Face towards the shop
 // ----------------------------------
 
-// This component handles all scene-specific behaviors that need to use hooks like useFrame
+// This component handles scene-specific behaviors like movement updates and portal checks
 const SceneManager = ({ 
   characterRef, 
-  shopPosition, 
   portalPosition,
   username,
-  onNearShop, 
   onCharacterMovementChange 
 }) => {
-  // Convert shop position array to Vector3
-  const shopVec = new THREE.Vector3(shopPosition[0], shopPosition[1], shopPosition[2]);
   // Convert portal position array to Vector3
   const portalVec = new THREE.Vector3(portalPosition[0], portalPosition[1], portalPosition[2]);
   const PORTAL_ACTIVATION_THRESHOLD = 2.0;
-  
-  // Shop dimensions matching the ClothingShop component
-  const shopSize = { width: 5, height: 3, depth: 5 };
-  const doorSize = { width: 1, height: 2 };
-  const doorPosition = { x: 0, z: shopSize.depth/2 }; // Door is centered on front wall
   
   // Store last position to detect movement
   const lastPosition = useRef(new THREE.Vector3());
@@ -72,9 +63,9 @@ const SceneManager = ({
   
   // Throttle position updates
   const lastPositionUpdateTime = useRef(0);
-  const POSITION_UPDATE_INTERVAL = 100; // 100ms = 10 updates per second
+  const POSITION_UPDATE_INTERVAL = 100; 
   
-  // Initialize character rotation to face the shop
+  // Initialize character rotation (keep this)
   useEffect(() => {
     if (characterRef.current) {
       // Position character further away from the shop initially
@@ -84,7 +75,7 @@ const SceneManager = ({
     }
   }, [characterRef]);
   
-  // Check if character is moving
+  // Check if character is moving & portal interaction
   useFrame(() => {
     if (!characterRef.current) return;
     
@@ -149,23 +140,7 @@ const SceneManager = ({
     }
   });
   
-  return (
-    <>
-      <ProximityDetector 
-        target={shopVec}
-        characterRef={characterRef}
-        threshold={5}
-        onNear={onNearShop}
-      />
-      <ShopCollision
-        shopPosition={shopVec}
-        characterRef={characterRef}
-        shopSize={shopSize}
-        doorSize={doorSize}
-        doorPosition={doorPosition}
-      />
-    </>
-  );
+  return null; // Or <></> if preferred
 };
 
 // Add the link to the React Three Fiber rotating cube demo
@@ -1156,33 +1131,57 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
                 isCustomizing={false}
               />
             )}
+
+            {/* --- Render ThirdPersonCamera ALWAYS, pass customization state --- */}
             <ThirdPersonCamera 
               characterRef={characterRef} 
-              customizingClothing={customizingClothing || customizingHair} 
-              shopPosition={clothingShopPosition} 
+              customizingClothing={customizingClothing || customizingHair} // Pass combined state 
+              shopPosition={clothingShopPosition} // Keep for potential collision use
               helperCharacterRef={helperCharacterRef}
             />
+            {/* --------------------------------------------------------------- */}
+
+            {/* --- Add Proximity Detectors for Shops --- */}
+            <ProximityDetector 
+                target={new THREE.Vector3(clothingShopPosition[0], clothingShopPosition[1], clothingShopPosition[2])}
+                characterRef={characterRef}
+                threshold={5} // Adjust threshold as needed
+                onNear={handleNearShop} // Use the correct handler
+            />
+            <ProximityDetector 
+                target={new THREE.Vector3(barberShopPosition[0], barberShopPosition[1], barberShopPosition[2])}
+                characterRef={characterRef}
+                threshold={5} // Adjust threshold as needed
+                onNear={handleNearBarberShop} // Use the correct handler
+            />
+            {/* ------------------------------------------ */}
+
+            {/* --- Add Collision Logic for Shops --- */}
+            <ShopCollision
+                shopPosition={new THREE.Vector3(clothingShopPosition[0], clothingShopPosition[1], clothingShopPosition[2])}
+                characterRef={characterRef}
+                shopSize={{ width: 5, height: 3, depth: 5 }} // Use actual dimensions
+                doorSize={{ width: 1, height: 2 }}
+                doorPosition={{ x: 0, z: 2.5 }}
+            />
+             <ShopCollision
+                shopPosition={new THREE.Vector3(barberShopPosition[0], barberShopPosition[1], barberShopPosition[2])}
+                characterRef={characterRef}
+                shopSize={{ width: 5, height: 3, depth: 5 }} // Use actual dimensions
+                doorSize={{ width: 1, height: 2 }}
+                doorPosition={{ x: 0, z: 2.5 }}
+            />
+            {/* --------------------------------------- */}
+
             <CharacterControls characterRef={characterRef} />
-            {inClothingShop && (
-              <SceneManager 
-                characterRef={characterRef} 
-                shopPosition={clothingShopPosition}
-                portalPosition={portalPosition}
-                username={initialUsername}
-                onNearShop={handleNearShop}
-                onCharacterMovementChange={handleCharacterMovementChange}
-              />
-            )}
-            {inBarberShop && (
-              <SceneManager 
-                characterRef={characterRef} 
-                shopPosition={barberShopPosition} 
-                portalPosition={portalPosition}
-                username={initialUsername}
-                onNearShop={handleNearBarberShop}
-                onCharacterMovementChange={handleCharacterMovementChange}
-              />
-            )}
+            
+            {/* Render SceneManager (now only for movement/portal) */}
+            <SceneManager 
+              characterRef={characterRef} 
+              portalPosition={portalPosition}
+              username={initialUsername}
+              onCharacterMovementChange={handleCharacterMovementChange}
+            />
             <HelperCharacter ref={helperCharacterRef} />
             <Portal />
             <ContactShadows opacity={opacity} scale={scale * 0.5} blur={blur} far={far} />

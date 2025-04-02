@@ -46,7 +46,13 @@ const cameraConfig = {
       pitch: -0.27,  // Adjust pitch angle (vertical rotation) (changed from -0.2 to -0.27)
       angle: 0.4    // Adjust horizontal angle around helper to 0.4
     }
-  }
+  },
+  customizationFocus: {
+    distance: 7.5,       // Distance from character during customization
+    heightOffset: 1.6,   // Height offset for camera/target
+    transitionSpeed: 6,  // Speed of transition into/out of customization view
+    // We don't need angle/pitch offsets like helper as it's a direct view
+  },
 };
 
 // Make the config available globally for manual adjustments with a message
@@ -54,14 +60,14 @@ window.cameraConfig = cameraConfig;
 
 interface ThirdPersonCameraProps {
   characterRef: MutableRefObject<THREE.Group | null>;
-  customizingClothing?: boolean;
+  customizingClothing?: boolean; // Re-add prop
   shopPosition?: [number, number, number]; // Add shop position for clipping check
   helperCharacterRef?: MutableRefObject<THREE.Group | null> | null; // Reference to helper character
 }
 
 const ThirdPersonCamera = ({ 
   characterRef, 
-  customizingClothing = false,
+  customizingClothing = false, // Add default value
   shopPosition = [0, 0, -20],
   helperCharacterRef = null
 }: ThirdPersonCameraProps) => {
@@ -154,9 +160,11 @@ const ThirdPersonCamera = ({
 
     // Event handler functions (stored as references for proper cleanup)
     const globalMouseDown = (e) => {
-      if (customizingClothing && isColorPickerElement(e.target)) {
-        onColorPickerDragStart();
-      }
+      // This check is now less relevant here, but keep for potential future use?
+      // Maybe tie it to another state if needed
+      // if (/* some condition indicating UI interaction */ && isColorPickerElement(e.target)) { 
+      //   onColorPickerDragStart(); 
+      // }
     };
     
     const globalMouseUp = () => {
@@ -290,7 +298,6 @@ const ThirdPersonCamera = ({
     cameraPitch.current, 
     isDragging, 
     dragStartPos,
-    customizingClothing,
     focusingHelper,
     inChatTransition
   ]);
@@ -328,54 +335,63 @@ const ThirdPersonCamera = ({
   };
 
   useFrame((state, delta) => {
-    if (!characterRef?.current || !orbitControlsRef.current) return;
+    if (!orbitControlsRef.current || !characterRef?.current) return; 
 
-    // --- Customization Mode: Set fixed view and exit --- 
-    if (customizingClothing) {
-        const customDistance = cameraConfig.customizationDistance;
-        const targetCharPos = new THREE.Vector3(0, 0, 11.5);
-        const customHeight = targetCharPos.y + 1.6;
-
-        const desiredCustomPos = new THREE.Vector3(
-            targetCharPos.x,
-            customHeight,
-            targetCharPos.z + customDistance
-        );
-
-        const lookTarget = new THREE.Vector3(
-            targetCharPos.x,
-            customHeight,
-            targetCharPos.z
-        );
-
-        // Apply position & target directly
-        camera.position.copy(desiredCustomPos);
-        orbitControlsRef.current.target.copy(lookTarget);
-        orbitControlsRef.current.update(); // Apply target change
-
-        // Update internal state refs *after* setting camera, just to keep them roughly synced 
-        // although they aren't actively used for positioning in this mode.
-        cameraDistance.current = customDistance;
-        cameraPitch.current = 0; 
-        cameraAngle.current = Math.PI; 
-
-        return; // EXIT useFrame immediately
-    }
-
-    // --- If NOT customizing, proceed with default logic ---
-    
     const character = characterRef.current;
     const characterPos = character.position.clone();
     const characterRot = character.rotation.y;
     
-    // Save last character position for transitions
     lastCharacterPos.current.copy(characterPos);
     
-    // Check if we have a helper character to focus on
     if (helperCharacterRef?.current && focusingHelper) {
       helperCharacterPos.current.copy(helperCharacterRef.current.position);
     }
     
+    let desiredCameraPos: THREE.Vector3;
+    let finalTargetPos: THREE.Vector3;
+    let transitionSpeed = cameraConfig.followSpeed; // Default speed
+
+    // --- Check for Customization Mode FIRST --- 
+    if (customizingClothing) {
+        orbitControlsRef.current.enabled = true; // Ensure controls are globally enabled
+        orbitControlsRef.current.enableRotate = false; // <<<=== DISABLE ROTATION
+
+        // Use the HARDCODED character position for stability during transition
+        const targetCharPos = new THREE.Vector3(0, 0, 11.5); 
+        
+        // Calculate desired camera position (behind character)
+        const cameraOffset = new THREE.Vector3(
+            0, 
+            cameraConfig.customizationFocus.heightOffset,
+            cameraConfig.customizationFocus.distance
+        );
+        desiredCameraPos = targetCharPos.clone().add(cameraOffset);
+
+        // Calculate desired look-at target
+        finalTargetPos = new THREE.Vector3(
+            targetCharPos.x,
+            targetCharPos.y + cameraConfig.customizationFocus.heightOffset,
+            targetCharPos.z
+        );
+        
+        transitionSpeed = cameraConfig.customizationFocus.transitionSpeed; // Use specific transition speed
+
+        // Apply using lerp (smooth transition)
+        camera.position.lerp(desiredCameraPos, transitionSpeed * delta);
+        orbitControlsRef.current.target.lerp(finalTargetPos, transitionSpeed * delta);
+        orbitControlsRef.current.update();
+
+        // EXIT EARLY - Don't run helper or default logic
+        return; 
+    }
+
+    // --- If NOT customizing, proceed with Helper Focus or Default Logic --- 
+    
+    // Ensure rotation is enabled for default/helper mode
+    if (!orbitControlsRef.current.enableRotate) {
+        orbitControlsRef.current.enableRotate = true; // <<<=== RE-ENABLE ROTATION
+    }
+
     // Calculate base target position (where the camera should look)
     let baseTargetPos;
     if (helperCharacterRef?.current && focusingHelper) {
@@ -385,20 +401,15 @@ const ThirdPersonCamera = ({
         helperCharacterPos.current.y + cameraConfig.helperFocus.height + cameraConfig.helperFocus.offset.y,
         helperCharacterPos.current.z + cameraConfig.helperFocus.offset.z
       );
+      transitionSpeed = cameraConfig.helperFocus.transitionSpeed; // Use helper speed
     } else {
-      // Focus on main character
-      baseTargetPos = new THREE.Vector3(
-        characterPos.x,
-        characterPos.y + cameraHeight.current * 0.5, 
-        characterPos.z
-      );
+      // Focus on main character (default)
+      baseTargetPos = new THREE.Vector3(characterPos.x, characterPos.y + cameraHeight.current * 0.5, characterPos.z);
+      transitionSpeed = cameraConfig.followSpeed; // Use default follow speed
     }
-    const finalTargetPos = baseTargetPos.clone(); // Target for OrbitControls
+    finalTargetPos = baseTargetPos.clone(); // Target for OrbitControls
     
-    // --- Calculate Desired Camera Position (Default Logic) ---
-    let finalCameraPos: THREE.Vector3;
-
-    // If dragging, position is determined by drag, not angles/distance
+    // Calculate Desired Camera Position (Default Logic, including dragging)
     if (isDragging) {
        // We still need to calculate the orbital position based on current angle/pitch/distance
        // so collision check can work, but we'll overwrite finalCameraPos later if dragging.
@@ -412,7 +423,7 @@ const ThirdPersonCamera = ({
           ? cameraConfig.helperFocus.height 
           : cameraHeight.current;
         
-        finalCameraPos = new THREE.Vector3(
+        desiredCameraPos = new THREE.Vector3(
           focusPos.x - offsetX,
           focusPos.y + verticalBaseOffset + heightOffset,
           focusPos.z - offsetZ
@@ -485,19 +496,17 @@ const ThirdPersonCamera = ({
         ? cameraConfig.helperFocus.height 
         : cameraHeight.current;
         
-      finalCameraPos = new THREE.Vector3(
+      desiredCameraPos = new THREE.Vector3(
         focusPos.x - offsetX,
         focusPos.y + verticalBaseOffset + heightOffset,
         focusPos.z - offsetZ
       );
     }
     
-    // --- Collision Check (only runs if not customizing) --- 
+    // --- Collision Check (always applies in default/helper mode) --- 
     const collisionStrength = focusingHelper ? 0.2 : inChatTransition ? 0.4 : 0.8;
-    // BaseTargetPos is where we look, finalCameraPos is where camera wants to be
-    const viewLineIntersectsShop = intersectsWithShop(baseTargetPos, finalCameraPos); 
-    
-    if (viewLineIntersectsShop) { // Implicitly includes && !customizingClothing because we are in the else block
+    const viewLineIntersectsShop = intersectsWithShop(baseTargetPos, desiredCameraPos); 
+    if (viewLineIntersectsShop) {
         let testAngle = cameraAngle.current;
         let validPosition: THREE.Vector3 | null = null;
         for (let i = 0; i < 8; i++) {
@@ -521,18 +530,13 @@ const ThirdPersonCamera = ({
             }
         }
         if (validPosition) {
-            finalCameraPos.lerp(validPosition, collisionStrength); // Lerp towards the valid position
+            desiredCameraPos.lerp(validPosition, collisionStrength); // Lerp towards the valid position
         }
     }
-    // --- End Collision Check ---
     
-    // Apply final position (smoothly lerp)
-    camera.position.lerp(finalCameraPos, cameraConfig.followSpeed * delta);
-
-    // --- End Default / Helper Focus / Dragging Logic ---
-     
-    // Update orbit controls target and apply changes (runs only if not customizing due to structure)
-    orbitControlsRef.current.target.copy(finalTargetPos);
+    // Apply final position and target using lerp with the determined speed
+    camera.position.lerp(desiredCameraPos, transitionSpeed * delta);
+    orbitControlsRef.current.target.lerp(finalTargetPos, transitionSpeed * delta);
     orbitControlsRef.current.update();
     
   });
@@ -549,8 +553,8 @@ const ThirdPersonCamera = ({
       <OrbitControls
         ref={orbitControlsRef}
         enablePan={false}
-        enableZoom={false} 
-        enableRotate={false}
+        enableZoom={false} // Keep zoom disabled if desired for normal gameplay too?
+        enableRotate={false} // Keep rotate disabled if desired?
         dampingFactor={0.2}
       />
     </>
