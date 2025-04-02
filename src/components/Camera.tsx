@@ -22,7 +22,7 @@ const cameraConfig = {
   maxZoom: 20,
   returnSpeed: 0.15, // Speed at which camera returns to behind character - increased from 0.1 to 0.15
   followSpeed: 3, // How quickly camera follows character rotation when moving
-  customizationDistance: 6.5, // Increased distance when customizing clothes for better view
+  customizationDistance: 7.5, // Increased distance from 6.5 to prevent mobile collision issues
   customizationHeight: 1.0, // Very low height to look straight at the character
   customizationPitch: -0.05, // Very slight downward pitch for direct view
   customizationPosition: {
@@ -329,6 +329,40 @@ const ThirdPersonCamera = ({
 
   useFrame((state, delta) => {
     if (!characterRef?.current || !orbitControlsRef.current) return;
+
+    // --- Customization Mode: Set fixed view and exit --- 
+    if (customizingClothing) {
+        const customDistance = cameraConfig.customizationDistance;
+        const targetCharPos = new THREE.Vector3(0, 0, 11.5);
+        const customHeight = targetCharPos.y + 1.6;
+
+        const desiredCustomPos = new THREE.Vector3(
+            targetCharPos.x,
+            customHeight,
+            targetCharPos.z + customDistance
+        );
+
+        const lookTarget = new THREE.Vector3(
+            targetCharPos.x,
+            customHeight,
+            targetCharPos.z
+        );
+
+        // Apply position & target directly
+        camera.position.copy(desiredCustomPos);
+        orbitControlsRef.current.target.copy(lookTarget);
+        orbitControlsRef.current.update(); // Apply target change
+
+        // Update internal state refs *after* setting camera, just to keep them roughly synced 
+        // although they aren't actively used for positioning in this mode.
+        cameraDistance.current = customDistance;
+        cameraPitch.current = 0; 
+        cameraAngle.current = Math.PI; 
+
+        return; // EXIT useFrame immediately
+    }
+
+    // --- If NOT customizing, proceed with default logic ---
     
     const character = characterRef.current;
     const characterPos = character.position.clone();
@@ -342,63 +376,66 @@ const ThirdPersonCamera = ({
       helperCharacterPos.current.copy(helperCharacterRef.current.position);
     }
     
-    // Calculate target based on which character to focus on
-    let targetPos;
+    // Calculate base target position (where the camera should look)
+    let baseTargetPos;
     if (helperCharacterRef?.current && focusingHelper) {
-      // Focus on helper character face with configurable offsets
-      targetPos = new THREE.Vector3(
+      // Focus on helper
+      baseTargetPos = new THREE.Vector3(
         helperCharacterPos.current.x + cameraConfig.helperFocus.offset.x,
         helperCharacterPos.current.y + cameraConfig.helperFocus.height + cameraConfig.helperFocus.offset.y,
         helperCharacterPos.current.z + cameraConfig.helperFocus.offset.z
       );
-    } else if (customizingClothing) {
-      // When customizing clothing, always position the camera directly in front of the character
-      // regardless of how the player approached the clothing shop
-      targetPos = new THREE.Vector3(
-        characterPos.x,
-        characterPos.y + 1.5, // Target the mid-section of the character (roughly chest height)
-        characterPos.z
-      );
     } else {
       // Focus on main character
-      targetPos = new THREE.Vector3(
+      baseTargetPos = new THREE.Vector3(
         characterPos.x,
-        characterPos.y + cameraHeight.current * 0.5,
+        characterPos.y + cameraHeight.current * 0.5, 
         characterPos.z
       );
     }
+    const finalTargetPos = baseTargetPos.clone(); // Target for OrbitControls
     
-    // When not dragging, determine the appropriate camera position
-    if (!isDragging) {
+    // --- Calculate Desired Camera Position (Default Logic) ---
+    let finalCameraPos: THREE.Vector3;
+
+    // If dragging, position is determined by drag, not angles/distance
+    if (isDragging) {
+       // We still need to calculate the orbital position based on current angle/pitch/distance
+       // so collision check can work, but we'll overwrite finalCameraPos later if dragging.
+        const distance = cameraDistance.current;
+        const horizontalDistance = distance * Math.cos(cameraPitch.current);
+        const offsetX = Math.sin(cameraAngle.current) * horizontalDistance;
+        const offsetZ = Math.cos(cameraAngle.current) * horizontalDistance;
+        const heightOffset = distance * Math.sin(cameraPitch.current);
+        const focusPos = focusingHelper ? helperCharacterPos.current : characterPos;
+        const verticalBaseOffset = focusingHelper 
+          ? cameraConfig.helperFocus.height 
+          : cameraHeight.current;
+        
+        finalCameraPos = new THREE.Vector3(
+          focusPos.x - offsetX,
+          focusPos.y + verticalBaseOffset + heightOffset,
+          focusPos.z - offsetZ
+        ); // Start with calculated position
+
+    } else {
+      // If not dragging, calculate target angle, pitch, distance, height
       let targetAngle;
       let targetDistance = cameraDistance.current;
-      let targetPitch; // Default pitch is now determined contextually
+      let targetPitch;
       let targetHeight = cameraConfig.height;
       
-      // --- Determine target pitch based on context ---
-      if (customizingClothing) {
-        targetPitch = cameraConfig.customizationPitch;
-      } else if (helperCharacterRef?.current && focusingHelper) {
+      // Determine target pitch 
+      if (helperCharacterRef?.current && focusingHelper) {
         targetPitch = cameraConfig.helperFocus.offset.pitch;
-      } else if (isMobile) { // Check if mobile
-        targetPitch = -0.13; // Apply fixed pitch for mobile
+      } else if (isMobile) { 
+        targetPitch = -0.13; // Mobile pitch (restored from previous edit mistake)
       } else {
-        // Default for desktop: Target horizontal (0) or lerp towards it
-        targetPitch = 0;
+        targetPitch = -0.15; // Desktop pitch
       }
-      // --- End target pitch determination ---
       
-      if (customizingClothing) {
-        // When customizing clothing, always position the camera directly in front of the character
-        // regardless of how the player approached the clothing shop
-        targetAngle = Math.PI; // 180 degrees - directly in front (character facing camera)
-        targetDistance = cameraConfig.customizationDistance;
-        targetHeight = cameraConfig.customizationHeight; // Lower height for better view
-        
-        // Force immediate transition to the target angle when entering customization mode
-        cameraAngle.current = targetAngle;
-      } else if (helperCharacterRef?.current && focusingHelper) {
-        // When focusing on helper, determine angle to look at helper's face
+      // Determine target angle and distance
+      if (helperCharacterRef?.current && focusingHelper) {
         const direction = new THREE.Vector2(
           helperCharacterPos.current.x - lastCharacterPos.current.x,
           helperCharacterPos.current.z - lastCharacterPos.current.z
@@ -406,162 +443,98 @@ const ThirdPersonCamera = ({
         targetAngle = Math.atan2(direction.x, direction.y) + cameraConfig.helperFocus.offset.angle;
         targetDistance = cameraConfig.helperFocus.distance;
       } else {
-        // Position camera behind character (default)
+        // Default: Position behind character
         targetAngle = characterRot;
-        
-        // Check if we just transitioned from helper focus to main character
-        // This creates a more dramatic zoom out effect when stopping conversation
         if (cameraDistance.current < cameraConfig.distance * 0.9) {
-          // We're closer than 90% of target distance, apply stronger zoom out
-          targetDistance = cameraConfig.distance * 1.15; // Zoom out 15% extra
+          targetDistance = cameraConfig.distance * 1.15; 
         } else {
           targetDistance = cameraConfig.distance;
         }
       }
       
-      // Smoothly transition to target angle
+      // Smoothly transition internal state refs toward targets
       const angleDiff = targetAngle - cameraAngle.current;
-      
-      // Handle angle wrapping
       let rotationDiff = ((angleDiff + Math.PI) % (Math.PI * 2)) - Math.PI;
       if (rotationDiff < -Math.PI) rotationDiff += Math.PI * 2;
+      const rotationSpeed = focusingHelper 
+        ? cameraConfig.helperFocus.transitionSpeed * delta 
+        : cameraConfig.returnSpeed;
+      cameraAngle.current += rotationDiff * rotationSpeed;
       
-      // Apply smooth rotation to appropriate position but only if not in customization mode
-      if (!customizingClothing) {
-        // Use helper transition speed when focusing on helper
-        const rotationSpeed = focusingHelper 
-          ? cameraConfig.helperFocus.transitionSpeed * delta 
-          : cameraConfig.returnSpeed;
-        
-        cameraAngle.current += rotationDiff * rotationSpeed;
-        
-        // --- Pitch logic adjustment ---
-        // When focusing helper, transition to helper pitch
-        // Otherwise (mobile or desktop), transition towards the determined targetPitch
-        if (!focusingHelper) {
-            const pitchDiff = targetPitch - cameraPitch.current;
-            // Use a slightly faster transition for pitch adjustment
-            cameraPitch.current += pitchDiff * cameraConfig.returnSpeed * 1.5;
-        } else {
-            // Keep existing helper focus pitch logic
-            cameraPitch.current += (targetPitch - cameraPitch.current) * cameraConfig.helperFocus.transitionSpeed * delta;
-        }
-        // --- End pitch logic adjustment ---
+      if (!focusingHelper) {
+          const pitchDiff = targetPitch - cameraPitch.current;
+          cameraPitch.current += pitchDiff * cameraConfig.returnSpeed * 1.5;
       } else {
-         // When customizing, directly set pitch (prevents lerping during UI interaction)
-         cameraPitch.current = targetPitch;
+          cameraPitch.current += (targetPitch - cameraPitch.current) * cameraConfig.helperFocus.transitionSpeed * delta;
       }
-      
-      // Smoothly transition to target height
+
       const heightDiff = targetHeight - cameraHeight.current;
       cameraHeight.current += heightDiff * cameraConfig.returnSpeed;
       
-      // Smoothly adjust distance with appropriate speed based on focus state
       const distanceSpeed = focusingHelper ? 0.2 : 0.1;
       cameraDistance.current += (targetDistance - cameraDistance.current) * distanceSpeed;
+
+      // Calculate final camera position based on the *updated* internal state refs
+      const distance = cameraDistance.current;
+      const horizontalDistance = distance * Math.cos(cameraPitch.current);
+      const offsetX = Math.sin(cameraAngle.current) * horizontalDistance;
+      const offsetZ = Math.cos(cameraAngle.current) * horizontalDistance;
+      const heightOffset = distance * Math.sin(cameraPitch.current);
+      const focusPos = focusingHelper ? helperCharacterPos.current : characterPos;
+      const verticalBaseOffset = focusingHelper 
+        ? cameraConfig.helperFocus.height 
+        : cameraHeight.current;
+        
+      finalCameraPos = new THREE.Vector3(
+        focusPos.x - offsetX,
+        focusPos.y + verticalBaseOffset + heightOffset,
+        focusPos.z - offsetZ
+      );
     }
     
-    // Calculate camera position in orbit around character with vertical angle
-    const distance = cameraDistance.current;
+    // --- Collision Check (only runs if not customizing) --- 
+    const collisionStrength = focusingHelper ? 0.2 : inChatTransition ? 0.4 : 0.8;
+    // BaseTargetPos is where we look, finalCameraPos is where camera wants to be
+    const viewLineIntersectsShop = intersectsWithShop(baseTargetPos, finalCameraPos); 
     
-    // Calculate horizontal position (around character)
-    const horizontalDistance = distance * Math.cos(cameraPitch.current);
-    const offsetX = Math.sin(cameraAngle.current) * horizontalDistance;
-    const offsetZ = Math.cos(cameraAngle.current) * horizontalDistance;
-    
-    // Calculate vertical offset (height based on pitch)
-    const heightOffset = distance * Math.sin(cameraPitch.current);
-    
-    // The position to place the camera depends on which character we're focusing
-    const focusPos = focusingHelper ? helperCharacterPos.current : characterPos;
-    const verticalBaseOffset = focusingHelper 
-      ? cameraConfig.helperFocus.height 
-      : cameraHeight.current;
-    
-    const desiredCameraPos = new THREE.Vector3(
-      focusPos.x - offsetX,
-      focusPos.y + verticalBaseOffset + heightOffset,
-      focusPos.z - offsetZ
-    );
-    
-    // Check if camera line of sight passes through the shop building
-    // Use variable collision strength based on context
-    const collisionStrength = focusingHelper ? 0.2 : // Very weak during conversation
-                             inChatTransition ? 0.4 : // Moderate during transition
-                             0.8; // Strong during normal gameplay
-                             
-    // Calculate collision effect with adjustable strength
-    const viewLineIntersectsShop = intersectsWithShop(targetPos, desiredCameraPos);
-    
-    // If view line intersects shop, adjust camera position with variable strength
-    let finalCameraPos: THREE.Vector3 = desiredCameraPos.clone();
-    if (viewLineIntersectsShop && !customizingClothing) {
-      // Find a better angle that doesn't intersect the shop
-      let testAngle = cameraAngle.current;
-      let validPosition: THREE.Vector3 | null = null;
-      
-      // Test multiple angles to find a valid position
-      for (let i = 0; i < 8; i++) { // Reduced iterations from 12 to 8
-        testAngle += Math.PI / 4; // 45 degree increments instead of 30
-        const testHorizontalDistance = distance * Math.cos(cameraPitch.current);
-        const testOffsetX = Math.sin(testAngle) * testHorizontalDistance;
-        const testOffsetZ = Math.cos(testAngle) * testHorizontalDistance;
-        
-        const testPos = new THREE.Vector3(
-          focusPos.x - testOffsetX,
-          focusPos.y + verticalBaseOffset + heightOffset,
-          focusPos.z - testOffsetZ
-        );
-        
-        if (!intersectsWithShop(targetPos, testPos)) {
-          validPosition = testPos;
-          // Gradually transition camera angle toward this valid angle with reduced strength
-          cameraAngle.current += (testAngle - cameraAngle.current) * 0.05; // Reduced from 0.1
-          break;
+    if (viewLineIntersectsShop) { // Implicitly includes && !customizingClothing because we are in the else block
+        let testAngle = cameraAngle.current;
+        let validPosition: THREE.Vector3 | null = null;
+        for (let i = 0; i < 8; i++) {
+            testAngle += Math.PI / 4;
+            const distance = cameraDistance.current; // Use current distance for test
+            const testHorizontalDistance = distance * Math.cos(cameraPitch.current);
+            const testOffsetX = Math.sin(testAngle) * testHorizontalDistance;
+            const testOffsetZ = Math.cos(testAngle) * testHorizontalDistance;
+            const focusPos = focusingHelper ? helperCharacterPos.current : characterPos; // Use appropriate focus point
+            const verticalBaseOffset = focusingHelper ? cameraConfig.helperFocus.height : cameraHeight.current;
+            const heightOffset = distance * Math.sin(cameraPitch.current);
+            const testPos = new THREE.Vector3(
+                focusPos.x - testOffsetX,
+                focusPos.y + verticalBaseOffset + heightOffset,
+                focusPos.z - testOffsetZ
+            );
+            if (!intersectsWithShop(baseTargetPos, testPos)) {
+                validPosition = testPos;
+                cameraAngle.current += (testAngle - cameraAngle.current) * 0.05; // Gently nudge angle towards valid
+                break;
+            }
         }
-      }
-      
-      // Use the valid position or fall back to the original, with variable blending
-      if (validPosition) {
-        // Blend between desired and collision-free position based on context
-        finalCameraPos.lerp(validPosition, collisionStrength);
-      }
+        if (validPosition) {
+            finalCameraPos.lerp(validPosition, collisionStrength); // Lerp towards the valid position
+        }
     }
+    // --- End Collision Check ---
     
-    // Update camera and controls
-    if (isDragging) {
-      // Direct positioning during drag for stability
-      camera.position.copy(finalCameraPos);
-    } else {
-      // Different follow speed based on whether we're transitioning to/from helper
-      const followSpeedFactor = focusingHelper 
-        ? cameraConfig.helperFocus.transitionSpeed 
-        : cameraConfig.followSpeed;
-      
-      // If already in customization mode, use instant positioning for any updates
-      // to prevent unwanted animations when interacting with the UI
-      if (customizingClothing) {
-        // For customization mode, maintain a stable camera position and view
-        camera.position.copy(finalCameraPos);
-        
-        // Get the exact position we want to look at (character's center)
-        const lookTarget = new THREE.Vector3(
-          characterPos.x,
-          characterPos.y + 1.5, // Look at chest height
-          characterPos.z
-        );
-        
-        // Make camera look directly at the character (overriding any calculated angles)
-        camera.lookAt(lookTarget);
-      } else {
-        // Regular smooth positioning when not in customization mode
-        camera.position.lerp(finalCameraPos, followSpeedFactor * delta);
-      }
-    }
-    
-    // Always update orbit controls target to target position
-    orbitControlsRef.current.target.copy(targetPos);
+    // Apply final position (smoothly lerp)
+    camera.position.lerp(finalCameraPos, cameraConfig.followSpeed * delta);
+
+    // --- End Default / Helper Focus / Dragging Logic ---
+     
+    // Update orbit controls target and apply changes (runs only if not customizing due to structure)
+    orbitControlsRef.current.target.copy(finalTargetPos);
     orbitControlsRef.current.update();
+    
   });
 
   return (

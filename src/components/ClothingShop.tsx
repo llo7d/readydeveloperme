@@ -52,7 +52,7 @@ const ClothingShop = ({
   
   // House-specific configuration - modify these values to adjust the house only
   const houseScale = [5, 5, 5] as [number, number, number]; // Scale the house
-  const houseRotation = [0, -Math.PI / 9, 0] as [number, number, number]; // Rotate house 20 degrees to the left
+  const houseRotation = [0, 0, 0] as [number, number, number]; // Rotate house 20 degrees to the left
   const houseOffset = [0, 2.5, 0] as [number, number, number]; // Additional offset for the house within the group
 
   // Original ClothingShop colors
@@ -145,9 +145,9 @@ const ClothingShop = ({
           zIndex: 100, // Ensure badge is on top
           ...(isMobile && isCustomizing ? {
             position: 'fixed',
-            top: '30px',
+            top: '55px', // Changed from 30px to 45px (15% more down)
             left: '50%',
-            transform: 'translateX(5%)',
+            transform: 'translateX(15%)',
           } : {
             transform: `scale(${(isCustomizing ? 1 : badgeScale) * 1.5})`
           })
@@ -197,7 +197,7 @@ const ClothingShop = ({
           style={isMobile ? {
             // Mobile: Position icon row at bottom center
             position: 'fixed',
-            bottom: '1vh', // Smaller margin from bottom
+            bottom: '-10vh', // Changed from 1vh to 2vh to move closer to bottom
             left: '50%',
             transform: 'translateX(-50%)', // Center horizontally
             width: 'auto', // Let content define width
@@ -206,7 +206,7 @@ const ClothingShop = ({
           } : {
             // Desktop: Position at bottom center like mobile
             position: 'fixed',
-            bottom: '2vh', // Slightly larger margin from bottom for desktop
+            bottom: '-12vh', // Changed from 2vh to 0.5vh to move closer to bottom on desktop
             left: '50%', 
             transform: 'translateX(-50%)', // Center horizontally
             width: 'auto',

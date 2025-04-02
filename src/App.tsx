@@ -154,7 +154,7 @@ const SceneManager = ({
       <ProximityDetector 
         target={shopVec}
         characterRef={characterRef}
-        threshold={8}
+        threshold={5}
         onNear={onNearShop}
       />
       <ShopCollision
