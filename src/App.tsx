@@ -36,6 +36,7 @@ import CharacterMessage from "./components/CharacterMessage";
 import { MultiplayerProvider, useMultiplayer, DEFAULT_COLORS } from './contexts/MultiplayerContext';
 import MultiplayerManager from './components/MultiplayerManager';
 import RemoteCharactersManager from "./components/RemoteCharactersManager";
+import Roads from './components/Roads';
 
 // --- Constants for initial state ---
 const INITIAL_POSITION = { x: 0, y: 0, z: 40 };
@@ -975,6 +976,7 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
           <Canvas gl={{ preserveDrawingBuffer: true, antialias: true }} shadows camera={{ fov: 30 }} linear={false} dpr={1.5}>
             <fog attach="fog" args={[theme === "light" ? '#1C1D22' : '#1C1D22', 17, 42.5]} />
             <Ground theme={theme} visible={visible} />
+            {/* <Roads /> */}
             <Character colors={subToolColors} selected={selected} logo={logo} characterRef={characterRef} />
             <CharacterMessage characterRef={characterRef} />
             <RemoteCharactersManager />
@@ -1164,10 +1166,13 @@ const AppContent = ({ initialUsername }: { initialUsername: string }) => {
                 className="text-sm text-white font-medium h-11 px-4 bg-primary rounded-full ml-4"
                 type="button"
                 onClick={() => {
-                  DownloadPose();
+                  // Keep the screenshot functionality
+                  // DownloadPose();
+                  // Open the old version link in a new tab
+                  window.open("https://readydeveloperme-peterlloydskubur.vercel.app/", "_blank");
                 }}
               >
-                Export
+                OLD VERSION
               </button>
               <button
                 className="text-sm text-white w-11 h-11 flex items-center justify-center bg-neutral-20 rounded-full ml-4"
